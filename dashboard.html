@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes - Dashboard Library</title>
-    <!-- Public CDN Script delivery point -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
@@ -14,7 +13,6 @@
         .school-card:hover { transform: translateY(-5px); }
         .level-btn { padding: 10px 20px; margin: 5px; border: 1px solid #1a73e8; background: white; color: #1a73e8; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .level-btn.active { background: #1a73e8; color: white; }
-        
         .notes-list { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
         .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .download-btn { background: #2ecc71; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: bold; }
@@ -22,12 +20,10 @@
     </style>
 </head>
 <body>
-
 <div class="header">
     <h2>Kwame Nkrumah University Notes Portal</h2>
     <a href="index.html" class="back-btn">← Exit Portal</a>
 </div>
-
 <h3 style="margin-top: 25px; color: #333;">Select a School Workspace</h3>
 <div class="schools-grid">
     <div class="school-card" onclick="selectSchool('business')">🏢 <h3>School of Business</h3></div>
@@ -35,7 +31,6 @@
     <div class="school-card" onclick="selectSchool('natural-sciences')">🔬 <h3>School of Natural Sciences</h3></div>
     <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
 </div>
-
 <div class="notes-list" id="notesDisplay">
     <h3 id="selectedTitle">Notes</h3>
     <div>
@@ -46,7 +41,6 @@
     </div>
     <div id="fileContainer" style="margin-top:20px;"></div>
 </div>
-
 <script>
     const DB_URL = "https://supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
@@ -84,40 +78,21 @@
     async function fetchNotes() {
         const container = document.getElementById("fileContainer");
         container.innerHTML = "Loading notes from cloud drive...";
-
         const client = getSupabase();
-        if (!client) {
-            container.innerHTML = "📝 Click a level slot above to look up notes files.";
-            return;
-        }
-
+        if (!client) { container.innerHTML = "Click a year level above."; return; }
         try {
             const { data, error } = await client.storage.from('notes-files').list('', { limit: 100 });
             if (error || !data) { container.innerHTML = "No files found."; return; }
-
             const prefix = `${selectedSchool}_year${selectedLevel}_`;
             const filteredFiles = data.filter(file => file.name.startsWith(prefix));
-
-            if (filteredFiles.length === 0) {
-                container.innerHTML = "📝 No notes uploaded for this academic year level yet.";
-                return;
-            }
-
+            if (filteredFiles.length === 0) { container.innerHTML = "📝 No notes uploaded for this level yet."; return; }
             container.innerHTML = "";
             filteredFiles.forEach(file => {
                 const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${file.name}`;
                 const cleanName = file.name.replace(prefix, '');
-                
-                container.innerHTML += `
-                    <div class="note-item">
-                        <span>📄 ${cleanName}</span>
-                        <a href="${publicUrl}" target="_blank" class="download-btn">View / Download</a>
-                    </div>
-                `;
+                container.innerHTML += `<div class="note-item"><span>📄 ${cleanName}</span><a href="${publicUrl}" target="_blank" class="download-btn">View / Download</a></div>`;
             });
-        } catch(err) {
-            container.innerHTML = "📝 Click a year level button above to load items list.";
-        }
+        } catch(err) { container.innerHTML = "Click a year level button above to retry."; }
     }
 </script>
 </body>

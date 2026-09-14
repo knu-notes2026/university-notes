@@ -87,29 +87,33 @@
         }
     }
 
-    async function uploadNote() {
+        async function uploadNote() {
         const client = getSupabase();
         if (!client) { alert("Server connection busy. Try again."); return; }
         const fileInput = document.getElementById("fileUpload");
         if (fileInput.files.length === 0) { alert("Please choose a file first."); return; }
         
         const uploadBtn = document.getElementById("uploadActionButton");
-        uploadBtn.innerText = "⏳ Sending to Cloud...";
-        uploadBtn.disabled = true;
+        if (uploadBtn) {
+            uploadBtn.innerText = "⏳ Sending to Cloud...";
+            uploadBtn.disabled = true;
+        }
 
-        const targetFile = fileInput.files[0]; 
-        const school = document.getElementById("uploadSchool").value;
-        const level = document.getElementById("uploadLevel").value;
+        // 1. Grab the single file object accurately
+        const fileObj = fileInput.files[0]; 
         
-        const cleanOriginalName = targetFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
-        const cloudFileName = `${school}_year${level}_${cleanOriginalName}`;
+        // 2. Direct name upload: Takes exactly the name your file already has on your computer!
+        const cloudFileName = fileObj.name;
 
+        // 3. Send to cloud drive storage pipeline
         const { data, error } = await client.storage
             .from('notes-files')
-            .upload(cloudFileName, targetFile, { cacheControl: '3600', upsert: true });
+            .upload(cloudFileName, fileObj, { cacheControl: '3600', upsert: true });
 
-        uploadBtn.innerText = "Upload File to Cloud";
-        uploadBtn.disabled = false;
+        if (uploadBtn) {
+            uploadBtn.innerText = "Upload File to Cloud";
+            uploadBtn.disabled = false;
+        }
 
         if (error) {
             alert("Upload failed details: " + error.message);
@@ -119,6 +123,7 @@
             document.getElementById("adminBox").style.display = "none";
         }
     }
+
 </script>
 </body>
 </html>

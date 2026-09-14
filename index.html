@@ -3,294 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Notes Portal - Login</title>
-    <!-- Reliable, high-availability global library delivery point -->
-    <script src="https://unpkg.com"></script>
+    <title>Welcome - Kwame Nkrumah University Notes Website</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-        button { width: 96%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1557b0; }
-        .toggle-link { margin-top: 15px; display: inline-block; color: #1a73e8; cursor: pointer; text-decoration: none; font-size: 14px; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #f0f2f5; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .container { 
+            background: white; 
+            padding: 40px 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 500px; 
+            text-align: center; 
+            border-top: 6px solid #1a73e8;
+        }
+        h1 { 
+            color: #1a73e8; 
+            font-size: 26px; 
+            margin-bottom: 5px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        h3 {
+            color: #5f6368;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+        .credits { 
+            font-size: 14px; 
+            color: #70757a; 
+            margin-bottom: 40px; 
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .enter-btn { 
+            display: inline-block;
+            width: 90%; 
+            padding: 15px; 
+            background: #1a73e8; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 18px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            text-decoration: none;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(26,115,232,0.3);
+        }
+        .enter-btn:hover { 
+            background: #1557b0; 
+            transform: translateY(-1px);
+        }
+        .enter-btn:active {
+            transform: translateY(1px);
+        }
     </style>
 </head>
 <body>
 
-<div class="container" id="authBox">
-    <h2 id="formTitle">Student Login</h2>
-    <input type="text" id="username" placeholder="8-Digit Student ID (e.g., 20212345)">
-    <input type="password" id="password" placeholder="Password">
-    <button id="mainBtn" style="cursor: pointer;" onclick="handleAuth()">Log In</button>
-    <br><br>
-    <a class="toggle-link" id="toggleLink" href="javascript:void(0)" onclick="toggleForm()" style="cursor: pointer; font-weight: bold;">Don't have an account? Register here</a>
-    <br><br>
-    <a class="toggle-link" id="forgotLink" href="javascript:void(0)" onclick="forgotPassword()" style="cursor: pointer; font-weight: bold;">Forgot Password? Reset it</a>
+<div class="container">
+    <h1>Welcome to</h1>
+    <h1>Kwame Nkrumah University</h1>
+    <h3>Notes Website</h3>
+    
+    <a href="dashboard.html" class="enter-btn">Enter Into Main Notes Library</a>
+    
+    <div class="credits">
+        Created by Kamima Nkhata
+    </div>
 </div>
 
-<script>
-    let isLoginMode = true;
-    
-    // Configured directly using your precise notepad layout credentials
-    const DB_URL = "https://<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Notes Portal - Login</title>
-    <!-- Reliable, high-availability global library delivery point -->
-    <script src="https://unpkg.com"></script>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-        button { width: 96%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1557b0; }
-        .toggle-link { margin-top: 15px; display: inline-block; color: #1a73e8; cursor: pointer; text-decoration: none; font-size: 14px; }
-    </style>
-</head>
-<body>
-
-<div class="container" id="authBox">
-    <h2 id="formTitle">Student Login</h2>
-    <input type="text" id="username" placeholder="8-Digit Student ID (e.g., 20212345)">
-    <input type="password" id="password" placeholder="Password">
-    <button id="mainBtn" style="cursor: pointer;" onclick="handleAuth()">Log In</button>
-    <br><br>
-    <a class="toggle-link" id="toggleLink" href="javascript:void(0)" onclick="toggleForm()" style="cursor: pointer; font-weight: bold;">Don't have an account? Register here</a>
-    <br><br>
-    <a class="toggle-link" id="forgotLink" href="javascript:void(0)" onclick="forgotPassword()" style="cursor: pointer; font-weight: bold;">Forgot Password? Reset it</a>
-</div>
-
-<script>
-    let isLoginMode = true;
-    
-    // Configured directly using your precise notepad layout credentials
-    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
-    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
-    
-    // Explicit clean initialization wrapper logic
-    const supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
-
-    function toggleForm() {
-        isLoginMode = !isLoginMode;
-        document.getElementById("formTitle").innerText = isLoginMode ? "Student Login" : "Register New Account";
-        document.getElementById("mainBtn").innerText = isLoginMode ? "Log In" : "Register";
-        document.getElementById("toggleLink").innerText = isLoginMode ? "Don't have an account? Register here" : "Already have an account? Log In";
-        document.getElementById("forgotLink").style.display = isLoginMode ? "inline-block" : "none";
-    }
-
-    function isValidStudentID(id) {
-        const regex = /^202\d{5}$/;
-        return regex.test(id);
-    }
-
-    async function handleAuth() {
-        const idInput = document.getElementById("username").value.trim();
-        const passwordInput = document.getElementById("password").value;
-
-        if (!isValidStudentID(idInput)) {
-            alert("Error: Student ID must be exactly 8 digits long and start with '202'.");
-            return;
-        }
-        if (passwordInput.length < 6) {
-            alert("Password must be at least 6 characters long.");
-            return;
-        }
-
-        if (isLoginMode) {
-            const { data, error } = await supabaseClient
-                .from('students')
-                .select('*')
-                .eq('student_id', idInput)
-                .eq('password', passwordInput)
-                .maybeSingle();
-
-            if (error || !data) {
-                alert("Invalid Student ID or Password!");
-            } else {
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("studentId", data.student_id);
-                window.location.href = "dashboard.html";
-            }
-        } else {
-            const { data: existingUser } = await supabaseClient
-                .from('students')
-                .select('student_id')
-                .eq('student_id', idInput)
-                .maybeSingle();
-
-            if (existingUser) {
-                alert("Error: This Student ID already has a registered account!");
-                return;
-            }
-
-            const { error } = await supabaseClient
-                .from('students')
-                .insert([{ student_id: idInput, password: passwordInput, role: 'student' }]);
-
-            if (error) {
-                alert("Registration failed: " + error.message);
-            } else {
-                alert("Account created successfully! You can now log in.");
-                toggleForm();
-            }
-        }
-    }
-
-    function forgotPassword() {
-        const idInput = document.getElementById("username").value.trim();
-        if (!isValidStudentID(idInput)) {
-            alert("Please type your valid 8-digit Student ID into the box first, then click Reset.");
-            return;
-        }
-        
-        let newPassword = prompt("Enter your new chosen password (min 6 characters):");
-        if (newPassword && newPassword.length >= 6) {
-            updatePasswordInCloud(idInput, newPassword);
-        } else {
-            alert("Invalid password length.");
-        }
-    }
-
-    async function updatePasswordInCloud(id, newPass) {
-        const { data: userExists } = await supabaseClient
-            .from('students')
-            .select('student_id')
-            .eq('student_id', id)
-            .maybeSingle();
-
-        if (!userExists) {
-            alert("Reset failed: Student ID not found in database.");
-            return;
-        }
-
-        const { error } = await supabaseClient
-            .from('students')
-            .update({ password: newPass })
-            .eq('student_id', id);
-
-        if (error) {
-            alert("Reset failed.");
-        } else {
-            alert("Password reset successfully! Log in using your new password.");
-        }
-    }
-</script>
-</body>
-</html>
-supabase.co";
-    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
-    
-    // Explicit clean initialization wrapper logic
-    const supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
-
-    function toggleForm() {
-        isLoginMode = !isLoginMode;
-        document.getElementById("formTitle").innerText = isLoginMode ? "Student Login" : "Register New Account";
-        document.getElementById("mainBtn").innerText = isLoginMode ? "Log In" : "Register";
-        document.getElementById("toggleLink").innerText = isLoginMode ? "Don't have an account? Register here" : "Already have an account? Log In";
-        document.getElementById("forgotLink").style.display = isLoginMode ? "inline-block" : "none";
-    }
-
-    function isValidStudentID(id) {
-        const regex = /^202\d{5}$/;
-        return regex.test(id);
-    }
-
-    async function handleAuth() {
-        const idInput = document.getElementById("username").value.trim();
-        const passwordInput = document.getElementById("password").value;
-
-        if (!isValidStudentID(idInput)) {
-            alert("Error: Student ID must be exactly 8 digits long and start with '202'.");
-            return;
-        }
-        if (passwordInput.length < 6) {
-            alert("Password must be at least 6 characters long.");
-            return;
-        }
-
-        if (isLoginMode) {
-            const { data, error } = await supabaseClient
-                .from('students')
-                .select('*')
-                .eq('student_id', idInput)
-                .eq('password', passwordInput)
-                .maybeSingle();
-
-            if (error || !data) {
-                alert("Invalid Student ID or Password!");
-            } else {
-                localStorage.setItem("userRole", data.role);
-                localStorage.setItem("studentId", data.student_id);
-                window.location.href = "dashboard.html";
-            }
-        } else {
-            const { data: existingUser } = await supabaseClient
-                .from('students')
-                .select('student_id')
-                .eq('student_id', idInput)
-                .maybeSingle();
-
-            if (existingUser) {
-                alert("Error: This Student ID already has a registered account!");
-                return;
-            }
-
-            const { error } = await supabaseClient
-                .from('students')
-                .insert([{ student_id: idInput, password: passwordInput, role: 'student' }]);
-
-            if (error) {
-                alert("Registration failed: " + error.message);
-            } else {
-                alert("Account created successfully! You can now log in.");
-                toggleForm();
-            }
-        }
-    }
-
-    function forgotPassword() {
-        const idInput = document.getElementById("username").value.trim();
-        if (!isValidStudentID(idInput)) {
-            alert("Please type your valid 8-digit Student ID into the box first, then click Reset.");
-            return;
-        }
-        
-        let newPassword = prompt("Enter your new chosen password (min 6 characters):");
-        if (newPassword && newPassword.length >= 6) {
-            updatePasswordInCloud(idInput, newPassword);
-        } else {
-            alert("Invalid password length.");
-        }
-    }
-
-    async function updatePasswordInCloud(id, newPass) {
-        const { data: userExists } = await supabaseClient
-            .from('students')
-            .select('student_id')
-            .eq('student_id', id)
-            .maybeSingle();
-
-        if (!userExists) {
-            alert("Reset failed: Student ID not found in database.");
-            return;
-        }
-
-        const { error } = await supabaseClient
-            .from('students')
-            .update({ password: newPass })
-            .eq('student_id', id);
-
-        if (error) {
-            alert("Reset failed.");
-        } else {
-            alert("Password reset successfully! Log in using your new password.");
-        }
-    }
-</script>
 </body>
 </html>

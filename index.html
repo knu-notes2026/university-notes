@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Kwame Nkrumah University Notes Website</title>
     
-    <!-- Correct Supabase JS library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .welcome-container { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; border-top: 6px solid #1a73e8; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .welcome-container { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 520px; text-align: center; border-top: 6px solid #1a73e8; }
         h1 { color: #1a73e8; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
         h3 { color: #5f6368; font-weight: 500; margin-top: 0; margin-bottom: 30px; }
         .credits { font-size: 14px; color: #70757a; margin-top: 30px; font-style: italic; border-top: 1px solid #eee; padding-top: 15px; }
@@ -20,8 +19,9 @@
         .admin-toggle-btn { background: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-top: 10px; }
         .admin-toggle-btn:hover { background: #d35400; }
         .admin-section { background: #fff3cd; padding: 20px; border-radius: 8px; margin-top: 20px; text-align: left; display: none; border: 1px solid #ffeeba; }
-        select, input[type="file"] { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 95%; }
-        .upload-btn { background: #1a73e8; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        select, input[type="file"] { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .upload-btn { background: #1a73e8; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        label { font-weight: bold; font-size: 14px; display: block; margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -37,24 +37,40 @@
     <div class="admin-section" id="adminBox">
         <h3 style="margin-top: 0; color: #7d5a00;">🛠️ Admin Control: Upload New Notes</h3>
         
-        <label style="font-weight: bold; font-size: 14px;">Select File:</label><br>
-        <input type="file" id="fileUpload"><br><br>
+        <label>Select File:</label>
+        <input type="file" id="fileUpload">
         
-        <label style="font-weight: bold; font-size: 14px;">Select Destination School:</label><br>
+        <label>Select Destination School:</label>
         <select id="uploadSchool">
             <option value="business">School of Business</option>
             <option value="education">School of Education</option>
             <option value="natural-sciences">School of Natural Sciences</option>
             <option value="humanities">School of Humanities</option>
-        </select><br><br>
+        </select>
         
-        <label style="font-weight: bold; font-size: 14px;">Select Study Level:</label><br>
+        <label>Select Study Level:</label>
         <select id="uploadLevel">
             <option value="1">1st Year</option>
             <option value="2">2nd Year</option>
             <option value="3">3rd Year</option>
             <option value="4">4th Year</option>
-        </select><br>
+        </select>
+        
+        <label>Select Folder:</label>
+        <select id="uploadFolder">
+            <option value="1">Folder 1</option>
+            <option value="2">Folder 2</option>
+            <option value="3">Folder 3</option>
+            <option value="4">Folder 4</option>
+            <option value="5">Folder 5</option>
+            <option value="6">Folder 6</option>
+            <option value="7">Folder 7</option>
+            <option value="8">Folder 8</option>
+            <option value="9">Folder 9</option>
+            <option value="10">Folder 10</option>
+            <option value="11">Folder 11</option>
+            <option value="12">Folder 12</option>
+        </select>
         
         <button class="upload-btn" id="uploadActionButton" onclick="uploadNote()">Upload File to Cloud</button>
     </div>
@@ -63,7 +79,6 @@
 </div>
 
 <script>
-    // ===== CORRECT CREDENTIALS =====
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     
@@ -118,14 +133,17 @@
         const fileObj = fileInput.files[0];
         const school = document.getElementById("uploadSchool").value;
         const level = document.getElementById("uploadLevel").value;
+        const folder = document.getElementById("uploadFolder").value;
 
         // Clean filename
         const cleanName = fileObj.name
-            .replace(/\.[^/.]+$/, "")          // remove extension
-            .replace(/[^a-zA-Z0-9]/g, "_");  // remove special chars
+            .replace(/\.[^/.]+$/, "")
+            .replace(/[^a-zA-Z0-9]/g, "_");
         
         const extension = fileObj.name.split('.').pop();
-        const cloudFileName = `${school}_year${level}_${cleanName}.${extension}`;
+        
+        // New path structure: school/year/folderX/filename
+        const cloudFileName = `${school}/${level}/folder${folder}/${cleanName}.${extension}`;
 
         try {
             const { data, error } = await client.storage
@@ -138,7 +156,7 @@
             if (error) {
                 alert("Upload failed: " + error.message);
             } else {
-                alert("🎉 File successfully uploaded to the cloud!");
+                alert(`🎉 File uploaded successfully to:\n${school} → Year ${level} → Folder ${folder}`);
                 fileInput.value = "";
                 document.getElementById("adminBox").style.display = "none";
             }

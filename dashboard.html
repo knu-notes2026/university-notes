@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes - Dashboard Library</title>
-    <script src="https://unpkg.com"></script>
+    
+    <!-- Correct Supabase JS library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -24,13 +27,16 @@
     <h2>Kwame Nkrumah University Notes Portal</h2>
     <a href="index.html" class="back-btn">← Exit Portal</a>
 </div>
+
 <h3 style="margin-top: 25px; color: #333;">Select a School Workspace</h3>
+
 <div class="schools-grid">
     <div class="school-card" onclick="selectSchool('business')">🏢 <h3>School of Business</h3></div>
     <div class="school-card" onclick="selectSchool('education')">🍎 <h3>School of Education</h3></div>
     <div class="school-card" onclick="selectSchool('natural-sciences')">🔬 <h3>School of Natural Sciences</h3></div>
     <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
 </div>
+
 <div class="notes-list" id="notesDisplay">
     <h3 id="selectedTitle">Notes</h3>
     <div>
@@ -41,18 +47,21 @@
     </div>
     <div id="fileContainer" style="margin-top:20px;"></div>
 </div>
+
 <script>
-    const DB_URL = "https://supabase.co";
+    // ===== CORRECT CREDENTIALS =====
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    
     let supabaseClient = null;
 
     function getSupabase() {
         if (!supabaseClient) {
             try {
-                if (window.supabase && window.supabase.createClient) {
-                    supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
-                }
-            } catch (e) { console.error(e); }
+                supabaseClient = supabase.createClient(DB_URL, DB_KEY);
+            } catch (e) {
+                console.error("Supabase init error:", e);
+            }
         }
         return supabaseClient;
     }
@@ -77,22 +86,55 @@
 
     async function fetchNotes() {
         const container = document.getElementById("fileContainer");
-        container.innerHTML = "Loading notes from cloud drive...";
+        container.innerHTML = "⏳ Loading notes from cloud...";
+
         const client = getSupabase();
-        if (!client) { container.innerHTML = "Click a year level above."; return; }
+        if (!client) {
+            container.innerHTML = "❌ Connection failed. Please refresh the page.";
+            return;
+        }
+
         try {
-            const { data, error } = await client.storage.from('notes-files').list('', { limit: 100 });
-            if (error || !data) { container.innerHTML = "No files found."; return; }
+            const { data, error } = await client.storage
+                .from('notes-files')
+                .list('', { limit: 100 });
+
+            if (error) {
+                console.error(error);
+                container.innerHTML = "Error loading files: " + error.message;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                container.innerHTML = "📝 No notes uploaded yet.";
+                return;
+            }
+
             const prefix = `${selectedSchool}_year${selectedLevel}_`;
             const filteredFiles = data.filter(file => file.name.startsWith(prefix));
-            if (filteredFiles.length === 0) { container.innerHTML = "📝 No notes uploaded for this level yet."; return; }
+
+            if (filteredFiles.length === 0) {
+                container.innerHTML = "📝 No notes uploaded for this level yet.";
+                return;
+            }
+
             container.innerHTML = "";
             filteredFiles.forEach(file => {
+                // Correct public URL
                 const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${file.name}`;
                 const cleanName = file.name.replace(prefix, '');
-                container.innerHTML += `<div class="note-item"><span>📄 ${cleanName}</span><a href="${publicUrl}" target="_blank" class="download-btn">View / Download</a></div>`;
+                
+                container.innerHTML += `
+                    <div class="note-item">
+                        <span>📄 ${cleanName}</span>
+                        <a href="${publicUrl}" target="_blank" class="download-btn">View / Download</a>
+                    </div>
+                `;
             });
-        } catch(err) { container.innerHTML = "Click a year level button above to retry."; }
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = "Something went wrong. Please try again.";
+        }
     }
 </script>
 </body>

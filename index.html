@@ -131,20 +131,26 @@
         const fileInput = document.getElementById("fileUpload");
         if (fileInput.files.length === 0) { alert("Please choose a file first."); return; }
         
-        // FIXED ARRAY POINTER INDEX TO READ OBJECT CORRECTLY
+        // Grab the single file accurately using structural array index
         const file = fileInput.files[0]; 
         const school = document.getElementById("uploadSchool").value;
         const level = document.getElementById("uploadLevel").value;
         
-        const cleanOriginalName = file.name.replace(/\s+/g, '_');
+        // Dynamic name sanitizer (swaps dots, dashes, and spaces with clean characters)
+        const cleanOriginalName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
         const cloudFileName = `${school}_year${level}_${cleanOriginalName}`;
 
         const { data, error } = await client.storage
             .from('notes-files')
-            .upload(cloudFileName, fileInput.files[0]);
+            .upload(cloudFileName, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
 
         if (error) {
-            alert("Upload failed: " + error.message);
+            // Displays true low-level database structural errors explicitly
+            alert("Upload failed details: " + error.message);
+            console.error(error);
         } else {
             alert("File successfully sent to the cloud!");
             fileInput.value = "";

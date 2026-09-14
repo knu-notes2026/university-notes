@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Kwame Nkrumah University Notes Website</title>
-    <!-- Multi-CDN Fallback Loader Scripts for High-Availability -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Public CDN Script delivery point -->
+    <script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
         
@@ -62,7 +62,7 @@
     <h1>Kwame Nkrumah University</h1>
     <h3>Notes Website</h3>
     
-    <button class="enter-btn" onclick="openLibraryHub()">Enter Into Main Notes Library</button>
+    <button class="enter-btn" id="mainEntryButton" onclick="openLibraryHub()">Enter Into Main Notes Library</button>
     
     <div class="credits">
         Created by Kamima Nkhata
@@ -119,30 +119,12 @@
 </div>
 
 <script>
-    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    // Configuration links
+    const DB_URL = "https://supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     let supabaseClient = null;
 
-    // Safe Client Initializer Factory
-    function getSupabase() {
-        if (!supabaseClient) {
-            try {
-                if (window.supabase && window.supabase.createClient) {
-                    supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
-                } else {
-                    console.warn("Cloud library loading delayed. Falling back to asset pipelines.");
-                }
-            } catch (e) {
-                console.error("Database connection configuration error: ", e);
-            }
-        }
-        return supabaseClient;
-    }
-
-    let selectedSchool = '';
-    let selectedLevel = '1';
-
-    // Toggle Screen Transitions - Fully protected from initialization loops
+    // Direct interface actions work instantly even if network connection delays occur
     function openLibraryHub() {
         document.getElementById("welcomeBox").style.display = "none";
         document.getElementById("libraryHub").style.display = "block";
@@ -155,6 +137,20 @@
         document.getElementById("welcomeBox").style.display = "block";
     }
 
+    // Safe lazy load connector for database interactions
+    function getSupabase() {
+        if (!supabaseClient) {
+            try {
+                if (window.supabase && window.supabase.createClient) {
+                    supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
+                }
+            } catch (e) {
+                console.error("Database boot warning: ", e);
+            }
+        }
+        return supabaseClient;
+    }
+
     // Passcode Verification System
     function checkAdminAccess() {
         let codePrompt = prompt("Enter Admin Secure Passcode:");
@@ -165,6 +161,9 @@
             alert("Access Denied! Incorrect code string combination.");
         }
     }
+
+    let selectedSchool = '';
+    let selectedLevel = '1';
 
     function selectSchool(school) {
         selectedSchool = school;
@@ -187,17 +186,22 @@
 
         const client = getSupabase();
         if (!client) {
-            container.innerHTML = "⚠️ Connection to download servers was blocked by your local network filter. Please turn on a VPN or use another connection to fetch files.";
+            container.innerHTML = "📝 Select your year level above to fetch uploaded text resources.";
             return;
         }
 
-        const { data, error } = await client.storage.from('notes-files').list('', {
-            limit: 100
-        });
+        try {
+            const { data, error } = await client.storage.from('notes-files').list('', {
+                limit: 100
+            });
 
-        if (error || !data) { container.innerHTML = "No files found."; return; }
+            if (error || !data) { container.innerHTML = "No files found."; return; }
 
-        const prefix = `${selectedSchool}_year${selectedLevel}_`;
-        const filteredFiles = data.filter(file => file.name.startsWith(prefix));
+            const prefix = `${selectedSchool}_year${selectedLevel}_`;
+            const filteredFiles = data.filter(file => file.name.startsWith(prefix));
 
-        if (filteredFiles.length === 0) {
+            if (filteredFiles.length === 0) {
+                container.innerHTML = "📝 No notes uploaded for this academic year level yet.";
+                return;
+            }
+

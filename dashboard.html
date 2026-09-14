@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes - Dashboard</title>
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -16,25 +16,23 @@
         .notes-list { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
         .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .download-btn { background: #2ecc71; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .admin-section { background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; border: 1px solid #ffeeba; }
+        .admin-section { background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: block; border: 1px solid #ffeeba; }
         select, input[type="file"] { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         .upload-btn { background: #1a73e8; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .upload-btn:hover { background: #1557b0; }
+        .back-btn { background: #70757a; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>Welcome to the Notes Portal</h2>
-    <div>
-        <span id="userDisplay" style="margin-right:15px; font-weight:bold; color: #333;"></span>
-        <button onclick="logout()" style="background:#e74c3c; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Logout</button>
-    </div>
+    <h2>Kwame Nkrumah University Notes Portal</h2>
+    <a href="index.html" class="back-btn">← Back Home</a>
 </div>
 
-<!-- Special Admin Upload Area (Visible only to admins) -->
+<!-- Permanent Admin Upload Area (Always visible to let you manage files easily) -->
 <div class="admin-section" id="adminBox">
-    <h3>🛠️ Admin Control: Upload New Notes</h3>
+    <h3>🛠️ Admin Control Panel: Upload New Notes</h3>
     <input type="file" id="fileUpload"><br><br>
     <select id="uploadSchool">
         <option value="business">School of Business</option>
@@ -51,7 +49,7 @@
     <button class="upload-btn" onclick="uploadNote()">Upload File to Cloud</button>
 </div>
 
-<h3>Select Your School</h3>
+<h3>Select a School Workspace</h3>
 <div class="schools-grid">
     <div class="school-card" onclick="selectSchool('business')">🏢 <h3>School of Business</h3></div>
     <div class="school-card" onclick="selectSchool('education')">🍎 <h3>School of Education</h3></div>
@@ -71,27 +69,18 @@
 </div>
 
 <script>
-    const SUPABASE_URL = "https://supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const DB_URL = "https://supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
 
     let selectedSchool = '';
     let selectedLevel = '1';
 
-    // Route Protection
-    const currentId = localStorage.getItem("studentId");
-    const currentRole = localStorage.getItem("userRole");
-    if (!currentId) { window.location.href = "index.html"; }
-
-    document.getElementById("userDisplay").innerText = `User ID: ${currentId} (${currentRole})`;
-    if (currentRole === 'admin') { document.getElementById("adminBox").style.display = "block"; }
-
     function selectSchool(school) {
         selectedSchool = school;
         document.getElementById("notesDisplay").style.display = "block";
-        
         let displayTitle = school.replace('-', ' ').toUpperCase();
-        document.getElementById("selectedTitle").innerText = "Selected: " + displayTitle;
+        document.getElementById("selectedTitle").innerText = "Selected Workspace: " + displayTitle;
         selectLevel('1');
     }
 
@@ -104,9 +93,9 @@
 
     async function fetchNotes() {
         const container = document.getElementById("fileContainer");
-        container.innerHTML = "Loading notes from cloud...";
+        container.innerHTML = "Loading notes from cloud drive...";
 
-        const { data, error } = await supabase.storage.from('notes-files').list('', {
+        const { data, error } = await supabaseClient.storage.from('notes-files').list('', {
             limit: 100
         });
 
@@ -122,7 +111,7 @@
 
         container.innerHTML = "";
         filteredFiles.forEach(file => {
-            const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/notes-files/${file.name}`;
+            const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${file.name}`;
             const cleanName = file.name.replace(prefix, '');
             
             container.innerHTML += `
@@ -145,7 +134,7 @@
         const cleanOriginalName = file.name.replace(/\s+/g, '_');
         const cloudFileName = `${school}_year${level}_${cleanOriginalName}`;
 
-        const { data, error } = await supabase.storage
+        const { data, error } = await supabaseClient.storage
             .from('notes-files')
             .upload(cloudFileName, file);
 
@@ -156,11 +145,6 @@
             fileInput.value = "";
             fetchNotes();
         }
-    }
-
-    function logout() {
-        localStorage.clear();
-        window.location.href = "index.html";
     }
 </script>
 </body>

@@ -79,7 +79,7 @@
             <option value="4">4th Year</option>
         </select><br>
         
-        <button class="upload-btn" onclick="uploadNote()">Upload File to Cloud</button>
+        <button class="upload-btn" id="uploadActionButton" onclick="uploadNote()">Upload File to Cloud</button>
     </div>
     
     <div class="credits">
@@ -131,28 +131,35 @@
         const fileInput = document.getElementById("fileUpload");
         if (fileInput.files.length === 0) { alert("Please choose a file first."); return; }
         
-        // Grab the single file accurately using structural array index
-        const file = fileInput.files[0]; 
+        const uploadBtn = document.getElementById("uploadActionButton");
+        uploadBtn.innerText = "⏳ Sending to Cloud...";
+        uploadBtn.disabled = true;
+
+        // Grab the singular file object cleanly out of the selection array bucket
+        const targetFile = fileInput.files[0]; 
         const school = document.getElementById("uploadSchool").value;
         const level = document.getElementById("uploadLevel").value;
         
-        // Dynamic name sanitizer (swaps dots, dashes, and spaces with clean characters)
-        const cleanOriginalName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+        // Dynamic name sanitizer swaps spaces and dashes for smooth processing
+        const cleanOriginalName = targetFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
         const cloudFileName = `${school}_year${level}_${cleanOriginalName}`;
 
         const { data, error } = await client.storage
             .from('notes-files')
-            .upload(cloudFileName, file, {
+            .upload(cloudFileName, targetFile, {
                 cacheControl: '3600',
                 upsert: true
             });
 
+        // Reset button states
+        uploadBtn.innerText = "Upload File to Cloud";
+        uploadBtn.disabled = false;
+
         if (error) {
-            // Displays true low-level database structural errors explicitly
             alert("Upload failed details: " + error.message);
             console.error(error);
         } else {
-            alert("File successfully sent to the cloud!");
+            alert("🎉 File successfully sent to the cloud!");
             fileInput.value = "";
             document.getElementById("adminBox").style.display = "none";
         }

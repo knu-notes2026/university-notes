@@ -144,17 +144,17 @@
     function openLibraryHub() {
         const entryBtn = document.getElementById("mainEntryButton");
         
-        // 1. Activate loading state style properties
+        // Activate loading state style properties
         entryBtn.classList.add("loading");
         entryBtn.innerText = "⏳ Opening Library Hub...";
         entryBtn.disabled = true;
 
-        // 2. Perform a beautiful 1-second timeout loop before launching the grid pages
+        // Perform a beautiful 1-second timeout loop before launching the grid pages
         setTimeout(() => {
             document.getElementById("welcomeBox").style.display = "none";
             document.getElementById("libraryHub").style.display = "block";
             
-            // Reset button text configurations back to original states for later sessions
+            // Reset button text configurations back to original states
             entryBtn.classList.remove("loading");
             entryBtn.innerText = "Enter Into Main Notes Library";
             entryBtn.disabled = false;
@@ -198,3 +198,4 @@
     function selectSchool(school) {
         selectedSchool = school;
         document.getElementById("notesDisplay").style.display = "block";
+        let displayTitle = school.replace('-', ' ').toUpperCase();

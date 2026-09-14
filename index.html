@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes Portal - Login</title>
-    <!-- Clean, globally accessible library loader script -->
+    <!-- Direct cloud library delivery point -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -20,7 +20,7 @@
 
 <div class="container" id="authBox">
     <h2 id="formTitle">Student Login</h2>
-    <input type="text" id="username" placeholder="8-Digit Student ID (e.g., 20212345)">
+    <input type="text" id="username" placeholder="8-Digit Student ID (e.g., 20252799)">
     <input type="password" id="password" placeholder="Password">
     <button id="mainBtn" style="cursor: pointer;" onclick="handleAuth()">Log In</button>
     <br><br>
@@ -30,12 +30,13 @@
 </div>
 
 <script>
+    // 1. Declare application configuration state variables first
     let isLoginMode = true;
-    const SUPABASE_URL = "https://supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const DB_URL = "https://supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     
-    // Exact standard module client call
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 2. FIXED INITIALIZATION: Uses the global window element to prevent naming conflicts
+    const supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
 
     function toggleForm() {
         isLoginMode = !isLoginMode;
@@ -64,7 +65,7 @@
         }
 
         if (isLoginMode) {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('students')
                 .select('*')
                 .eq('student_id', idInput)
@@ -79,7 +80,7 @@
                 window.location.href = "dashboard.html";
             }
         } else {
-            const { data: existingUser } = await supabase
+            const { data: existingUser } = await supabaseClient
                 .from('students')
                 .select('student_id')
                 .eq('student_id', idInput)
@@ -90,7 +91,7 @@
                 return;
             }
 
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('students')
                 .insert([{ student_id: idInput, password: passwordInput, role: 'student' }]);
 
@@ -119,7 +120,7 @@
     }
 
     async function updatePasswordInCloud(id, newPass) {
-        const { data: userExists } = await supabase
+        const { data: userExists } = await supabaseClient
             .from('students')
             .select('student_id')
             .eq('student_id', id)
@@ -130,7 +131,7 @@
             return;
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('students')
             .update({ password: newPass })
             .eq('student_id', id);

@@ -100,7 +100,7 @@
 
         setTimeout(() => {
             window.location.href = "dashboard.html";
-        }, 8000); // 800ms gives a modern fast loading feel before leaping
+        }, 1200);
     }
 
     function getSupabase() {
@@ -131,7 +131,8 @@
         const fileInput = document.getElementById("fileUpload");
         if (fileInput.files.length === 0) { alert("Please choose a file first."); return; }
         
-        const file = fileInput.files[0]; // FIXED SELECTION POINTER
+        // FIXED ARRAY POINTER INDEX TO READ OBJECT CORRECTLY
+        const file = fileInput.files[0]; 
         const school = document.getElementById("uploadSchool").value;
         const level = document.getElementById("uploadLevel").value;
         

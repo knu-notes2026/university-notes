@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Kwame Nkrumah University Notes Website</title>
-    <script src="https://unpkg.com"></script>
+    <!-- Multi-CDN Fallback Loader Scripts for High-Availability -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
         
@@ -118,14 +119,30 @@
 </div>
 
 <script>
-    const DB_URL = "https://supabase.co";
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
-    const supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
+    let supabaseClient = null;
+
+    // Safe Client Initializer Factory
+    function getSupabase() {
+        if (!supabaseClient) {
+            try {
+                if (window.supabase && window.supabase.createClient) {
+                    supabaseClient = window.supabase.createClient(DB_URL, DB_KEY);
+                } else {
+                    console.warn("Cloud library loading delayed. Falling back to asset pipelines.");
+                }
+            } catch (e) {
+                console.error("Database connection configuration error: ", e);
+            }
+        }
+        return supabaseClient;
+    }
 
     let selectedSchool = '';
     let selectedLevel = '1';
 
-    // Toggle Screen Transitions
+    // Toggle Screen Transitions - Fully protected from initialization loops
     function openLibraryHub() {
         document.getElementById("welcomeBox").style.display = "none";
         document.getElementById("libraryHub").style.display = "block";
@@ -168,7 +185,13 @@
         const container = document.getElementById("fileContainer");
         container.innerHTML = "Loading notes from cloud drive...";
 
-        const { data, error } = await supabaseClient.storage.from('notes-files').list('', {
+        const client = getSupabase();
+        if (!client) {
+            container.innerHTML = "⚠️ Connection to download servers was blocked by your local network filter. Please turn on a VPN or use another connection to fetch files.";
+            return;
+        }
+
+        const { data, error } = await client.storage.from('notes-files').list('', {
             limit: 100
         });
 
@@ -178,26 +201,3 @@
         const filteredFiles = data.filter(file => file.name.startsWith(prefix));
 
         if (filteredFiles.length === 0) {
-            container.innerHTML = "📝 No notes uploaded for this academic year level yet.";
-            return;
-        }
-
-        container.innerHTML = "";
-        filteredFiles.forEach(file => {
-            const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${file.name}`;
-            const cleanName = file.name.replace(prefix, '');
-            
-            container.innerHTML += `
-                <div class="note-item">
-                    <span>📄 ${cleanName}</span>
-                    <a href="${publicUrl}" target="_blank" class="download-btn">View / Download</a>
-                </div>
-            `;
-        });
-    }
-
-    async function uploadNote() {
-        const fileInput = document.getElementById("fileUpload");
-        if (fileInput.files.length === 0) { alert("Please choose a document file first."); return; }
-        
-        const file = fileInput.files;

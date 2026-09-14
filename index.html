@@ -21,7 +21,7 @@
     <h2 id="formTitle">Student Login</h2>
     <input type="text" id="username" placeholder="8-Digit Student ID (e.g., 20212345)">
     <input type="password" id="password" placeholder="Password">
-       <button id="mainBtn" style="cursor: pointer;" onclick="handleAuth()">Log In</button>
+    <button id="mainBtn" style="cursor: pointer;" onclick="handleAuth()">Log In</button>
     <br><br>
     <a class="toggle-link" id="toggleLink" href="javascript:void(0)" onclick="toggleForm()" style="cursor: pointer; font-weight: bold;">Don't have an account? Register here</a>
     <br><br>
@@ -29,8 +29,7 @@
 </div>
 
 <script>
-    const SUPABASE_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
-
+    const SUPABASE_URL = "https://supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

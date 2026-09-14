@@ -54,7 +54,6 @@
 </div>
 <script>
     const DB_URL = "https://supabase.co";
-    // Using explicit high-privilege configuration token parameters
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     let supabaseClient = null;
 
@@ -87,33 +86,30 @@
         }
     }
 
-        async function uploadNote() {
+    async function uploadNote() {
         const client = getSupabase();
         if (!client) { alert("Server connection busy. Try again."); return; }
         const fileInput = document.getElementById("fileUpload");
         if (fileInput.files.length === 0) { alert("Please choose a file first."); return; }
         
         const uploadBtn = document.getElementById("uploadActionButton");
-        if (uploadBtn) {
-            uploadBtn.innerText = "⏳ Sending to Cloud...";
-            uploadBtn.disabled = true;
-        }
+        if (uploadBtn) { uploadBtn.innerText = "⏳ Sending to Cloud..."; uploadBtn.disabled = true; }
 
-        // 1. Grab the single file object accurately
+        // FIXED FILE OBJ TO EXTRACT TARGET CORRECTLY FROM ARRAY BUCKET
         const fileObj = fileInput.files[0]; 
+        const school = document.getElementById("uploadSchool").value;
+        const level = document.getElementById("uploadLevel").value;
         
-        // 2. Direct name upload: Takes exactly the name your file already has on your computer!
-        const cloudFileName = fileObj.name;
+        // Complete clean name configuration handler
+        const cleanName = fileObj.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
+        const extension = fileObj.name.split('.').pop();
+        const cloudFileName = `${school}_year${level}_${cleanName}.${extension}`;
 
-        // 3. Send to cloud drive storage pipeline
         const { data, error } = await client.storage
             .from('notes-files')
             .upload(cloudFileName, fileObj, { cacheControl: '3600', upsert: true });
 
-        if (uploadBtn) {
-            uploadBtn.innerText = "Upload File to Cloud";
-            uploadBtn.disabled = false;
-        }
+        if (uploadBtn) { uploadBtn.innerText = "Upload File to Cloud"; uploadBtn.disabled = false; }
 
         if (error) {
             alert("Upload failed details: " + error.message);
@@ -123,7 +119,6 @@
             document.getElementById("adminBox").style.display = "none";
         }
     }
-
 </script>
 </body>
 </html>

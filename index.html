@@ -31,11 +31,11 @@
 
 <script>
     let isLoginMode = true;
-    const SUPABASE_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const SUPABASE_URL = "https://supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     
-    // FIXED: Correct initialization for the cdnjs Supabase bundle
-    const supabase = cookiesupabase.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // FIXED BOTH INITIALIZATION VARIABLES FOR THE LIVE CLOUD INSTANCE
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function toggleForm() {
         isLoginMode = !isLoginMode;

@@ -17,7 +17,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #1e7e34;          /* Green top bar */
+            background: #1e7e34;
             color: white;
             padding: 15px 25px;
             border-radius: 8px;
@@ -244,7 +244,6 @@
     let currentYear = "1";
     let currentFolder = null;
 
-    // Show admin badge if logged in as admin
     if (isAdmin) {
         document.getElementById("adminBadge").style.display = "inline-block";
     }
@@ -267,9 +266,7 @@
         document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("active"));
         document.getElementById("lvl" + year).classList.add("active");
 
-        // Show admin create panel only if admin
         document.getElementById("adminCreatePanel").style.display = isAdmin ? "block" : "none";
-
         loadFolders();
     }
 
@@ -343,9 +340,7 @@
         document.getElementById("folderView").style.display = "block";
         document.getElementById("folderTitle").innerText = folder.name;
 
-        // Show admin panel only if admin
         document.getElementById("folderAdminPanel").style.display = isAdmin ? "block" : "none";
-
         loadFilesInFolder();
     }
 
@@ -416,7 +411,6 @@
 
         if (!confirm(`Are you sure you want to permanently delete the folder "${currentFolder.name}"?`)) return;
 
-        // 1. Delete all files in storage
         const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
         const { data: files } = await client.storage.from("notes-files").list(path);
         if (files && files.length) {
@@ -424,7 +418,6 @@
             await client.storage.from("notes-files").remove(pathsToDelete);
         }
 
-        // 2. Delete the folder record
         const { error } = await client.from("folders").delete().eq("id", currentFolder.id);
 
         if (error) {

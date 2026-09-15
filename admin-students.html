@@ -26,19 +26,19 @@
         .search-box { margin-bottom: 20px; }
         .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
 
-        /* Modal */
+        /* Advanced Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
             z-index: 9999; opacity: 0; transition: opacity 0.3s;
         }
         .modal-overlay.show { display: flex; opacity: 1; }
         .modal-box {
-            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
+            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
             transform: translateY(-30px); transition: transform 0.3s;
         }
         .modal-overlay.show .modal-box { transform: translateY(0); }
-        .modal-box h3 { margin-top: 0; color: #6a1b9a; }
+        .modal-box h3 { margin-top: 0; }
         .password-wrapper { position: relative; margin-top: 10px; }
         .password-wrapper input {
             width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc;
@@ -51,10 +51,11 @@
         }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions button { flex: 1; padding: 11px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-confirm-danger { background: #c62828; color: white; }
     </style>
 </head>
 <body>
-
 <div class="header">
     <div>
         <h2>Student Accounts</h2>
@@ -67,18 +68,16 @@
 
 <div class="card">
     <h3>All Registered Students</h3>
-
     <div class="search-box">
-        <input type="text" id="searchStudents" placeholder="Search by Student Number, Email, Phone, School or Year..." oninput="filterStudents()">
+        <input type="text" id="searchStudents" placeholder="Search by Name, Student Number, Email, Phone, School or Year..." oninput="filterStudents()">
     </div>
-
     <div id="studentsList">Loading...</div>
 </div>
 
 <!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetModal">
     <div class="modal-box">
-        <h3>Reset Password</h3>
+        <h3 style="color:#6a1b9a;">Reset Password</h3>
         <p id="resetStudentLabel" style="color:#555;"></p>
         
         <label>New Password</label>
@@ -88,8 +87,21 @@
         </div>
         
         <div class="modal-actions">
-            <button class="btn" style="background:#e0e0e0;" onclick="closeResetModal()">Cancel</button>
+            <button class="btn-cancel" onclick="closeResetModal()">Cancel</button>
             <button class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Delete Student Modal -->
+<div class="modal-overlay" id="deleteStudentModal">
+    <div class="modal-box">
+        <h3 style="color:#c62828;">Delete Student Account</h3>
+        <p id="deleteStudentText" style="color:#555; line-height:1.5;"></p>
+        <p style="color:#888; font-size:14px;">This action is permanent and cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteStudentModal()">Cancel</button>
+            <button class="btn-confirm-danger" onclick="confirmDeleteStudent()">Delete Account</button>
         </div>
     </div>
 </div>
@@ -106,29 +118,28 @@
 
     let allStudents = [];
     let currentStudentId = null;
+    let studentToDelete = null;
 
     async function loadStudents() {
         const { data, error } = await client
             .from("students")
             .select("*")
             .order("created_at", { ascending: false });
-
         allStudents = data || [];
         renderStudents(allStudents);
     }
 
     function renderStudents(list) {
         const container = document.getElementById("studentsList");
-
         if (!list || list.length === 0) {
             container.innerHTML = "<p>No students found.</p>";
             return;
         }
-
         let html = `
             <table>
                 <thead>
                     <tr>
+                        <th>Name</th>
                         <th>Student Number</th>
                         <th>Email</th>
                         <th>Phone</th>
@@ -139,10 +150,11 @@
                 </thead>
                 <tbody>
         `;
-
         list.forEach(s => {
+            const fullName = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ") || "—";
             html += `
                 <tr>
+                    <td>${fullName}</td>
                     <td>${s.student_number}</td>
                     <td>${s.email}</td>
                     <td>${s.phone || "-"}</td>
@@ -150,25 +162,26 @@
                     <td>Year ${s.year}</td>
                     <td>
                         <button class="btn btn-warning" onclick="openResetModal('${s.id}', '${s.student_number}')">Reset Password</button>
-                        <button class="btn btn-danger" onclick="deleteStudent('${s.id}', '${s.student_number}')">Delete</button>
+                        <button class="btn btn-danger" onclick="openDeleteStudentModal('${s.id}', '${s.student_number}', '${fullName.replace(/'/g, "\\'")}')">Delete</button>
                     </td>
                 </tr>
             `;
         });
-
         html += `</tbody></table>`;
         container.innerHTML = html;
     }
 
     function filterStudents() {
         const term = document.getElementById("searchStudents").value.toLowerCase();
-        const filtered = allStudents.filter(s => 
-            (s.student_number || "").toLowerCase().includes(term) ||
-            (s.email || "").toLowerCase().includes(term) ||
-            (s.phone || "").toLowerCase().includes(term) ||
-            (s.school || "").toLowerCase().includes(term) ||
-            (s.year || "").toString().includes(term)
-        );
+        const filtered = allStudents.filter(s => {
+            const fullName = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ").toLowerCase();
+            return fullName.includes(term) ||
+                (s.student_number || "").toLowerCase().includes(term) ||
+                (s.email || "").toLowerCase().includes(term) ||
+                (s.phone || "").toLowerCase().includes(term) ||
+                (s.school || "").toLowerCase().includes(term) ||
+                (s.year || "").toString().includes(term);
+        });
         renderStudents(filtered);
     }
 
@@ -203,7 +216,6 @@
             alert("Password must be at least 6 characters");
             return;
         }
-
         const { error } = await client.from("students").update({ password: newPass }).eq("id", currentStudentId);
         if (error) alert("Failed to reset password");
         else {
@@ -212,13 +224,25 @@
         }
     }
 
-    async function deleteStudent(id, studentNo) {
-        if (!confirm(`Are you sure you want to DELETE the account of ${studentNo}?`)) return;
+    function openDeleteStudentModal(id, studentNo, fullName) {
+        studentToDelete = id;
+        document.getElementById("deleteStudentText").innerHTML = 
+            `You are about to permanently delete the account of:<br><strong>${fullName}</strong> (${studentNo})`;
+        document.getElementById("deleteStudentModal").classList.add("show");
+    }
 
-        const { error } = await client.from("students").delete().eq("id", id);
+    function closeDeleteStudentModal() {
+        document.getElementById("deleteStudentModal").classList.remove("show");
+        studentToDelete = null;
+    }
+
+    async function confirmDeleteStudent() {
+        if (!studentToDelete) return;
+        const { error } = await client.from("students").delete().eq("id", studentToDelete);
         if (error) alert("Failed to delete account");
         else {
             alert("Student account deleted");
+            closeDeleteStudentModal();
             loadStudents();
         }
     }

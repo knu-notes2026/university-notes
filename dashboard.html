@@ -162,17 +162,24 @@
     </div>
     <div class="folder-grid" id="notesFolders"></div>
 
+    <!-- Test Results Section -->
     <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
+
     <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
         <p style="margin-top:0; margin-bottom:15px;">Students must log in to view their Test Results and CA.</p>
-        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" onclick="window.location.href='student-auth.html'">
+        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" 
+                onclick="window.location.href='student-auth.html'">
             🔐 Login to View Test Results / CA
         </button>
     </div>
-    <div class="search-box">
-        <input type="text" id="searchResults" placeholder="Search results folders..." oninput="filterResults()">
+
+    <!-- Only visible to Admins -->
+    <div id="adminResultsSection" style="display:none;">
+        <div class="search-box" style="margin-top:20px;">
+            <input type="text" id="searchResults" placeholder="Search results folders..." oninput="filterResults()">
+        </div>
+        <div class="folder-grid" id="resultsFolders"></div>
     </div>
-    <div class="folder-grid" id="resultsFolders"></div>
 </div>
 
 <div id="folderView" class="section">
@@ -252,7 +259,10 @@
     let allResultsFolders = [];
     let allFiles = [];
 
-    if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
+    if (isAdmin) {
+        document.getElementById("adminBadge").style.display = "inline-block";
+        document.getElementById("adminResultsSection").style.display = "block";
+    }
     if (isMaster) document.getElementById("masterPanel").style.display = "block";
 
     function showLoading(show, text = "Uploading... Please wait") {
@@ -364,6 +374,7 @@
     }
     function renderFolderList(containerId, folders) {
         const container = document.getElementById(containerId);
+        if (!container) return;
         if (folders.length === 0) {
             container.innerHTML = `<p style="color:#888;">No folders found.</p>`;
             return;

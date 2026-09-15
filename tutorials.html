@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial Videos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .header { background: #8e44ad; color: white; padding: 15px 25px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h2 { margin: 0; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .card { background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 4px; }
+        .btn-primary { background: #8e44ad; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        input, select { padding: 10px; width: 100%; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .admin-panel { background: #f5eef8; border: 1px solid #d7bde2; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: none; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h2>📺 Tutorial Videos</h2>
+    <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+</div>
+
+<div class="card">
+    <h2 id="pageTitle">Loading...</h2>
+
+    <div class="admin-panel" id="adminPanel">
+        <h3>Add New Tutorial</h3>
+        <input type="text" id="tutTitle" placeholder="Title of the tutorial">
+        <select id="tutType" onchange="toggleInputType()">
+            <option value="link">YouTube / Video Link</option>
+            <option value="video">Upload Video File</option>
+        </select>
+        <input type="text" id="tutLink" placeholder="Paste YouTube or video URL here">
+        <input type="file" id="tutFile" accept="video/*" style="display:none;">
+        <button class="btn btn-primary" onclick="addTutorial()">Add Tutorial</button>
+    </div>
+
+    <div id="tutorialsList"></div>
+</div>
+
+<script>
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const client = supabase.createClient(DB_URL, DB_KEY);
+    const MASTER_PASSWORD = "Stuff@KNU.2026";
+
+    const school = sessionStorage.getItem("tutSchool") || "business";
+    const year = sessionStorage.getItem("tutYear") || "1";
+    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+
+    document.getElementById("pageTitle").innerText = 
+        `${school.replace("-", " ").toUpperCase()} – Year ${year} Tutorials`;
+
+    if (isAdmin) document.getElementById("adminPanel").style.display = "block";
+
+    function toggleInputType() {
+        const type = document.getElementById("tutType").value;
+        document.getElementById("tutLink").style.display = type === "link" ? "block" : "none";
+        document.getElementById("tutFile").style.display = type === "video" ? "block" : "none";
+    }
+
+    async function loadTutorials() {
+        const { data, error } = await client.from("tutorials")
+            .select("*").eq("school", school).eq("year", year).order("created_at", { ascending: false });
+
+        const container = document.getElementById("tutorialsList");
+        if (error || !data || data.length === 0) {
+            container.innerHTML = "<p style='color:#888;'>No tutorials added yet.</p>";
+            return;
+        }
+
+        container.innerHTML = data.map(t => {
+            let content = "";
+            if (t.type === "link") {
+                content = `<a href="${t.content}" target="_blank" class="btn btn-primary">Watch Video</a>`;
+            } else {
+                const url = `${DB_URL}/storage/v1/object/public/notes-files/${t.content}`;
+                content = `<a href="${url}" target="_blank" class="btn btn-primary">Play Video</a>`;
+            }
+
+            return `
+                <div class="video-item">
+                    <div>
+                        <strong>${t.title}</strong><br>
+                        <small>${t.type === "link" ? "YouTube / Link" : "Uploaded Video"}</small>
+                    </div>
+                    <div>
+                        ${content}
+                        ${isAdmin ? `<button class="btn btn-danger" onclick="deleteTutorial('${t.id}', '${t.content}', '${t.type}')">Delete</button>` : ""}
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    async function addTutorial() {
+        const title = document.getElementById("tutTitle").value.trim();
+        const type = document.getElementById("tutType").value;
+
+        if (!title) return alert("Please enter a title");
+
+        let content = "";
+
+        if (type === "link") {
+            content = document.getElementById("tutLink").value.trim();
+            if (!content) return alert("Please paste a link");
+        } else {
+            const fileInput = document.getElementById("tutFile");
+            if (!fileInput.files.length) return alert("Please select a video file");
+
+            const file = fileInput.files[0];
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+            const path = `tutorials/${school}/${year}/${Date.now()}_${cleanName}`;
+
+            const { error: upError } = await client.storage.from("notes-files").upload(path, file);
+            if (upError) return alert("Upload failed: " + upError.message);
+            content = path;
+        }
+
+        const { error } = await client.from("tutorials").insert({
+            school, year, title, type, content
+        });
+
+        if (error) alert("Failed: " + error.message);
+        else {
+            alert("Tutorial added!");
+            document.getElementById("tutTitle").value = "";
+            document.getElementById("tutLink").value = "";
+            document.getElementById("tutFile").value = "";
+            loadTutorials();
+        }
+    }
+
+    async function deleteTutorial(id, content, type) {
+        const pass = prompt("Enter Master Password to delete:");
+        if (pass !== MASTER_PASSWORD && pass !== "KNUstuff@2026") {
+            return alert("Wrong password");
+        }
+
+        if (type === "video") {
+            await client.storage.from("notes-files").remove([content]);
+        }
+
+        const { error } = await client.from("tutorials").delete().eq("id", id);
+        if (error) alert("Delete failed");
+        else {
+            alert("Deleted");
+            loadTutorials();
+        }
+    }
+
+    loadTutorials();
+</script>
+</body>
+</html>

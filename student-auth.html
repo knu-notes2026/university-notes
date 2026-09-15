@@ -64,7 +64,6 @@
         .back { text-align: center; padding: 15px; background: #f5f5f5; }
         .back a { color: #555; text-decoration: none; }
 
-        /* Loading Spinner */
         .loading-box {
             text-align: center; padding: 40px 20px; display: none;
         }
@@ -124,6 +123,15 @@
             <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
         </div>
 
+        <label>School</label>
+        <select id="regSchool">
+            <option value="">Select your School</option>
+            <option value="business">School of Business</option>
+            <option value="education">School of Education</option>
+            <option value="natural-sciences">School of Natural Sciences</option>
+            <option value="humanities">School of Humanities</option>
+        </select>
+
         <label>Year of Study</label>
         <select id="regYear">
             <option value="1">1st Year</option>
@@ -165,13 +173,11 @@
             <button class="btn" onclick="verifyIdentity()">Verify Identity</button>
         </div>
 
-        <!-- Loading -->
         <div id="forgotLoading" class="loading-box">
             <div class="spinner"></div>
             <p>Verifying your details...</p>
         </div>
 
-        <!-- New Password -->
         <div id="forgotStep3" style="display:none;">
             <h3 style="margin-top:0; color:#1565c0;">Create New Password</h3>
 
@@ -227,6 +233,7 @@
         const studentNo = document.getElementById("regStudentNo").value.trim();
         const email = document.getElementById("regEmail").value.trim();
         const phone = document.getElementById("regPhone").value.trim();
+        const school = document.getElementById("regSchool").value;
         const year = document.getElementById("regYear").value;
         const password = document.getElementById("regPassword").value;
         const confirm = document.getElementById("regConfirm").value;
@@ -246,6 +253,11 @@
             errorDiv.style.display = "block";
             return;
         }
+        if (!school) {
+            errorDiv.innerText = "Please select your School";
+            errorDiv.style.display = "block";
+            return;
+        }
         if (password.length < 6) {
             errorDiv.innerText = "Password must be at least 6 characters";
             errorDiv.style.display = "block";
@@ -261,6 +273,7 @@
             student_number: studentNo,
             email: email,
             phone: phone ? "+260" + phone : null,
+            school: school,
             year: year,
             password: password
         });
@@ -298,12 +311,13 @@
         sessionStorage.setItem("studentLoggedIn", "true");
         sessionStorage.setItem("studentNumber", data.student_number);
         sessionStorage.setItem("studentYear", data.year);
+        sessionStorage.setItem("studentSchool", data.school || "");
         sessionStorage.setItem("studentId", data.id);
 
         window.location.href = "student-dashboard.html";
     }
 
-    // VERIFY IDENTITY (Forgot Password)
+    // VERIFY IDENTITY
     async function verifyIdentity() {
         const studentNo = document.getElementById("forgotStudentNo").value.trim();
         const email = document.getElementById("forgotEmail").value.trim();
@@ -331,7 +345,6 @@
             return;
         }
 
-        // Check phone
         const storedPhone = (data.phone || "").replace("+260", "");
         if (storedPhone !== phone) {
             errorDiv.innerText = "Phone number does not match our records";
@@ -339,7 +352,6 @@
             return;
         }
 
-        // Success → show loading for 5 seconds
         verifiedStudentId = data.id;
         document.getElementById("forgotStep1").style.display = "none";
         document.getElementById("forgotLoading").style.display = "block";

@@ -56,7 +56,6 @@
         .search-box { margin: 15px 0; }
         .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
-        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -245,10 +244,12 @@
         document.getElementById("modalPassword").focus();
         modalCallback = callback;
     }
+
     function closeModal() {
         document.getElementById("passwordModal").classList.remove("show");
-        modalCallback = null;
+        // Do NOT clear modalCallback here
     }
+
     function toggleModalPassword() {
         const input = document.getElementById("modalPassword");
         const btn = event.target;
@@ -260,17 +261,28 @@
             btn.innerText = "Show";
         }
     }
+
+    // ===== FIXED CONFIRM BUTTON =====
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
+
         if (isCorrect) {
-            closeModal();
-            if (modalCallback) modalCallback();
+            // Save the callback first, then close the modal
+            const cb = modalCallback;
+            modalCallback = null;
+            document.getElementById("passwordModal").classList.remove("show");
+
+            if (typeof cb === "function") {
+                cb();   // now it actually runs
+            }
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
+            document.getElementById("modalPassword").focus();
         }
     }
+
     document.getElementById("modalPassword").addEventListener("keyup", e => {
         if (e.key === "Enter") submitModalPassword();
     });
@@ -411,7 +423,7 @@
         renderFiles(allFiles.filter(f => f.name.toLowerCase().includes(term)));
     }
 
-    // ===== UPLOAD (simplified, no loading overlay) =====
+    // ===== UPLOAD =====
     function uploadToFolder() {
         if (!isAdmin) return;
         const fileInput = document.getElementById("fileToUpload");

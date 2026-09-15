@@ -6,48 +6,212 @@
     <title>University Notes & Results Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: #1e7e34; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 25px; }
-        .header h2 { margin: 0; color: white; font-size: 20px; }
-        .back-btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; }
-        .back-btn:hover { background: rgba(255,255,255,0.3); }
-        #adminBadge { display: none; background: #f1c40f; color: #333; padding: 5px 12px; border-radius: 20px; font-size: 13px; margin-right: 10px; font-weight: bold; }
-        .schools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .school-card { background: white; padding: 28px; text-align: center; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border-top: 5px solid #1a73e8; transition: 0.2s; }
-        .school-card:hover { transform: translateY(-4px); }
-        .level-btn { padding: 9px 16px; margin: 4px; border: 1px solid #1a73e8; background: white; color: #1a73e8; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .level-btn.active { background: #1a73e8; color: white; }
-        .section { background: white; padding: 25px; border-radius: 8px; margin-top: 20px; display: none; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
-        .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .folder-card:hover { background: #e8f0fe; border-color: #1a73e8; }
-        .admin-panel { background: #fff8e6; border: 1px solid #ffe0a3; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: none; }
-        .btn { padding: 9px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 4px; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e7e34;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            margin-bottom: 25px;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: white;
+            font-size: 20px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        #adminBadge {
+            display: none;
+            background: #f1c40f;
+            color: #333;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .schools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .school-card {
+            background: white;
+            padding: 28px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            border-top: 5px solid #1a73e8;
+            transition: 0.2s;
+        }
+        .school-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .level-btn {
+            padding: 9px 16px;
+            margin: 4px;
+            border: 1px solid #1a73e8;
+            background: white;
+            color: #1a73e8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .level-btn.active {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .folder-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 18px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .folder-card:hover {
+            background: #e8f0fe;
+            border-color: #1a73e8;
+            transform: translateY(-3px);
+        }
+
+        .admin-panel {
+            background: #fff8e6;
+            border: 1px solid #ffe0a3;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 4px;
+        }
         .btn-primary { background: #1a73e8; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-success { background: #27ae60; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-purple { background: #8e44ad; color: white; }
-        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; gap: 10px; }
-        input, select { padding: 9px; margin: 6px 0; width: 100%; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-blue { background: #1565c0; color: white; }
 
-        /* ===== Modern Password Modal ===== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; transition: opacity 0.3s ease;
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
         }
-        .modal-overlay.show { display: flex; opacity: 1; }
+
+        input, select {
+            padding: 9px;
+            margin: 6px 0;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Password Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
         .modal-box {
-            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
-            transform: translateY(-40px); transition: transform 0.35s ease;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(-40px);
+            transition: transform 0.35s ease;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
-        .modal-overlay.show .modal-box { transform: translateY(0); }
-        .modal-box h3 { margin-top: 0; color: #1a73e8; }
-        .modal-error { color: #e74c3c; font-size: 14px; margin-top: 8px; display: none; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; }
+        .modal-overlay.show .modal-box {
+            transform: translateY(0);
+        }
+        .modal-box h3 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+        .modal-error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -100,11 +264,25 @@
         <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
+    <!-- Notes Folders -->
     <h3 style="margin-top:25px;">📁 Notes Folders</h3>
     <div class="folder-grid" id="notesFolders"></div>
 
-    <h3 style="margin-top:30px;">📊 Test Results for this Academic Year</h3>
-    <div class="folder-grid" id="resultsFolders"></div>
+    <!-- ====================== TEST RESULTS SECTION ====================== -->
+    <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
+
+    <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
+        <p style="margin-top:0; margin-bottom:15px;">
+            Students must log in with their Student Number to view Test Results and CA.
+        </p>
+        
+        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" 
+                onclick="window.location.href='student-auth.html'">
+            🔐 Login to View Test Results / CA
+        </button>
+    </div>
+
+    <div class="folder-grid" id="resultsFolders" style="margin-top:20px;"></div>
 </div>
 
 <!-- Inside a Folder View -->
@@ -123,11 +301,11 @@
     <div id="filesList" style="margin-top:20px;"></div>
 </div>
 
-<!-- ===== Password Modal ===== -->
+<!-- Password Modal -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
         <h3 id="modalTitle">Enter Password</h3>
-        <input type="password" id="modalPassword" placeholder="Enter password or master passcode" style="width:100%; padding:12px; font-size:16px;">
+        <input type="password" id="modalPassword" placeholder="Enter password or master passcode" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">
         <div class="modal-error" id="modalError">Wrong password or passcode. Please try again.</div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -148,9 +326,11 @@
     let currentFolder = null;
     let modalCallback = null;
 
-    if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
+    if (isAdmin) {
+        document.getElementById("adminBadge").style.display = "inline-block";
+    }
 
-    // ===== Modal Functions =====
+    // Modal functions
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
@@ -169,7 +349,6 @@
         const password = document.getElementById("modalPassword").value;
         if (!password) return;
 
-        // Check if correct
         const isCorrect = password === MASTER_PASSWORD || 
                           (currentFolder && password === currentFolder.password);
 
@@ -183,12 +362,11 @@
         }
     }
 
-    // Allow Enter key
     document.getElementById("modalPassword").addEventListener("keyup", function(e) {
         if (e.key === "Enter") submitModalPassword();
     });
 
-    // ===== Navigation =====
+    // Navigation
     function selectSchool(school) {
         currentSchool = school;
         document.getElementById("schoolView").style.display = "none";
@@ -211,18 +389,20 @@
     }
 
     function openTutorials() {
-        // Pass school and year to the tutorials page
         sessionStorage.setItem("tutSchool", currentSchool);
         sessionStorage.setItem("tutYear", currentYear);
         window.location.href = "tutorials.html";
     }
 
-    // ===== Folders =====
+    // Folders
     async function loadFolders() {
         const { data, error } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
 
-        if (error) return alert("Error loading folders: " + error.message);
+        if (error) {
+            console.error(error);
+            return;
+        }
 
         renderFolderList("notesFolders", data.filter(f => f.type === "notes"));
         renderFolderList("resultsFolders", data.filter(f => f.type === "results"));

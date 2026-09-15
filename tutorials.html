@@ -25,10 +25,9 @@
         .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
         .folder-card:hover { background: #f3e5f5; border-color: #8e44ad; }
 
-        /* Loading Overlay */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
             z-index: 10000; flex-direction: column; color: white;
         }
         .loading-overlay.show { display: flex; }
@@ -39,7 +38,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Advanced Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -80,16 +78,14 @@
 <div class="card">
     <h2 id="pageTitle">Loading...</h2>
 
-    <!-- Admin Create Folder + Upload Panel -->
     <div class="admin-panel" id="adminPanel">
         <h3 style="margin-top:0;">🛠️ Admin: Create Tutorial Folder</h3>
         <input type="text" id="newFolderName" placeholder="Folder name (e.g. Week 1 Videos)">
         <input type="password" id="newFolderPassword" placeholder="Set a password for this folder">
         <button class="btn btn-primary" onclick="createTutorialFolder()">Create Folder</button>
-
         <hr style="margin:25px 0; border:none; border-top:1px solid #d7bde2;">
         <p style="color:#666; font-size:14px; margin:0;">
-            After creating a folder, open it below to add videos/links inside it.
+            After creating a folder, <strong>open it</strong> below, then add videos/links inside it.
         </p>
     </div>
 
@@ -97,12 +93,10 @@
         <input type="text" id="searchTutorials" placeholder="Search folders or tutorials..." oninput="filterItems()">
     </div>
 
-    <!-- Folders View -->
     <div id="foldersView">
         <div class="folder-grid" id="foldersList">Loading folders...</div>
     </div>
 
-    <!-- Inside Folder View -->
     <div id="folderContentView" style="display:none;">
         <button class="btn btn-secondary" onclick="backToFolders()">← Back to Folders</button>
         <h3 id="currentFolderTitle" style="margin-top:15px;"></h3>
@@ -116,7 +110,7 @@
             </select>
             <input type="text" id="tutLink" placeholder="Paste YouTube or video URL here">
             <input type="file" id="tutFile" accept="video/*" style="display:none;">
-            <button class="btn btn-primary" onclick="addTutorial()">Add Tutorial</button>
+            <button class="btn btn-primary" id="addTutBtn" onclick="addTutorial()">Add Tutorial</button>
             <button class="btn btn-danger" onclick="deleteCurrentFolder()" style="margin-left:8px;">Delete this Folder</button>
         </div>
 
@@ -124,7 +118,7 @@
     </div>
 </div>
 
-<!-- Loading Overlay -->
+<!-- Loading -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div id="loadingText">Uploading... Please wait</div>
@@ -146,7 +140,7 @@
     </div>
 </div>
 
-<!-- Delete Confirm Modal -->
+<!-- Delete Confirm -->
 <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-box">
         <h3 style="color:#e74c3c;">Confirm Delete</h3>
@@ -158,7 +152,7 @@
     </div>
 </div>
 
-<!-- General Message Modal (Success / Error / Info) -->
+<!-- Message Modal -->
 <div class="modal-overlay" id="messageModal">
     <div class="modal-box">
         <h3 id="messageTitle" style="color:#8e44ad;">Message</h3>
@@ -193,7 +187,6 @@
     let modalCallback = null;
     let pendingDelete = null;
 
-    // ========== HELPERS ==========
     function showLoading(show, text = "Uploading... Please wait") {
         document.getElementById("loadingText").innerText = text;
         document.getElementById("loadingOverlay").classList.toggle("show", show);
@@ -215,13 +208,13 @@
         document.getElementById("tutFile").style.display = type === "video" ? "block" : "none";
     }
 
-    // Password Modal
+    // ===== Password Modal =====
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
         document.getElementById("modalError").style.display = "none";
         document.getElementById("passwordModal").classList.add("show");
-        document.getElementById("modalPassword").focus();
+        setTimeout(() => document.getElementById("modalPassword").focus(), 100);
         modalCallback = callback;
     }
     function closePasswordModal() {
@@ -242,19 +235,23 @@
     function submitPasswordModal() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
+
         if (isCorrect) {
             closePasswordModal();
-            if (modalCallback) modalCallback();
+            if (typeof modalCallback === "function") {
+                modalCallback();
+            }
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
+            document.getElementById("modalPassword").focus();
         }
     }
     document.getElementById("modalPassword").addEventListener("keyup", e => {
         if (e.key === "Enter") submitPasswordModal();
     });
 
-    // Delete Confirm
+    // ===== Delete Confirm =====
     function showDeleteConfirm(text, action) {
         document.getElementById("deleteConfirmText").innerHTML = text;
         document.getElementById("deleteConfirmModal").classList.add("show");
@@ -265,26 +262,28 @@
         pendingDelete = null;
     }
     function confirmDeleteAction() {
-        if (pendingDelete) pendingDelete();
+        if (typeof pendingDelete === "function") pendingDelete();
         closeDeleteConfirm();
     }
 
-    // ========== FOLDERS ==========
+    // ===== Folders =====
     async function loadFolders() {
-        const { data, error } = await client.from("folders")
-            .select("*")
-            .eq("school", school)
-            .eq("year", year)
-            .eq("type", "tutorials")
-            .order("created_at", { ascending: false });
+        try {
+            const { data, error } = await client.from("folders")
+                .select("*")
+                .eq("school", school)
+                .eq("year", year)
+                .eq("type", "tutorials")
+                .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error(error);
-            document.getElementById("foldersList").innerHTML = "<p style='color:#e74c3c;'>Error loading folders.</p>";
-            return;
+            if (error) throw error;
+            allFolders = data || [];
+            renderFolders(allFolders);
+        } catch (err) {
+            console.error(err);
+            document.getElementById("foldersList").innerHTML = 
+                `<p style="color:#e74c3c;">Error loading folders: ${err.message}</p>`;
         }
-        allFolders = data || [];
-        renderFolders(allFolders);
     }
 
     function renderFolders(list) {
@@ -304,11 +303,9 @@
     function filterItems() {
         const term = document.getElementById("searchTutorials").value.toLowerCase();
         if (document.getElementById("folderContentView").style.display === "block") {
-            const filtered = allTutorials.filter(t => t.title.toLowerCase().includes(term));
-            renderTutorials(filtered);
+            renderTutorials(allTutorials.filter(t => t.title.toLowerCase().includes(term)));
         } else {
-            const filtered = allFolders.filter(f => f.name.toLowerCase().includes(term));
-            renderFolders(filtered);
+            renderFolders(allFolders.filter(f => f.name.toLowerCase().includes(term)));
         }
     }
 
@@ -342,42 +339,45 @@
         }
 
         showLoading(true, "Creating folder...");
+        try {
+            const { error } = await client.from("folders").insert({
+                school, year, name, password, type: "tutorials"
+            });
+            showLoading(false);
 
-        const { error } = await client.from("folders").insert({
-            school, year, name, password, type: "tutorials"
-        });
-
-        showLoading(false);
-
-        if (error) {
-            showMessage("Error", "Failed to create folder:<br><br>" + error.message, true);
-        } else {
-            document.getElementById("newFolderName").value = "";
-            document.getElementById("newFolderPassword").value = "";
-            showMessage("Success", "Folder <strong>" + name + "</strong> created successfully!");
-            loadFolders();
+            if (error) {
+                showMessage("Error", "Failed to create folder:<br><br>" + error.message, true);
+            } else {
+                document.getElementById("newFolderName").value = "";
+                document.getElementById("newFolderPassword").value = "";
+                showMessage("Success", `Folder <strong>${name}</strong> created successfully!`);
+                loadFolders();
+            }
+        } catch (err) {
+            showLoading(false);
+            showMessage("Error", err.message, true);
         }
     }
 
-    // ========== TUTORIALS ==========
+    // ===== Tutorials =====
     async function loadTutorials() {
         if (!currentFolder) return;
-        const { data, error } = await client.from("tutorials")
-            .select("*")
-            .eq("school", school)
-            .eq("year", year)
-            .eq("folder_id", currentFolder.id)
-            .order("created_at", { ascending: false });
+        try {
+            const { data, error } = await client.from("tutorials")
+                .select("*")
+                .eq("school", school)
+                .eq("year", year)
+                .eq("folder_id", currentFolder.id)
+                .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error(error);
-            // Most common cause: folder_id column missing
+            if (error) throw error;
+            allTutorials = data || [];
+            renderTutorials(allTutorials);
+        } catch (err) {
+            console.error(err);
             showMessage("Database Error", 
-                "Could not load tutorials.<br><br>Please make sure you ran the SQL to add the <code>folder_id</code> column to the tutorials table.", true);
-            return;
+                "Could not load tutorials.<br><br>Most common cause: the <code>folder_id</code> column is missing.<br>Please run the SQL I gave you earlier.", true);
         }
-        allTutorials = data || [];
-        renderTutorials(allTutorials);
     }
 
     function renderTutorials(list) {
@@ -409,9 +409,12 @@
         }).join("");
     }
 
-    async function addTutorial() {
+    // ===== MAIN UPLOAD FUNCTION =====
+    function addTutorial() {
+        console.log("Add Tutorial clicked");
+
         if (!currentFolder) {
-            showMessage("No Folder Selected", "Please open a folder first before adding a tutorial.", true);
+            showMessage("No Folder Open", "Please open a folder first before adding a tutorial.", true);
             return;
         }
 
@@ -423,86 +426,104 @@
             return;
         }
 
-        showPasswordModal("Enter folder password to upload", async () => {
+        // Always show password modal first
+        showPasswordModal("Enter folder password to continue", function() {
+            // This runs AFTER correct password is entered
+            performUpload(title, type);
+        });
+    }
+
+    async function performUpload(title, type) {
+        showLoading(true, type === "video" ? "Uploading video... Please wait" : "Saving tutorial...");
+
+        try {
             let content = "";
 
-            // Show loading immediately after password is accepted
-            showLoading(true, type === "video" ? "Uploading video... Please wait" : "Saving tutorial...");
-
-            try {
-                if (type === "link") {
-                    content = document.getElementById("tutLink").value.trim();
-                    if (!content) {
-                        showLoading(false);
-                        showMessage("Missing Link", "Please paste a YouTube or video URL.", true);
-                        return;
-                    }
-                } else {
-                    const fileInput = document.getElementById("tutFile");
-                    if (!fileInput.files.length) {
-                        showLoading(false);
-                        showMessage("No File Selected", "Please select a video file to upload.", true);
-                        return;
-                    }
-
-                    const file = fileInput.files[0];
-                    const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-                    const path = `tutorials/${school}/${year}/${currentFolder.id}/${Date.now()}_${cleanName}`;
-
-                    const { error: upError } = await client.storage
-                        .from("notes-files")
-                        .upload(path, file);
-
-                    if (upError) {
-                        showLoading(false);
-                        showMessage("Upload Failed", upError.message, true);
-                        return;
-                    }
-                    content = path;
+            if (type === "link") {
+                content = document.getElementById("tutLink").value.trim();
+                if (!content) {
+                    showLoading(false);
+                    showMessage("Missing Link", "Please paste a YouTube or video URL.", true);
+                    return;
+                }
+            } else {
+                const fileInput = document.getElementById("tutFile");
+                if (!fileInput.files || !fileInput.files.length) {
+                    showLoading(false);
+                    showMessage("No File Selected", "Please select a video file first.", true);
+                    return;
                 }
 
-                const { error } = await client.from("tutorials").insert({
-                    school,
-                    year,
-                    title,
-                    type,
-                    content,
-                    folder_id: currentFolder.id
-                });
+                const file = fileInput.files[0];
+                const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+                const path = `tutorials/${school}/${year}/${currentFolder.id}/${Date.now()}_${cleanName}`;
 
-                showLoading(false);
+                console.log("Uploading to path:", path);
 
-                if (error) {
-                    showMessage("Database Error", 
-                        error.message + "<br><br>Most common cause: the <code>folder_id</code> column is missing.<br>Please run the SQL I gave you earlier.", true);
-                } else {
-                    document.getElementById("tutTitle").value = "";
-                    document.getElementById("tutLink").value = "";
-                    document.getElementById("tutFile").value = "";
-                    showMessage("Success", "Tutorial added successfully!");
-                    loadTutorials();
+                const { error: upError } = await client.storage
+                    .from("notes-files")
+                    .upload(path, file);
+
+                if (upError) {
+                    showLoading(false);
+                    showMessage("Upload Failed", upError.message, true);
+                    return;
                 }
-            } catch (err) {
-                showLoading(false);
-                showMessage("Unexpected Error", err.message, true);
+                content = path;
             }
-        });
+
+            // Insert into database
+            const { error } = await client.from("tutorials").insert({
+                school: school,
+                year: year,
+                title: title,
+                type: type,
+                content: content,
+                folder_id: currentFolder.id
+            });
+
+            showLoading(false);
+
+            if (error) {
+                console.error(error);
+                showMessage("Database Error", 
+                    error.message + 
+                    "<br><br><strong>Most common cause:</strong> the <code>folder_id</code> column does not exist yet.<br>" +
+                    "Please run this SQL in Supabase:<br><code>ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS folder_id UUID;</code>", true);
+            } else {
+                // Clear form
+                document.getElementById("tutTitle").value = "";
+                document.getElementById("tutLink").value = "";
+                document.getElementById("tutFile").value = "";
+                showMessage("Success", "Tutorial added successfully!");
+                loadTutorials();
+            }
+        } catch (err) {
+            showLoading(false);
+            console.error(err);
+            showMessage("Unexpected Error", err.message, true);
+        }
     }
 
     function deleteTutorial(id, content, type) {
         showPasswordModal("Enter password to delete", () => {
             showDeleteConfirm("Are you sure you want to permanently delete this tutorial?", async () => {
                 showLoading(true, "Deleting...");
-                if (type === "video") {
-                    await client.storage.from("notes-files").remove([content]);
-                }
-                const { error } = await client.from("tutorials").delete().eq("id", id);
-                showLoading(false);
-                if (error) {
-                    showMessage("Error", "Delete failed: " + error.message, true);
-                } else {
-                    showMessage("Deleted", "Tutorial deleted successfully.");
-                    loadTutorials();
+                try {
+                    if (type === "video") {
+                        await client.storage.from("notes-files").remove([content]);
+                    }
+                    const { error } = await client.from("tutorials").delete().eq("id", id);
+                    showLoading(false);
+                    if (error) {
+                        showMessage("Error", "Delete failed: " + error.message, true);
+                    } else {
+                        showMessage("Deleted", "Tutorial deleted successfully.");
+                        loadTutorials();
+                    }
+                } catch (err) {
+                    showLoading(false);
+                    showMessage("Error", err.message, true);
                 }
             });
         });
@@ -512,26 +533,31 @@
         if (!currentFolder) return;
         showPasswordModal("Enter password to delete folder", () => {
             showDeleteConfirm(
-                `Delete folder <strong>"${currentFolder.name}"</strong> and all its tutorials? This cannot be undone.`,
+                `Delete folder <strong>"${currentFolder.name}"</strong> and all its tutorials?<br>This cannot be undone.`,
                 async () => {
                     showLoading(true, "Deleting folder...");
-                    const { data: tuts } = await client.from("tutorials")
-                        .select("id, content, type")
-                        .eq("folder_id", currentFolder.id);
+                    try {
+                        const { data: tuts } = await client.from("tutorials")
+                            .select("id, content, type")
+                            .eq("folder_id", currentFolder.id);
 
-                    if (tuts && tuts.length) {
-                        for (const t of tuts) {
-                            if (t.type === "video") {
-                                await client.storage.from("notes-files").remove([t.content]);
+                        if (tuts && tuts.length) {
+                            for (const t of tuts) {
+                                if (t.type === "video") {
+                                    await client.storage.from("notes-files").remove([t.content]);
+                                }
                             }
+                            await client.from("tutorials").delete().eq("folder_id", currentFolder.id);
                         }
-                        await client.from("tutorials").delete().eq("folder_id", currentFolder.id);
-                    }
 
-                    await client.from("folders").delete().eq("id", currentFolder.id);
-                    showLoading(false);
-                    showMessage("Deleted", "Folder deleted successfully.");
-                    backToFolders();
+                        await client.from("folders").delete().eq("id", currentFolder.id);
+                        showLoading(false);
+                        showMessage("Deleted", "Folder deleted successfully.");
+                        backToFolders();
+                    } catch (err) {
+                        showLoading(false);
+                        showMessage("Error", err.message, true);
+                    }
                 }
             );
         });

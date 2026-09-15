@@ -9,7 +9,6 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Simple network-first strategy
   event.respondWith(
     fetch(event.request).catch(() => {
       return caches.match(event.request);

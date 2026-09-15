@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: white; width: 100%; max-width: 450px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .container { background: white; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
         .header { background: #1565c0; color: white; padding: 25px; text-align: center; }
         .header h2 { margin: 0; }
         .tabs { display: flex; background: #e3f2fd; }
@@ -30,6 +30,8 @@
         .loading-box { text-align: center; padding: 40px 20px; display: none; }
         .spinner { width: 50px; height: 50px; border: 5px solid #e3f2fd; border-top: 5px solid #1565c0; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .name-row { display: flex; gap: 10px; }
+        .name-row > div { flex: 1; }
     </style>
 </head>
 <body>
@@ -38,7 +40,6 @@
         <h2>Student Portal</h2>
         <p style="margin:8px 0 0; opacity:0.9;">Test Results & Continuous Assessment</p>
     </div>
-
     <div class="tabs">
         <div class="tab active" onclick="showTab('login')">Login</div>
         <div class="tab" onclick="showTab('register')">Register</div>
@@ -62,6 +63,21 @@
     <div id="register" class="form-section">
         <label>Student Number</label>
         <input type="text" id="regStudentNo" placeholder="Must start with 202 (8 digits)" maxlength="8">
+
+        <div class="name-row">
+            <div>
+                <label>First Name</label>
+                <input type="text" id="regFirstName" placeholder="First name">
+            </div>
+            <div>
+                <label>Middle Name <small style="color:#888">(optional)</small></label>
+                <input type="text" id="regMiddleName" placeholder="Middle name">
+            </div>
+        </div>
+
+        <label>Last Name</label>
+        <input type="text" id="regLastName" placeholder="Last name">
+
         <label>Email Address</label>
         <input type="email" id="regEmail" placeholder="yourname@example.com">
         <label>Phone Number</label>
@@ -131,7 +147,6 @@
             <button class="btn" onclick="resetPassword()">Set New Password</button>
         </div>
     </div>
-
     <div class="back">
         <a href="dashboard.html">← Back to Main Portal</a>
     </div>
@@ -163,13 +178,15 @@
 
     async function registerStudent() {
         const studentNo = document.getElementById("regStudentNo").value.trim();
+        const firstName = document.getElementById("regFirstName").value.trim();
+        const middleName = document.getElementById("regMiddleName").value.trim();
+        const lastName = document.getElementById("regLastName").value.trim();
         const email = document.getElementById("regEmail").value.trim();
         const phone = document.getElementById("regPhone").value.trim();
         const school = document.getElementById("regSchool").value;
         const year = document.getElementById("regYear").value;
         const password = document.getElementById("regPassword").value;
         const confirm = document.getElementById("regConfirm").value;
-
         const errorDiv = document.getElementById("regError");
         const successDiv = document.getElementById("regSuccess");
         errorDiv.style.display = "none";
@@ -177,6 +194,11 @@
 
         if (!/^202\d{5}$/.test(studentNo)) {
             errorDiv.innerText = "Student Number must start with 202 and be exactly 8 digits";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (!firstName || !lastName) {
+            errorDiv.innerText = "First Name and Last Name are required";
             errorDiv.style.display = "block";
             return;
         }
@@ -201,10 +223,8 @@
             return;
         }
 
-        // Check if already exists
         const { data: existing } = await client.from("students").select("student_number, email")
             .or(`student_number.eq.${studentNo},email.eq.${email}`);
-
         if (existing && existing.length > 0) {
             errorDiv.innerHTML = `You already have an account.<br>
                 Please <b>Login</b> or use <b>Forgot Password</b> to reset your password.`;
@@ -214,6 +234,9 @@
 
         const { error } = await client.from("students").insert({
             student_number: studentNo,
+            first_name: firstName,
+            middle_name: middleName || null,
+            last_name: lastName,
             email: email,
             phone: phone ? "+260" + phone : null,
             school: school,
@@ -222,8 +245,9 @@
         });
 
         if (error) {
-            errorDiv.innerText = "Registration failed. Please try again.";
+            errorDiv.innerText = "Registration failed. Please try again. (Make sure first_name, middle_name, last_name columns exist in the students table)";
             errorDiv.style.display = "block";
+            console.error(error);
         } else {
             successDiv.innerText = "Account created successfully! You can now login.";
             successDiv.style.display = "block";
@@ -250,7 +274,8 @@
         sessionStorage.setItem("studentYear", data.year);
         sessionStorage.setItem("studentSchool", data.school || "");
         sessionStorage.setItem("studentId", data.id);
-
+        sessionStorage.setItem("studentFirstName", data.first_name || "");
+        sessionStorage.setItem("studentLastName", data.last_name || "");
         window.location.href = "student-dashboard.html";
     }
 
@@ -286,7 +311,6 @@
         verifiedStudentId = data.id;
         document.getElementById("forgotStep1").style.display = "none";
         document.getElementById("forgotLoading").style.display = "block";
-
         setTimeout(() => {
             document.getElementById("forgotLoading").style.display = "none";
             document.getElementById("forgotStep3").style.display = "block";

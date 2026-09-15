@@ -6,79 +6,30 @@
     <title>Student Login - KNU Notes</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f0f4f8;
-            margin: 0; padding: 20px;
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background: white;
-            width: 100%; max-width: 450px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .header {
-            background: #1565c0; color: white;
-            padding: 25px; text-align: center;
-        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; width: 100%; max-width: 450px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #1565c0; color: white; padding: 25px; text-align: center; }
         .header h2 { margin: 0; }
         .tabs { display: flex; background: #e3f2fd; }
-        .tab {
-            flex: 1; padding: 15px; text-align: center;
-            cursor: pointer; font-weight: bold; color: #1565c0;
-        }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #1565c0; }
         .tab.active { background: white; border-bottom: 3px solid #1565c0; }
         .form-section { padding: 30px; display: none; }
         .form-section.active { display: block; }
         label { display: block; margin-top: 15px; font-weight: 600; color: #333; }
-        input, select {
-            width: 100%; padding: 12px; margin-top: 6px;
-            border: 1px solid #ccc; border-radius: 8px;
-            font-size: 15px; box-sizing: border-box;
-        }
+        input, select { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
         .password-wrapper { position: relative; }
-        .toggle-password {
-            position: absolute; right: 12px; top: 50%;
-            transform: translateY(-50%);
-            background: none; border: none;
-            cursor: pointer; color: #1565c0; font-size: 13px;
-            font-weight: bold;
-        }
+        .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #1565c0; font-size: 13px; font-weight: bold; }
         .phone-input { display: flex; gap: 8px; }
-        .phone-prefix {
-            background: #f5f5f5; padding: 12px 14px;
-            border-radius: 8px; color: #888; font-weight: bold;
-        }
-        .btn {
-            width: 100%; padding: 14px; margin-top: 25px;
-            background: #1565c0; color: white;
-            border: none; border-radius: 8px;
-            font-size: 16px; font-weight: bold; cursor: pointer;
-        }
+        .phone-prefix { background: #f5f5f5; padding: 12px 14px; border-radius: 8px; color: #888; font-weight: bold; }
+        .btn { width: 100%; padding: 14px; margin-top: 25px; background: #1565c0; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn:hover { background: #0d47a1; }
         .error { color: #c62828; font-size: 14px; margin-top: 8px; display: none; }
         .success { color: #2e7d32; font-size: 14px; margin-top: 8px; display: none; }
         .back { text-align: center; padding: 15px; background: #f5f5f5; }
         .back a { color: #555; text-decoration: none; }
-
-        .loading-box {
-            text-align: center; padding: 40px 20px; display: none;
-        }
-        .spinner {
-            width: 50px; height: 50px;
-            border: 5px solid #e3f2fd;
-            border-top: 5px solid #1565c0;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .loading-box { text-align: center; padding: 40px 20px; display: none; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #e3f2fd; border-top: 5px solid #1565c0; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -98,13 +49,11 @@
     <div id="login" class="form-section active">
         <label>Student Number</label>
         <input type="text" id="loginStudentNo" placeholder="e.g. 20252799" maxlength="8">
-
         <label>Password</label>
         <div class="password-wrapper">
             <input type="password" id="loginPassword" placeholder="Enter your password">
             <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">Show</button>
         </div>
-
         <div class="error" id="loginError"></div>
         <button class="btn" onclick="loginStudent()">Login</button>
     </div>
@@ -113,16 +62,13 @@
     <div id="register" class="form-section">
         <label>Student Number</label>
         <input type="text" id="regStudentNo" placeholder="Must start with 202 (8 digits)" maxlength="8">
-
         <label>Email Address</label>
         <input type="email" id="regEmail" placeholder="yourname@example.com">
-
         <label>Phone Number</label>
         <div class="phone-input">
             <div class="phone-prefix">+260</div>
             <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
         </div>
-
         <label>School</label>
         <select id="regSchool">
             <option value="">Select your School</option>
@@ -131,7 +77,6 @@
             <option value="natural-sciences">School of Natural Sciences</option>
             <option value="humanities">School of Humanities</option>
         </select>
-
         <label>Year of Study</label>
         <select id="regYear">
             <option value="1">1st Year</option>
@@ -139,19 +84,16 @@
             <option value="3">3rd Year</option>
             <option value="4">4th Year</option>
         </select>
-
         <label>Password (minimum 6 characters)</label>
         <div class="password-wrapper">
             <input type="password" id="regPassword" placeholder="Create password">
             <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">Show</button>
         </div>
-
         <label>Confirm Password</label>
         <div class="password-wrapper">
             <input type="password" id="regConfirm" placeholder="Re-enter password">
             <button type="button" class="toggle-password" onclick="togglePassword('regConfirm', this)">Show</button>
         </div>
-
         <div class="error" id="regError"></div>
         <div class="success" id="regSuccess"></div>
         <button class="btn" onclick="registerStudent()">Create Account</button>
@@ -162,37 +104,29 @@
         <div id="forgotStep1">
             <label>Student Number</label>
             <input type="text" id="forgotStudentNo" placeholder="e.g. 20252799" maxlength="8">
-
             <label>Email Address</label>
             <input type="email" id="forgotEmail" placeholder="Enter your registered email">
-
             <label>Phone Number (without +260)</label>
             <input type="text" id="forgotPhone" placeholder="97XXXXXXX" maxlength="9">
-
             <div class="error" id="forgotError"></div>
             <button class="btn" onclick="verifyIdentity()">Verify Identity</button>
         </div>
-
         <div id="forgotLoading" class="loading-box">
             <div class="spinner"></div>
             <p>Verifying your details...</p>
         </div>
-
         <div id="forgotStep3" style="display:none;">
             <h3 style="margin-top:0; color:#1565c0;">Create New Password</h3>
-
             <label>New Password</label>
             <div class="password-wrapper">
                 <input type="password" id="newPassword" placeholder="Minimum 6 characters">
                 <button type="button" class="toggle-password" onclick="togglePassword('newPassword', this)">Show</button>
             </div>
-
             <label>Confirm New Password</label>
             <div class="password-wrapper">
                 <input type="password" id="newConfirm" placeholder="Re-enter new password">
                 <button type="button" class="toggle-password" onclick="togglePassword('newConfirm', this)">Show</button>
             </div>
-
             <div class="error" id="resetError"></div>
             <button class="btn" onclick="resetPassword()">Set New Password</button>
         </div>
@@ -207,7 +141,6 @@
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
-
     let verifiedStudentId = null;
 
     function showTab(tab) {
@@ -228,7 +161,6 @@
         }
     }
 
-    // REGISTER
     async function registerStudent() {
         const studentNo = document.getElementById("regStudentNo").value.trim();
         const email = document.getElementById("regEmail").value.trim();
@@ -269,6 +201,17 @@
             return;
         }
 
+        // Check if already exists
+        const { data: existing } = await client.from("students").select("student_number, email")
+            .or(`student_number.eq.${studentNo},email.eq.${email}`);
+
+        if (existing && existing.length > 0) {
+            errorDiv.innerHTML = `You already have an account.<br>
+                Please <b>Login</b> or use <b>Forgot Password</b> to reset your password.`;
+            errorDiv.style.display = "block";
+            return;
+        }
+
         const { error } = await client.from("students").insert({
             student_number: studentNo,
             email: email,
@@ -279,8 +222,7 @@
         });
 
         if (error) {
-            errorDiv.innerText = error.message.includes("duplicate") ? 
-                "Student Number or Email already registered" : "Registration failed";
+            errorDiv.innerText = "Registration failed. Please try again.";
             errorDiv.style.display = "block";
         } else {
             successDiv.innerText = "Account created successfully! You can now login.";
@@ -288,19 +230,14 @@
         }
     }
 
-    // LOGIN
     async function loginStudent() {
         const studentNo = document.getElementById("loginStudentNo").value.trim();
         const password = document.getElementById("loginPassword").value;
         const errorDiv = document.getElementById("loginError");
         errorDiv.style.display = "none";
 
-        const { data, error } = await client
-            .from("students")
-            .select("*")
-            .eq("student_number", studentNo)
-            .eq("password", password)
-            .single();
+        const { data, error } = await client.from("students").select("*")
+            .eq("student_number", studentNo).eq("password", password).single();
 
         if (error || !data) {
             errorDiv.innerText = "Invalid Student Number or Password";
@@ -317,13 +254,11 @@
         window.location.href = "student-dashboard.html";
     }
 
-    // VERIFY IDENTITY
     async function verifyIdentity() {
         const studentNo = document.getElementById("forgotStudentNo").value.trim();
         const email = document.getElementById("forgotEmail").value.trim();
         const phone = document.getElementById("forgotPhone").value.trim();
         const errorDiv = document.getElementById("forgotError");
-
         errorDiv.style.display = "none";
 
         if (!studentNo || !email || !phone) {
@@ -332,12 +267,8 @@
             return;
         }
 
-        const { data, error } = await client
-            .from("students")
-            .select("*")
-            .eq("student_number", studentNo)
-            .eq("email", email)
-            .single();
+        const { data, error } = await client.from("students").select("*")
+            .eq("student_number", studentNo).eq("email", email).single();
 
         if (error || !data) {
             errorDiv.innerText = "Student Number or Email is incorrect";
@@ -362,7 +293,6 @@
         }, 5000);
     }
 
-    // RESET PASSWORD
     async function resetPassword() {
         const newPass = document.getElementById("newPassword").value;
         const confirm = document.getElementById("newConfirm").value;
@@ -380,11 +310,7 @@
             return;
         }
 
-        const { error } = await client
-            .from("students")
-            .update({ password: newPass })
-            .eq("id", verifiedStudentId);
-
+        const { error } = await client.from("students").update({ password: newPass }).eq("id", verifiedStudentId);
         if (error) {
             errorDiv.innerText = "Failed to update password";
             errorDiv.style.display = "block";

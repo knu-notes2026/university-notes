@@ -1,21 +1,24 @@
 {
-  "name": "KNU Notes & Results",
+  "name": "Kwame Nkrumah University Notes & Results",
   "short_name": "KNU Notes",
+  "description": "Notes, Tutorials and Test Results Portal for Kwame Nkrumah University",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1e7e34",
   "theme_color": "#1e7e34",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

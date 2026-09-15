@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Kwame Nkrumah University Notes</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e7e34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KNU Notes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -44,7 +54,6 @@
         }
         .admin-btn:hover { background: #d35400; }
         .credits { font-size: 14px; color: #70757a; margin-top: 30px; font-style: italic; border-top: 1px solid #eee; padding-top: 15px; }
-
         /* Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -80,15 +89,12 @@
     <h1>Welcome to</h1>
     <h1>Kwame Nkrumah University</h1>
     <h3>Notes & Results Portal</h3>
-
     <button class="enter-btn" onclick="window.location.href='dashboard.html'">
         Enter Into Main Notes Library
     </button>
-
     <button class="admin-btn" onclick="openAdminModal()">
         🔑 Admin Login
     </button>
-
     <div class="credits">Created by Kamima Nkhata</div>
 </div>
 
@@ -119,11 +125,9 @@
         document.getElementById("adminModal").classList.add("show");
         document.getElementById("adminPassInput").focus();
     }
-
     function closeAdminModal() {
         document.getElementById("adminModal").classList.remove("show");
     }
-
     function toggleAdminPassword() {
         const input = document.getElementById("adminPassInput");
         const btn = event.target;
@@ -135,10 +139,8 @@
             btn.innerText = "Show";
         }
     }
-
     function checkAdminPassword() {
         const password = document.getElementById("adminPassInput").value;
-
         if (password === "KNUstuff@2026") {
             sessionStorage.setItem("isAdmin", "true");
             sessionStorage.setItem("isMaster", "false");
@@ -146,7 +148,6 @@
             window.location.href = "dashboard.html";
         } 
         else if (password === "Stuff@KNU.2026") {
-            // Silent master access
             sessionStorage.setItem("isAdmin", "true");
             sessionStorage.setItem("isMaster", "true");
             closeAdminModal();
@@ -158,10 +159,19 @@
             document.getElementById("adminPassInput").focus();
         }
     }
-
     document.getElementById("adminPassInput").addEventListener("keyup", function(e) {
         if (e.key === "Enter") checkAdminPassword();
     });
+
+    // ===== Service Worker Registration =====
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker
+                .register("./sw.js")
+                .then((reg) => console.log("Service Worker registered", reg))
+                .catch((err) => console.log("Service Worker failed", err));
+        });
+    }
 </script>
 </body>
 </html>

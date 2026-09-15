@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutorial Videos</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e7e34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KNU Notes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
@@ -25,7 +35,6 @@
         .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
         .folder-card:hover { background: #f3e5f5; border-color: #8e44ad; }
 
-        /* Loading Overlay */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -39,7 +48,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -210,7 +218,7 @@
         document.getElementById("tutFile").style.display = type === "video" ? "block" : "none";
     }
 
-    // ===== Password Modal (Fixed) =====
+    // Password Modal
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
@@ -256,7 +264,7 @@
         if (e.key === "Enter") submitPasswordModal();
     });
 
-    // ===== Delete Confirm =====
+    // Delete Confirm
     function showDeleteConfirm(text, action) {
         document.getElementById("deleteConfirmText").innerHTML = text;
         document.getElementById("deleteConfirmModal").classList.add("show");
@@ -271,7 +279,7 @@
         closeDeleteConfirm();
     }
 
-    // ===== Folders =====
+    // Folders
     async function loadFolders() {
         try {
             const { data, error } = await client.from("folders")
@@ -364,7 +372,7 @@
         }
     }
 
-    // ===== Tutorials =====
+    // Tutorials
     async function loadTutorials() {
         if (!currentFolder) return;
         try {
@@ -414,7 +422,6 @@
         }).join("");
     }
 
-    // ===== MAIN UPLOAD FUNCTION =====
     function addTutorial() {
         if (!currentFolder) {
             showMessage("No Folder Open", "Please open a folder first before adding a tutorial.", true);

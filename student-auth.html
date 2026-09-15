@@ -196,6 +196,7 @@
             <button class="btn" id="sendCodeBtn" onclick="sendVerificationCode()">Send Verification Code</button>
         </div>
 
+        <!-- Step 2: Enter Code -->
         <div id="forgotStep2" style="display:none;">
             <p>We have sent a 6-digit code to your email.</p>
             <label>Enter Verification Code</label>
@@ -206,6 +207,7 @@
             <button class="btn" onclick="verifyCode()">Verify Code</button>
         </div>
 
+        <!-- Step 3: New Password -->
         <div id="forgotStep3" style="display:none;">
             <label>New Password</label>
             <input type="password" id="newPassword" placeholder="Minimum 6 characters">
@@ -225,14 +227,14 @@
 </div>
 
 <script>
-    // EmailJS Config
+    // ========== EMAILJS CONFIG ==========
     const EMAILJS_PUBLIC_KEY = "GzC9jPWbMEmQP9FWF";
     const EMAILJS_SERVICE_ID = "service_20m7yx8";
     const EMAILJS_TEMPLATE_ID = "template_4mqzobi";
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
-    // Supabase
+    // ========== SUPABASE ==========
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
@@ -243,11 +245,12 @@
     function showTab(tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        
         event.target.classList.add('active');
         document.getElementById(tab).classList.add('active');
     }
 
-    // REGISTER
+    // ========== REGISTER ==========
     async function registerStudent() {
         const studentNo = document.getElementById("regStudentNo").value.trim();
         const email = document.getElementById("regEmail").value.trim();
@@ -308,10 +311,11 @@
         }
     }
 
-    // LOGIN
+    // ========== LOGIN ==========
     async function loginStudent() {
         const studentNo = document.getElementById("loginStudentNo").value.trim();
         const password = document.getElementById("loginPassword").value;
+
         const errorDiv = document.getElementById("loginError");
         errorDiv.style.display = "none";
 
@@ -334,6 +338,7 @@
             return;
         }
 
+        // Save student session
         sessionStorage.setItem("studentLoggedIn", "true");
         sessionStorage.setItem("studentNumber", data.student_number);
         sessionStorage.setItem("studentYear", data.year);
@@ -343,10 +348,11 @@
         window.location.href = "student-dashboard.html";
     }
 
-    // SEND VERIFICATION CODE
+    // ========== SEND VERIFICATION CODE ==========
     async function sendVerificationCode() {
         const studentNo = document.getElementById("forgotStudentNo").value.trim();
         const email = document.getElementById("forgotEmail").value.trim();
+
         const errorDiv = document.getElementById("forgotError");
         const successDiv = document.getElementById("forgotSuccess");
         const sendBtn = document.getElementById("sendCodeBtn");
@@ -360,6 +366,7 @@
             return;
         }
 
+        // Check if student exists and email matches
         const { data, error } = await client
             .from("students")
             .select("*")
@@ -373,26 +380,32 @@
             return;
         }
 
+        // Generate 6-digit code
         generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
         verifiedStudentId = data.id;
 
         sendBtn.disabled = true;
         sendBtn.innerText = "Sending...";
 
+        // Data matching YOUR EmailJS template variables
+        const templateParams = {
+            email: email,                           // matches {{email}}
+            passcode: generatedCode,                // matches {{passcode}}
+            time: new Date().toLocaleString()       // matches {{time}}
+        };
+
         try {
-            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-                to_email: email,
-                code: generatedCode,
-                student_number: studentNo
-            });
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
 
             successDiv.innerText = "Verification code sent to your email!";
             successDiv.style.display = "block";
+
+            // Move to step 2
             document.getElementById("forgotStep1").style.display = "none";
             document.getElementById("forgotStep2").style.display = "block";
         } catch (err) {
-            console.error(err);
-            errorDiv.innerText = "Failed to send email. Please try again.";
+            console.error("EmailJS Error:", err);
+            errorDiv.innerText = "Failed to send email. Please try again later.";
             errorDiv.style.display = "block";
         }
 
@@ -400,21 +413,24 @@
         sendBtn.innerText = "Send Verification Code";
     }
 
+    // ========== VERIFY CODE ==========
     function verifyCode() {
         const enteredCode = document.getElementById("verificationCode").value.trim();
         const errorDiv = document.getElementById("codeError");
         errorDiv.style.display = "none";
 
         if (enteredCode !== generatedCode) {
-            errorDiv.innerText = "Incorrect verification code.";
+            errorDiv.innerText = "Incorrect verification code. Please try again.";
             errorDiv.style.display = "block";
             return;
         }
 
+        // Code is correct → go to new password step
         document.getElementById("forgotStep2").style.display = "none";
         document.getElementById("forgotStep3").style.display = "block";
     }
 
+    // ========== RESET PASSWORD ==========
     async function resetPassword() {
         const newPass = document.getElementById("newPassword").value;
         const confirm = document.getElementById("newConfirm").value;
@@ -441,8 +457,22 @@
             errorDiv.innerText = "Failed to update password";
             errorDiv.style.display = "block";
         } else {
-            alert("Password updated successfully! Please login.");
-            location.reload();
+            alert("Password updated successfully! Please login with your new password.");
+            // Reset the form
+            document.getElementById("forgotStep1").style.display = "block";
+            document.getElementById("forgotStep2").style.display = "none";
+            document.getElementById("forgotStep3").style.display = "none";
+            document.getElementById("forgotStudentNo").value = "";
+            document.getElementById("forgotEmail").value = "";
+            document.getElementById("verificationCode").value = "";
+            document.getElementById("newPassword").value = "";
+            document.getElementById("newConfirm").value = "";
+            
+            // Switch to Login tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.querySelector('.tab').classList.add('active');
+            document.getElementById('login').classList.add('active');
         }
     }
 </script>

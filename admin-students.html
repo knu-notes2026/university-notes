@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Students - Master Admin</title>
+    <title>Manage Students</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
@@ -15,24 +15,50 @@
         }
         .header h2 { margin: 0; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-light { background: rgba(255,255,255,0.2); color: white; }
+        .btn-light { background: rgba(255,255,255,0.2); color: white; text-decoration: none; }
         .btn-danger { background: #c62828; color: white; }
         .btn-warning { background: #f9a825; color: #333; }
+        .btn-primary { background: #6a1b9a; color: white; }
         .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f5f5f5; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-box {
+            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
+            transform: translateY(-30px); transition: transform 0.3s;
+        }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-box h3 { margin-top: 0; color: #6a1b9a; }
+        .password-wrapper { position: relative; margin-top: 10px; }
+        .password-wrapper input {
+            width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc;
+            border-radius: 8px; box-sizing: border-box;
+        }
+        .toggle-password {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #6a1b9a;
+            font-size: 13px; font-weight: bold;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions button { flex: 1; padding: 11px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div>
-        <h2>Master Admin – Student Accounts</h2>
-        <small>Only accessible with Master Key</small>
+        <h2>Student Accounts</h2>
     </div>
     <div>
-        <a href="dashboard.html" class="btn btn-light">Go to Main Dashboard</a>
+        <a href="dashboard.html" class="btn btn-light">Back to Dashboard</a>
         <button class="btn btn-light" onclick="logout()" style="margin-left:10px;">Logout</button>
     </div>
 </div>
@@ -42,16 +68,37 @@
     <div id="studentsList">Loading...</div>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetModal">
+    <div class="modal-box">
+        <h3>Reset Password</h3>
+        <p id="resetStudentLabel" style="color:#555;"></p>
+        
+        <label>New Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="newPassInput" placeholder="Minimum 6 characters">
+            <button type="button" class="toggle-password" onclick="toggleResetPassword()">Show</button>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn" style="background:#e0e0e0;" onclick="closeResetModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // Only allow Master Admin
+    // Only allow if master access
     if (sessionStorage.getItem("isMaster") !== "true") {
-        alert("Access Denied. Master Key required.");
-        window.location.href = "index.html";
+        alert("Access Denied");
+        window.location.href = "dashboard.html";
     }
+
+    let currentStudentId = null;
 
     async function loadStudents() {
         const { data, error } = await client
@@ -88,7 +135,7 @@
                     <td>${s.phone || "-"}</td>
                     <td>Year ${s.year}</td>
                     <td>
-                        <button class="btn btn-warning" onclick="resetPassword('${s.id}', '${s.student_number}')">Reset Password</button>
+                        <button class="btn btn-warning" onclick="openResetModal('${s.id}', '${s.student_number}')">Reset Password</button>
                         <button class="btn btn-danger" onclick="deleteStudent('${s.id}', '${s.student_number}')">Delete</button>
                     </td>
                 </tr>
@@ -99,10 +146,34 @@
         container.innerHTML = html;
     }
 
-    async function resetPassword(id, studentNo) {
-        if (!confirm(`Reset password for ${studentNo}?`)) return;
+    function openResetModal(id, studentNo) {
+        currentStudentId = id;
+        document.getElementById("resetStudentLabel").innerText = "Student: " + studentNo;
+        document.getElementById("newPassInput").value = "";
+        document.getElementById("resetModal").classList.add("show");
+        document.getElementById("newPassInput").focus();
+    }
 
-        const newPass = prompt("Enter new password for this student (min 6 characters):");
+    function closeResetModal() {
+        document.getElementById("resetModal").classList.remove("show");
+        currentStudentId = null;
+    }
+
+    function toggleResetPassword() {
+        const input = document.getElementById("newPassInput");
+        const btn = event.target;
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "Hide";
+        } else {
+            input.type = "password";
+            btn.innerText = "Show";
+        }
+    }
+
+    async function confirmResetPassword() {
+        const newPass = document.getElementById("newPassInput").value;
+
         if (!newPass || newPass.length < 6) {
             alert("Password must be at least 6 characters");
             return;
@@ -111,14 +182,18 @@
         const { error } = await client
             .from("students")
             .update({ password: newPass })
-            .eq("id", id);
+            .eq("id", currentStudentId);
 
-        if (error) alert("Failed to reset password");
-        else alert("Password reset successfully!");
+        if (error) {
+            alert("Failed to reset password");
+        } else {
+            alert("Password reset successfully!");
+            closeResetModal();
+        }
     }
 
     async function deleteStudent(id, studentNo) {
-        if (!confirm(`Are you sure you want to DELETE the account of ${studentNo}? This cannot be undone.`)) return;
+        if (!confirm(`Are you sure you want to DELETE the account of ${studentNo}?`)) return;
 
         const { error } = await client
             .from("students")

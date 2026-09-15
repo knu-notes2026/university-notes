@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes & Results Portal</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e7e34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KNU Notes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
@@ -56,7 +66,6 @@
         .search-box { margin: 15px 0; }
         .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
-        /* Loading Overlay */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
@@ -70,7 +79,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -287,7 +295,6 @@
         }
     }
 
-    // Fixed Confirm button
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
@@ -446,7 +453,6 @@
         renderFiles(allFiles.filter(f => f.name.toLowerCase().includes(term)));
     }
 
-    // ===== UPLOAD WITH LOADING =====
     function uploadToFolder() {
         if (!isAdmin) return;
         const fileInput = document.getElementById("fileToUpload");

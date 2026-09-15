@@ -23,6 +23,8 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f5f5f5; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
 
         /* Modal */
         .modal-overlay {
@@ -65,6 +67,11 @@
 
 <div class="card">
     <h3>All Registered Students</h3>
+
+    <div class="search-box">
+        <input type="text" id="searchStudents" placeholder="Search by Student Number, Email, Phone, School or Year..." oninput="filterStudents()">
+    </div>
+
     <div id="studentsList">Loading...</div>
 </div>
 
@@ -92,12 +99,12 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // Only allow if master access
     if (sessionStorage.getItem("isMaster") !== "true") {
         alert("Access Denied");
         window.location.href = "dashboard.html";
     }
 
+    let allStudents = [];
     let currentStudentId = null;
 
     async function loadStudents() {
@@ -106,10 +113,15 @@
             .select("*")
             .order("created_at", { ascending: false });
 
+        allStudents = data || [];
+        renderStudents(allStudents);
+    }
+
+    function renderStudents(list) {
         const container = document.getElementById("studentsList");
 
-        if (error || !data || data.length === 0) {
-            container.innerHTML = "<p>No students registered yet.</p>";
+        if (!list || list.length === 0) {
+            container.innerHTML = "<p>No students found.</p>";
             return;
         }
 
@@ -120,6 +132,7 @@
                         <th>Student Number</th>
                         <th>Email</th>
                         <th>Phone</th>
+                        <th>School</th>
                         <th>Year</th>
                         <th>Actions</th>
                     </tr>
@@ -127,12 +140,13 @@
                 <tbody>
         `;
 
-        data.forEach(s => {
+        list.forEach(s => {
             html += `
                 <tr>
                     <td>${s.student_number}</td>
                     <td>${s.email}</td>
                     <td>${s.phone || "-"}</td>
+                    <td>${(s.school || "-").replace("-", " ")}</td>
                     <td>Year ${s.year}</td>
                     <td>
                         <button class="btn btn-warning" onclick="openResetModal('${s.id}', '${s.student_number}')">Reset Password</button>
@@ -144,6 +158,18 @@
 
         html += `</tbody></table>`;
         container.innerHTML = html;
+    }
+
+    function filterStudents() {
+        const term = document.getElementById("searchStudents").value.toLowerCase();
+        const filtered = allStudents.filter(s => 
+            (s.student_number || "").toLowerCase().includes(term) ||
+            (s.email || "").toLowerCase().includes(term) ||
+            (s.phone || "").toLowerCase().includes(term) ||
+            (s.school || "").toLowerCase().includes(term) ||
+            (s.year || "").toString().includes(term)
+        );
+        renderStudents(filtered);
     }
 
     function openResetModal(id, studentNo) {
@@ -173,20 +199,14 @@
 
     async function confirmResetPassword() {
         const newPass = document.getElementById("newPassInput").value;
-
         if (!newPass || newPass.length < 6) {
             alert("Password must be at least 6 characters");
             return;
         }
 
-        const { error } = await client
-            .from("students")
-            .update({ password: newPass })
-            .eq("id", currentStudentId);
-
-        if (error) {
-            alert("Failed to reset password");
-        } else {
+        const { error } = await client.from("students").update({ password: newPass }).eq("id", currentStudentId);
+        if (error) alert("Failed to reset password");
+        else {
             alert("Password reset successfully!");
             closeResetModal();
         }
@@ -195,11 +215,7 @@
     async function deleteStudent(id, studentNo) {
         if (!confirm(`Are you sure you want to DELETE the account of ${studentNo}?`)) return;
 
-        const { error } = await client
-            .from("students")
-            .delete()
-            .eq("id", id);
-
+        const { error } = await client.from("students").delete().eq("id", id);
         if (error) alert("Failed to delete account");
         else {
             alert("Student account deleted");

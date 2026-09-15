@@ -6,212 +6,72 @@
     <title>University Notes & Results Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
-
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #1e7e34;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #1e7e34; color: white; padding: 15px 25px;
+            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 25px;
         }
-
-        .header h2 {
-            margin: 0;
-            color: white;
-            font-size: 20px;
-        }
-
+        .header h2 { margin: 0; color: white; font-size: 20px; }
         .back-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-            transition: 0.2s;
+            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
+            padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;
         }
-        .back-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
         #adminBadge {
-            display: none;
-            background: #f1c40f;
-            color: #333;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            margin-right: 10px;
-            font-weight: bold;
+            display: none; background: #f1c40f; color: #333; padding: 5px 12px;
+            border-radius: 20px; font-size: 13px; margin-right: 10px; font-weight: bold;
         }
-
-        .schools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
+        .schools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
         .school-card {
-            background: white;
-            padding: 28px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            cursor: pointer;
-            border-top: 5px solid #1a73e8;
-            transition: 0.2s;
+            background: white; padding: 28px; text-align: center; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border-top: 5px solid #1a73e8; transition: 0.2s;
         }
-        .school-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
+        .school-card:hover { transform: translateY(-4px); }
         .level-btn {
-            padding: 9px 16px;
-            margin: 4px;
-            border: 1px solid #1a73e8;
-            background: white;
-            color: #1a73e8;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 9px 16px; margin: 4px; border: 1px solid #1a73e8; background: white;
+            color: #1a73e8; border-radius: 4px; cursor: pointer; font-weight: bold;
         }
-        .level-btn.active {
-            background: #1a73e8;
-            color: white;
-        }
-
-        .section {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .folder-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
+        .level-btn.active { background: #1a73e8; color: white; }
+        .section { background: white; padding: 25px; border-radius: 8px; margin-top: 20px; display: none; }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
         .folder-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 18px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
+            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;
+            padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s;
         }
-        .folder-card:hover {
-            background: #e8f0fe;
-            border-color: #1a73e8;
-            transform: translateY(-3px);
-        }
-
+        .folder-card:hover { background: #e8f0fe; border-color: #1a73e8; }
         .admin-panel {
-            background: #fff8e6;
-            border: 1px solid #ffe0a3;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
+            background: #fff8e6; border: 1px solid #ffe0a3; padding: 20px;
+            border-radius: 8px; margin-bottom: 20px; display: none;
         }
-
-        .btn {
-            padding: 9px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 4px;
-        }
+        .btn { padding: 9px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 4px; }
         .btn-primary { background: #1a73e8; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-success { background: #27ae60; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-purple { background: #8e44ad; color: white; }
         .btn-blue { background: #1565c0; color: white; }
+        .btn-master { background: #6a1b9a; color: white; }
+        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; gap: 10px; }
+        input, select { padding: 9px; margin: 6px 0; width: 100%; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .search-box { margin: 15px 0; }
+        .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
-        .note-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            gap: 10px;
-        }
-
-        input, select {
-            padding: 9px;
-            margin: 6px 0;
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        /* Password Modal */
+        /* Modal */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 0; transition: opacity 0.3s;
         }
-        .modal-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
+        .modal-overlay.show { display: flex; opacity: 1; }
         .modal-box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            transform: translateY(-40px);
-            transition: transform 0.35s ease;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
+            transform: translateY(-40px); transition: transform 0.35s;
         }
-        .modal-overlay.show .modal-box {
-            transform: translateY(0);
-        }
-        .modal-box h3 {
-            margin-top: 0;
-            color: #1a73e8;
-        }
-        .modal-error {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 8px;
-            display: none;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .modal-actions button {
-            flex: 1;
-        }
+        .modal-overlay.show .modal-box { transform: translateY(0); }
+        .modal-box h3 { margin-top: 0; color: #1a73e8; }
+        .modal-error { color: #e74c3c; font-size: 14px; margin-top: 8px; display: none; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions button { flex: 1; }
     </style>
 </head>
 <body>
@@ -247,15 +107,21 @@
         <button class="level-btn" id="lvl4" onclick="selectYear('4')">4th Year</button>
     </div>
 
-    <!-- Tutorials Button -->
+    <!-- Master Admin Button (hidden by default) -->
+    <div id="masterPanel" style="display:none; margin: 15px 0;">
+        <button class="btn btn-master" onclick="window.location.href='admin-students.html'">
+            Manage Student Accounts
+        </button>
+    </div>
+
     <button class="btn btn-purple" onclick="openTutorials()" style="margin-top:10px;">
         📺 Tutorial Videos for this Year
     </button>
 
-    <!-- Admin Create Folder Panel -->
+    <!-- Admin Create Folder -->
     <div class="admin-panel" id="adminCreatePanel">
         <h4 style="margin-top:0;">🛠️ Admin: Create New Folder</h4>
-        <input type="text" id="newFolderName" placeholder="Folder name (e.g. Semester 1 Notes)">
+        <input type="text" id="newFolderName" placeholder="Folder name">
         <input type="password" id="newFolderPassword" placeholder="Set a password for this folder">
         <select id="newFolderType">
             <option value="notes">Notes Folder</option>
@@ -264,28 +130,30 @@
         <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
-    <!-- Notes Folders -->
+    <!-- Search Notes -->
     <h3 style="margin-top:25px;">📁 Notes Folders</h3>
+    <div class="search-box">
+        <input type="text" id="searchNotes" placeholder="Search notes folders..." oninput="filterNotes()">
+    </div>
     <div class="folder-grid" id="notesFolders"></div>
 
-    <!-- ====================== TEST RESULTS SECTION ====================== -->
+    <!-- Test Results Section -->
     <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
-
     <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
-        <p style="margin-top:0; margin-bottom:15px;">
-            Students must log in with their Student Number to view Test Results and CA.
-        </p>
-        
+        <p style="margin-top:0; margin-bottom:15px;">Students must log in to view their Test Results and CA.</p>
         <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" 
                 onclick="window.location.href='student-auth.html'">
             🔐 Login to View Test Results / CA
         </button>
     </div>
 
-    <div class="folder-grid" id="resultsFolders" style="margin-top:20px;"></div>
+    <div class="search-box">
+        <input type="text" id="searchResults" placeholder="Search results folders..." oninput="filterResults()">
+    </div>
+    <div class="folder-grid" id="resultsFolders"></div>
 </div>
 
-<!-- Inside a Folder View -->
+<!-- Inside Folder View -->
 <div id="folderView" class="section">
     <button class="btn btn-secondary" onclick="backToYear()">← Back to Folders</button>
     <h2 id="folderTitle" style="margin-top:15px;"></h2>
@@ -295,18 +163,20 @@
         <input type="file" id="fileToUpload">
         <button class="btn btn-success" onclick="uploadToFolder()">Upload File</button>
         <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete this Folder</button>
-        <p style="font-size:13px; color:#666; margin-bottom:0;">Master password or folder password required</p>
     </div>
 
-    <div id="filesList" style="margin-top:20px;"></div>
+    <div class="search-box">
+        <input type="text" id="searchFiles" placeholder="Search files inside this folder..." oninput="filterFiles()">
+    </div>
+    <div id="filesList" style="margin-top:15px;"></div>
 </div>
 
 <!-- Password Modal -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
         <h3 id="modalTitle">Enter Password</h3>
-        <input type="password" id="modalPassword" placeholder="Enter password or master passcode" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">
-        <div class="modal-error" id="modalError">Wrong password or passcode. Please try again.</div>
+        <input type="password" id="modalPassword" placeholder="Enter password" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">
+        <div class="modal-error" id="modalError">Wrong password. Please try again.</div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
             <button class="btn btn-primary" onclick="submitModalPassword()">Confirm</button>
@@ -321,16 +191,18 @@
     const MASTER_PASSWORD = "Stuff@KNU.2026";
 
     let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    let isMaster = sessionStorage.getItem("isMaster") === "true";
     let currentSchool = "";
     let currentYear = "1";
     let currentFolder = null;
     let modalCallback = null;
+    let allNotesFolders = [];
+    let allResultsFolders = [];
+    let allFiles = [];
 
-    if (isAdmin) {
-        document.getElementById("adminBadge").style.display = "inline-block";
-    }
+    if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
+    if (isMaster) document.getElementById("masterPanel").style.display = "block";
 
-    // Modal functions
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
@@ -347,26 +219,20 @@
 
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
-        if (!password) return;
-
-        const isCorrect = password === MASTER_PASSWORD || 
-                          (currentFolder && password === currentFolder.password);
-
+        const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
         if (isCorrect) {
             closeModal();
-            if (modalCallback) modalCallback(password);
+            if (modalCallback) modalCallback();
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
-            document.getElementById("modalPassword").focus();
         }
     }
 
-    document.getElementById("modalPassword").addEventListener("keyup", function(e) {
+    document.getElementById("modalPassword").addEventListener("keyup", e => {
         if (e.key === "Enter") submitModalPassword();
     });
 
-    // Navigation
     function selectSchool(school) {
         currentSchool = school;
         document.getElementById("schoolView").style.display = "none";
@@ -394,24 +260,21 @@
         window.location.href = "tutorials.html";
     }
 
-    // Folders
     async function loadFolders() {
-        const { data, error } = await client.from("folders").select("*")
+        const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
 
-        if (error) {
-            console.error(error);
-            return;
-        }
+        allNotesFolders = data ? data.filter(f => f.type === "notes") : [];
+        allResultsFolders = data ? data.filter(f => f.type === "results") : [];
 
-        renderFolderList("notesFolders", data.filter(f => f.type === "notes"));
-        renderFolderList("resultsFolders", data.filter(f => f.type === "results"));
+        renderFolderList("notesFolders", allNotesFolders);
+        renderFolderList("resultsFolders", allResultsFolders);
     }
 
     function renderFolderList(containerId, folders) {
         const container = document.getElementById(containerId);
         if (folders.length === 0) {
-            container.innerHTML = `<p style="color:#888;">No folders created yet.</p>`;
+            container.innerHTML = `<p style="color:#888;">No folders found.</p>`;
             return;
         }
         container.innerHTML = folders.map(f => `
@@ -422,18 +285,28 @@
         `).join("");
     }
 
+    function filterNotes() {
+        const term = document.getElementById("searchNotes").value.toLowerCase();
+        const filtered = allNotesFolders.filter(f => f.name.toLowerCase().includes(term));
+        renderFolderList("notesFolders", filtered);
+    }
+
+    function filterResults() {
+        const term = document.getElementById("searchResults").value.toLowerCase();
+        const filtered = allResultsFolders.filter(f => f.name.toLowerCase().includes(term));
+        renderFolderList("resultsFolders", filtered);
+    }
+
     async function createFolder() {
         if (!isAdmin) return;
         const name = document.getElementById("newFolderName").value.trim();
         const password = document.getElementById("newFolderPassword").value;
         const type = document.getElementById("newFolderType").value;
-
-        if (!name || !password) return alert("Please enter both name and password");
+        if (!name || !password) return alert("Please enter name and password");
 
         const { error } = await client.from("folders").insert({
             school: currentSchool, year: currentYear, name, password, type
         });
-
         if (error) alert("Failed: " + error.message);
         else {
             alert("Folder created!");
@@ -460,15 +333,19 @@
 
     async function loadFilesInFolder() {
         const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-        const { data, error } = await client.storage.from("notes-files").list(path);
-        const container = document.getElementById("filesList");
+        const { data } = await client.storage.from("notes-files").list(path);
+        allFiles = (data || []).filter(f => f.name && !f.name.startsWith("."));
+        renderFiles(allFiles);
+    }
 
-        if (error || !data || data.length === 0) {
-            container.innerHTML = `<p style="color:#888;">This folder is empty.</p>`;
+    function renderFiles(files) {
+        const container = document.getElementById("filesList");
+        if (files.length === 0) {
+            container.innerHTML = `<p style="color:#888;">No files found.</p>`;
             return;
         }
-
-        container.innerHTML = data.filter(f => f.name && !f.name.startsWith(".")).map(f => {
+        const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
+        container.innerHTML = files.map(f => {
             const url = `${DB_URL}/storage/v1/object/public/notes-files/${path}/${f.name}`;
             return `
                 <div class="note-item">
@@ -482,20 +359,24 @@
         }).join("");
     }
 
+    function filterFiles() {
+        const term = document.getElementById("searchFiles").value.toLowerCase();
+        const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term));
+        renderFiles(filtered);
+    }
+
     function uploadToFolder() {
         if (!isAdmin) return;
-        showPasswordModal("Enter folder password or Master Password", async () => {
+        showPasswordModal("Enter folder password", async () => {
             const fileInput = document.getElementById("fileToUpload");
-            if (!fileInput.files.length) return alert("Please select a file");
-
+            if (!fileInput.files.length) return alert("Select a file");
             const file = fileInput.files[0];
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
-
             const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
-            if (error) alert("Upload failed: " + error.message);
+            if (error) alert("Upload failed");
             else {
-                alert("File uploaded!");
+                alert("Uploaded!");
                 fileInput.value = "";
                 loadFilesInFolder();
             }
@@ -504,38 +385,24 @@
 
     function deleteFile(fileName) {
         if (!isAdmin) return;
-        showPasswordModal("Enter password to delete this file", async () => {
-            if (!confirm(`Delete "${fileName}"?`)) return;
-
+        showPasswordModal("Enter password to delete file", async () => {
+            if (!confirm(`Delete ${fileName}?`)) return;
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
-            const { error } = await client.storage.from("notes-files").remove([path]);
-
-            if (error) alert("Delete failed: " + error.message);
-            else {
-                alert("File deleted");
-                loadFilesInFolder();
-            }
+            await client.storage.from("notes-files").remove([path]);
+            loadFilesInFolder();
         });
     }
 
     function deleteCurrentFolder() {
         if (!isAdmin) return;
-        showPasswordModal("Enter password to DELETE this folder", async () => {
-            if (!confirm(`Permanently delete folder "${currentFolder.name}"?`)) return;
-
+        showPasswordModal("Enter password to delete folder", async () => {
+            if (!confirm(`Delete folder ${currentFolder.name}?`)) return;
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
             const { data: files } = await client.storage.from("notes-files").list(path);
-            if (files && files.length) {
-                await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
-            }
-
-            const { error } = await client.from("folders").delete().eq("id", currentFolder.id);
-            if (error) alert("Failed: " + error.message);
-            else {
-                alert("Folder deleted");
-                backToYear();
-                loadFolders();
-            }
+            if (files?.length) await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
+            await client.from("folders").delete().eq("id", currentFolder.id);
+            backToYear();
+            loadFolders();
         });
     }
 </script>

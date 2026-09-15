@@ -56,26 +56,52 @@
         .search-box { margin: 15px 0; }
         .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
-        /* Modal */
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55); display: none; justify-content: center; align-items: center;
+            z-index: 10000; flex-direction: column; color: white;
+        }
+        .loading-overlay.show { display: flex; }
+        .spinner {
+            width: 55px; height: 55px; border: 5px solid rgba(255,255,255,0.25);
+            border-top: 5px solid #fff; border-radius: 50%;
+            animation: spin 0.9s linear infinite; margin-bottom: 18px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Advanced Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
             z-index: 9999; opacity: 0; transition: opacity 0.3s;
         }
         .modal-overlay.show { display: flex; opacity: 1; }
         .modal-box {
-            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
+            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
             transform: translateY(-40px); transition: transform 0.35s;
         }
         .modal-overlay.show .modal-box { transform: translateY(0); }
         .modal-box h3 { margin-top: 0; color: #1a73e8; }
         .modal-error { color: #e74c3c; font-size: 14px; margin-top: 8px; display: none; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; }
+        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-confirm { background: #1a73e8; color: white; }
+        .btn-confirm-danger { background: #e74c3c; color: white; }
+        .password-wrapper { position: relative; margin-top: 10px; }
+        .password-wrapper input {
+            width: 100%; padding: 13px; font-size: 15px; border: 2px solid #ddd;
+            border-radius: 8px; box-sizing: border-box;
+        }
+        .toggle-password {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #1a73e8;
+            font-size: 13px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
-
 <div class="header">
     <h2>Kwame Nkrumah University – Notes & Results</h2>
     <div>
@@ -99,7 +125,6 @@
 <div id="mainView" class="section">
     <button class="btn btn-secondary" onclick="backToSchools()">← Back to Schools</button>
     <h2 id="schoolTitle" style="margin-top:15px;"></h2>
-
     <div style="margin:15px 0;">
         <button class="level-btn" id="lvl1" onclick="selectYear('1')">1st Year</button>
         <button class="level-btn" id="lvl2" onclick="selectYear('2')">2nd Year</button>
@@ -107,7 +132,6 @@
         <button class="level-btn" id="lvl4" onclick="selectYear('4')">4th Year</button>
     </div>
 
-    <!-- Master Admin Button (hidden by default) -->
     <div id="masterPanel" style="display:none; margin: 15px 0;">
         <button class="btn btn-master" onclick="window.location.href='admin-students.html'">
             Manage Student Accounts
@@ -130,14 +154,12 @@
         <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
-    <!-- Search Notes -->
     <h3 style="margin-top:25px;">📁 Notes Folders</h3>
     <div class="search-box">
         <input type="text" id="searchNotes" placeholder="Search notes folders..." oninput="filterNotes()">
     </div>
     <div class="folder-grid" id="notesFolders"></div>
 
-    <!-- Test Results Section -->
     <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
     <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
         <p style="margin-top:0; margin-bottom:15px;">Students must log in to view their Test Results and CA.</p>
@@ -146,7 +168,6 @@
             🔐 Login to View Test Results / CA
         </button>
     </div>
-
     <div class="search-box">
         <input type="text" id="searchResults" placeholder="Search results folders..." oninput="filterResults()">
     </div>
@@ -157,29 +178,48 @@
 <div id="folderView" class="section">
     <button class="btn btn-secondary" onclick="backToYear()">← Back to Folders</button>
     <h2 id="folderTitle" style="margin-top:15px;"></h2>
-
     <div class="admin-panel" id="folderAdminPanel">
         <h4 style="margin-top:0;">Admin Actions</h4>
         <input type="file" id="fileToUpload">
         <button class="btn btn-success" onclick="uploadToFolder()">Upload File</button>
         <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete this Folder</button>
     </div>
-
     <div class="search-box">
         <input type="text" id="searchFiles" placeholder="Search files inside this folder..." oninput="filterFiles()">
     </div>
     <div id="filesList" style="margin-top:15px;"></div>
 </div>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div>Uploading... Please wait</div>
+</div>
+
 <!-- Password Modal -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
         <h3 id="modalTitle">Enter Password</h3>
-        <input type="password" id="modalPassword" placeholder="Enter password" style="width:100%; padding:12px; font-size:16px; margin-top:10px;">
+        <div class="password-wrapper">
+            <input type="password" id="modalPassword" placeholder="Enter password">
+            <button type="button" class="toggle-password" onclick="toggleModalPassword()">Show</button>
+        </div>
         <div class="modal-error" id="modalError">Wrong password. Please try again.</div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="submitModalPassword()">Confirm</button>
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-confirm" onclick="submitModalPassword()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <h3 style="color:#e74c3c;" id="confirmTitle">Confirm Delete</h3>
+        <p id="confirmText" style="color:#555; line-height:1.5;"></p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-confirm-danger" onclick="executeConfirmAction()">Delete</button>
         </div>
     </div>
 </div>
@@ -196,12 +236,17 @@
     let currentYear = "1";
     let currentFolder = null;
     let modalCallback = null;
+    let confirmCallback = null;
     let allNotesFolders = [];
     let allResultsFolders = [];
     let allFiles = [];
 
     if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
     if (isMaster) document.getElementById("masterPanel").style.display = "block";
+
+    function showLoading(show) {
+        document.getElementById("loadingOverlay").classList.toggle("show", show);
+    }
 
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
@@ -211,12 +256,21 @@
         document.getElementById("modalPassword").focus();
         modalCallback = callback;
     }
-
     function closeModal() {
         document.getElementById("passwordModal").classList.remove("show");
         modalCallback = null;
     }
-
+    function toggleModalPassword() {
+        const input = document.getElementById("modalPassword");
+        const btn = event.target;
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "Hide";
+        } else {
+            input.type = "password";
+            btn.innerText = "Show";
+        }
+    }
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
@@ -228,10 +282,25 @@
             document.getElementById("modalPassword").value = "";
         }
     }
-
     document.getElementById("modalPassword").addEventListener("keyup", e => {
         if (e.key === "Enter") submitModalPassword();
     });
+
+    // Professional Confirm Modal
+    function showConfirmModal(title, text, callback) {
+        document.getElementById("confirmTitle").innerText = title;
+        document.getElementById("confirmText").innerHTML = text;
+        document.getElementById("confirmModal").classList.add("show");
+        confirmCallback = callback;
+    }
+    function closeConfirmModal() {
+        document.getElementById("confirmModal").classList.remove("show");
+        confirmCallback = null;
+    }
+    function executeConfirmAction() {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
+    }
 
     function selectSchool(school) {
         currentSchool = school;
@@ -240,12 +309,10 @@
         document.getElementById("schoolTitle").innerText = school.replace("-", " ").toUpperCase();
         selectYear("1");
     }
-
     function backToSchools() {
         document.getElementById("mainView").style.display = "none";
         document.getElementById("schoolView").style.display = "block";
     }
-
     function selectYear(year) {
         currentYear = year;
         document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("active"));
@@ -253,7 +320,6 @@
         document.getElementById("adminCreatePanel").style.display = isAdmin ? "block" : "none";
         loadFolders();
     }
-
     function openTutorials() {
         sessionStorage.setItem("tutSchool", currentSchool);
         sessionStorage.setItem("tutYear", currentYear);
@@ -263,14 +329,11 @@
     async function loadFolders() {
         const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
-
         allNotesFolders = data ? data.filter(f => f.type === "notes") : [];
         allResultsFolders = data ? data.filter(f => f.type === "results") : [];
-
         renderFolderList("notesFolders", allNotesFolders);
         renderFolderList("resultsFolders", allResultsFolders);
     }
-
     function renderFolderList(containerId, folders) {
         const container = document.getElementById(containerId);
         if (folders.length === 0) {
@@ -284,13 +347,11 @@
             </div>
         `).join("");
     }
-
     function filterNotes() {
         const term = document.getElementById("searchNotes").value.toLowerCase();
         const filtered = allNotesFolders.filter(f => f.name.toLowerCase().includes(term));
         renderFolderList("notesFolders", filtered);
     }
-
     function filterResults() {
         const term = document.getElementById("searchResults").value.toLowerCase();
         const filtered = allResultsFolders.filter(f => f.name.toLowerCase().includes(term));
@@ -324,7 +385,6 @@
         document.getElementById("folderAdminPanel").style.display = isAdmin ? "block" : "none";
         loadFilesInFolder();
     }
-
     function backToYear() {
         document.getElementById("folderView").style.display = "none";
         document.getElementById("mainView").style.display = "block";
@@ -337,7 +397,6 @@
         allFiles = (data || []).filter(f => f.name && !f.name.startsWith("."));
         renderFiles(allFiles);
     }
-
     function renderFiles(files) {
         const container = document.getElementById("filesList");
         if (files.length === 0) {
@@ -358,7 +417,6 @@
             `;
         }).join("");
     }
-
     function filterFiles() {
         const term = document.getElementById("searchFiles").value.toLowerCase();
         const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term));
@@ -370,13 +428,18 @@
         showPasswordModal("Enter folder password", async () => {
             const fileInput = document.getElementById("fileToUpload");
             if (!fileInput.files.length) return alert("Select a file");
+
             const file = fileInput.files[0];
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
+
+            showLoading(true);
             const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
-            if (error) alert("Upload failed");
+            showLoading(false);
+
+            if (error) alert("Upload failed: " + error.message);
             else {
-                alert("Uploaded!");
+                alert("Uploaded successfully!");
                 fileInput.value = "";
                 loadFilesInFolder();
             }
@@ -385,24 +448,36 @@
 
     function deleteFile(fileName) {
         if (!isAdmin) return;
-        showPasswordModal("Enter password to delete file", async () => {
-            if (!confirm(`Delete ${fileName}?`)) return;
-            const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
-            await client.storage.from("notes-files").remove([path]);
-            loadFilesInFolder();
+        showPasswordModal("Enter password to delete file", () => {
+            showConfirmModal(
+                "Delete File",
+                `Are you sure you want to permanently delete <strong>${fileName}</strong>?`,
+                async () => {
+                    const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
+                    await client.storage.from("notes-files").remove([path]);
+                    loadFilesInFolder();
+                }
+            );
         });
     }
 
     function deleteCurrentFolder() {
         if (!isAdmin) return;
-        showPasswordModal("Enter password to delete folder", async () => {
-            if (!confirm(`Delete folder ${currentFolder.name}?`)) return;
-            const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-            const { data: files } = await client.storage.from("notes-files").list(path);
-            if (files?.length) await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
-            await client.from("folders").delete().eq("id", currentFolder.id);
-            backToYear();
-            loadFolders();
+        showPasswordModal("Enter password to delete folder", () => {
+            showConfirmModal(
+                "Delete Folder",
+                `Are you sure you want to permanently delete the folder <strong>${currentFolder.name}</strong> and all its files?`,
+                async () => {
+                    const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
+                    const { data: files } = await client.storage.from("notes-files").list(path);
+                    if (files?.length) {
+                        await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
+                    }
+                    await client.from("folders").delete().eq("id", currentFolder.id);
+                    backToYear();
+                    loadFolders();
+                }
+            );
         });
     }
 </script>

@@ -16,8 +16,10 @@
         .btn-danger { background: #e74c3c; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
         input, select { padding: 10px; width: 100%; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; gap: 15px; }
         .admin-panel { background: #f5eef8; border: 1px solid #d7bde2; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: none; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { padding: 12px; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -41,6 +43,10 @@
         <button class="btn btn-primary" onclick="addTutorial()">Add Tutorial</button>
     </div>
 
+    <div class="search-box">
+        <input type="text" id="searchTutorials" placeholder="Search tutorials by title..." oninput="filterTutorials()">
+    </div>
+
     <div id="tutorialsList"></div>
 </div>
 
@@ -59,6 +65,8 @@
 
     if (isAdmin) document.getElementById("adminPanel").style.display = "block";
 
+    let allTutorials = [];
+
     function toggleInputType() {
         const type = document.getElementById("tutType").value;
         document.getElementById("tutLink").style.display = type === "link" ? "block" : "none";
@@ -67,15 +75,23 @@
 
     async function loadTutorials() {
         const { data, error } = await client.from("tutorials")
-            .select("*").eq("school", school).eq("year", year).order("created_at", { ascending: false });
+            .select("*")
+            .eq("school", school)
+            .eq("year", year)
+            .order("created_at", { ascending: false });
 
+        allTutorials = data || [];
+        renderTutorials(allTutorials);
+    }
+
+    function renderTutorials(list) {
         const container = document.getElementById("tutorialsList");
-        if (error || !data || data.length === 0) {
-            container.innerHTML = "<p style='color:#888;'>No tutorials added yet.</p>";
+        if (!list || list.length === 0) {
+            container.innerHTML = "<p style='color:#888;'>No tutorials found.</p>";
             return;
         }
 
-        container.innerHTML = data.map(t => {
+        container.innerHTML = list.map(t => {
             let content = "";
             if (t.type === "link") {
                 content = `<a href="${t.content}" target="_blank" class="btn btn-primary">Watch Video</a>`;
@@ -97,6 +113,12 @@
                 </div>
             `;
         }).join("");
+    }
+
+    function filterTutorials() {
+        const term = document.getElementById("searchTutorials").value.toLowerCase();
+        const filtered = allTutorials.filter(t => t.title.toLowerCase().includes(term));
+        renderTutorials(filtered);
     }
 
     async function addTutorial() {
@@ -138,7 +160,7 @@
     }
 
     async function deleteTutorial(id, content, type) {
-        const pass = prompt("Enter Master Password to delete:");
+        const pass = prompt("Enter password to delete:");
         if (pass !== MASTER_PASSWORD && pass !== "KNUstuff@2026") {
             return alert("Wrong password");
         }

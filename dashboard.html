@@ -56,6 +56,21 @@
         .search-box { margin: 15px 0; }
         .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
+            z-index: 10000; flex-direction: column; color: white;
+        }
+        .loading-overlay.show { display: flex; }
+        .spinner {
+            width: 60px; height: 60px; border: 6px solid rgba(255,255,255,0.25);
+            border-top: 6px solid #fff; border-radius: 50%;
+            animation: spin 0.85s linear infinite; margin-bottom: 18px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -167,6 +182,12 @@
     <div id="filesList" style="margin-top:15px;"></div>
 </div>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Uploading... Please wait</div>
+</div>
+
 <!-- Password Modal -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
@@ -226,6 +247,11 @@
     if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
     if (isMaster) document.getElementById("masterPanel").style.display = "block";
 
+    function showLoading(show, text = "Uploading... Please wait") {
+        document.getElementById("loadingText").innerText = text;
+        document.getElementById("loadingOverlay").classList.toggle("show", show);
+    }
+
     function showMessage(title, text, isError = false) {
         document.getElementById("messageTitle").innerText = title;
         document.getElementById("messageTitle").style.color = isError ? "#e74c3c" : "#1a73e8";
@@ -247,7 +273,6 @@
 
     function closeModal() {
         document.getElementById("passwordModal").classList.remove("show");
-        // Do NOT clear modalCallback here
     }
 
     function toggleModalPassword() {
@@ -262,20 +287,16 @@
         }
     }
 
-    // ===== FIXED CONFIRM BUTTON =====
+    // Fixed Confirm button
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
 
         if (isCorrect) {
-            // Save the callback first, then close the modal
             const cb = modalCallback;
             modalCallback = null;
             document.getElementById("passwordModal").classList.remove("show");
-
-            if (typeof cb === "function") {
-                cb();   // now it actually runs
-            }
+            if (typeof cb === "function") cb();
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
@@ -365,9 +386,11 @@
             showMessage("Missing Information", "Please enter both folder name and password.", true);
             return;
         }
+        showLoading(true, "Creating folder...");
         const { error } = await client.from("folders").insert({
             school: currentSchool, year: currentYear, name, password, type
         });
+        showLoading(false);
         if (error) {
             showMessage("Error", "Failed: " + error.message, true);
         } else {
@@ -423,7 +446,7 @@
         renderFiles(allFiles.filter(f => f.name.toLowerCase().includes(term)));
     }
 
-    // ===== UPLOAD =====
+    // ===== UPLOAD WITH LOADING =====
     function uploadToFolder() {
         if (!isAdmin) return;
         const fileInput = document.getElementById("fileToUpload");
@@ -437,14 +460,22 @@
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-            const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
+            showLoading(true, "Uploading file... Please wait");
 
-            if (error) {
-                showMessage("Upload Failed", error.message, true);
-            } else {
-                fileInput.value = "";
-                showMessage("Success", "File uploaded successfully!");
-                loadFilesInFolder();
+            try {
+                const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
+                showLoading(false);
+
+                if (error) {
+                    showMessage("Upload Failed", error.message, true);
+                } else {
+                    fileInput.value = "";
+                    showMessage("Success", "File uploaded successfully!");
+                    loadFilesInFolder();
+                }
+            } catch (err) {
+                showLoading(false);
+                showMessage("Error", err.message, true);
             }
         });
     }
@@ -453,8 +484,10 @@
         if (!isAdmin) return;
         showPasswordModal("Enter password to delete file", () => {
             showConfirmModal("Delete File", `Are you sure you want to delete <strong>${fileName}</strong>?`, async () => {
+                showLoading(true, "Deleting file...");
                 const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
                 await client.storage.from("notes-files").remove([path]);
+                showLoading(false);
                 loadFilesInFolder();
                 showMessage("Deleted", "File deleted successfully.");
             });
@@ -465,12 +498,14 @@
         if (!isAdmin) return;
         showPasswordModal("Enter password to delete folder", () => {
             showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all its files?`, async () => {
+                showLoading(true, "Deleting folder...");
                 const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
                 const { data: files } = await client.storage.from("notes-files").list(path);
                 if (files?.length) {
                     await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
                 }
                 await client.from("folders").delete().eq("id", currentFolder.id);
+                showLoading(false);
                 backToYear();
                 loadFolders();
                 showMessage("Deleted", "Folder deleted successfully.");

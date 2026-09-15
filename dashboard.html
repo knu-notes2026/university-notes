@@ -56,21 +56,7 @@
         .search-box { margin: 15px 0; }
         .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
 
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55); display: none; justify-content: center; align-items: center;
-            z-index: 10000; flex-direction: column; color: white;
-        }
-        .loading-overlay.show { display: flex; }
-        .spinner {
-            width: 55px; height: 55px; border: 5px solid rgba(255,255,255,0.25);
-            border-top: 5px solid #fff; border-radius: 50%;
-            animation: spin 0.9s linear infinite; margin-bottom: 18px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Advanced Modal */
+        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -82,13 +68,14 @@
             transform: translateY(-40px); transition: transform 0.35s;
         }
         .modal-overlay.show .modal-box { transform: translateY(0); }
-        .modal-box h3 { margin-top: 0; color: #1a73e8; }
+        .modal-box h3 { margin-top: 0; }
         .modal-error { color: #e74c3c; font-size: 14px; margin-top: 8px; display: none; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-cancel { background: #e0e0e0; color: #333; }
         .btn-confirm { background: #1a73e8; color: white; }
         .btn-confirm-danger { background: #e74c3c; color: white; }
+        .btn-ok { background: #1a73e8; color: white; }
         .password-wrapper { position: relative; margin-top: 10px; }
         .password-wrapper input {
             width: 100%; padding: 13px; font-size: 15px; border: 2px solid #ddd;
@@ -110,7 +97,6 @@
     </div>
 </div>
 
-<!-- School Selection -->
 <div id="schoolView">
     <h3 style="margin-top:0;">Select a School</h3>
     <div class="schools-grid">
@@ -121,7 +107,6 @@
     </div>
 </div>
 
-<!-- Year + Folders View -->
 <div id="mainView" class="section">
     <button class="btn btn-secondary" onclick="backToSchools()">← Back to Schools</button>
     <h2 id="schoolTitle" style="margin-top:15px;"></h2>
@@ -133,16 +118,11 @@
     </div>
 
     <div id="masterPanel" style="display:none; margin: 15px 0;">
-        <button class="btn btn-master" onclick="window.location.href='admin-students.html'">
-            Manage Student Accounts
-        </button>
+        <button class="btn btn-master" onclick="window.location.href='admin-students.html'">Manage Student Accounts</button>
     </div>
 
-    <button class="btn btn-purple" onclick="openTutorials()" style="margin-top:10px;">
-        📺 Tutorial Videos for this Year
-    </button>
+    <button class="btn btn-purple" onclick="openTutorials()" style="margin-top:10px;">📺 Tutorial Videos for this Year</button>
 
-    <!-- Admin Create Folder -->
     <div class="admin-panel" id="adminCreatePanel">
         <h4 style="margin-top:0;">🛠️ Admin: Create New Folder</h4>
         <input type="text" id="newFolderName" placeholder="Folder name">
@@ -163,8 +143,7 @@
     <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
     <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
         <p style="margin-top:0; margin-bottom:15px;">Students must log in to view their Test Results and CA.</p>
-        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" 
-                onclick="window.location.href='student-auth.html'">
+        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" onclick="window.location.href='student-auth.html'">
             🔐 Login to View Test Results / CA
         </button>
     </div>
@@ -174,7 +153,6 @@
     <div class="folder-grid" id="resultsFolders"></div>
 </div>
 
-<!-- Inside Folder View -->
 <div id="folderView" class="section">
     <button class="btn btn-secondary" onclick="backToYear()">← Back to Folders</button>
     <h2 id="folderTitle" style="margin-top:15px;"></h2>
@@ -190,16 +168,10 @@
     <div id="filesList" style="margin-top:15px;"></div>
 </div>
 
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div>Uploading... Please wait</div>
-</div>
-
 <!-- Password Modal -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
-        <h3 id="modalTitle">Enter Password</h3>
+        <h3 id="modalTitle" style="color:#1a73e8;">Enter Password</h3>
         <div class="password-wrapper">
             <input type="password" id="modalPassword" placeholder="Enter password">
             <button type="button" class="toggle-password" onclick="toggleModalPassword()">Show</button>
@@ -212,7 +184,7 @@
     </div>
 </div>
 
-<!-- Confirm Delete Modal -->
+<!-- Confirm Modal -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <h3 style="color:#e74c3c;" id="confirmTitle">Confirm Delete</h3>
@@ -220,6 +192,17 @@
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
             <button class="btn-confirm-danger" onclick="executeConfirmAction()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal-overlay" id="messageModal">
+    <div class="modal-box">
+        <h3 id="messageTitle" style="color:#1a73e8;">Message</h3>
+        <p id="messageText" style="color:#555; line-height:1.5; margin:0;"></p>
+        <div class="modal-actions">
+            <button class="btn-ok" onclick="closeMessageModal()" style="flex:1;">OK</button>
         </div>
     </div>
 </div>
@@ -244,8 +227,14 @@
     if (isAdmin) document.getElementById("adminBadge").style.display = "inline-block";
     if (isMaster) document.getElementById("masterPanel").style.display = "block";
 
-    function showLoading(show) {
-        document.getElementById("loadingOverlay").classList.toggle("show", show);
+    function showMessage(title, text, isError = false) {
+        document.getElementById("messageTitle").innerText = title;
+        document.getElementById("messageTitle").style.color = isError ? "#e74c3c" : "#1a73e8";
+        document.getElementById("messageText").innerHTML = text;
+        document.getElementById("messageModal").classList.add("show");
+    }
+    function closeMessageModal() {
+        document.getElementById("messageModal").classList.remove("show");
     }
 
     function showPasswordModal(title, callback) {
@@ -286,7 +275,6 @@
         if (e.key === "Enter") submitModalPassword();
     });
 
-    // Professional Confirm Modal
     function showConfirmModal(title, text, callback) {
         document.getElementById("confirmTitle").innerText = title;
         document.getElementById("confirmText").innerHTML = text;
@@ -349,13 +337,11 @@
     }
     function filterNotes() {
         const term = document.getElementById("searchNotes").value.toLowerCase();
-        const filtered = allNotesFolders.filter(f => f.name.toLowerCase().includes(term));
-        renderFolderList("notesFolders", filtered);
+        renderFolderList("notesFolders", allNotesFolders.filter(f => f.name.toLowerCase().includes(term)));
     }
     function filterResults() {
         const term = document.getElementById("searchResults").value.toLowerCase();
-        const filtered = allResultsFolders.filter(f => f.name.toLowerCase().includes(term));
-        renderFolderList("resultsFolders", filtered);
+        renderFolderList("resultsFolders", allResultsFolders.filter(f => f.name.toLowerCase().includes(term)));
     }
 
     async function createFolder() {
@@ -363,16 +349,19 @@
         const name = document.getElementById("newFolderName").value.trim();
         const password = document.getElementById("newFolderPassword").value;
         const type = document.getElementById("newFolderType").value;
-        if (!name || !password) return alert("Please enter name and password");
-
+        if (!name || !password) {
+            showMessage("Missing Information", "Please enter both folder name and password.", true);
+            return;
+        }
         const { error } = await client.from("folders").insert({
             school: currentSchool, year: currentYear, name, password, type
         });
-        if (error) alert("Failed: " + error.message);
-        else {
-            alert("Folder created!");
+        if (error) {
+            showMessage("Error", "Failed: " + error.message, true);
+        } else {
             document.getElementById("newFolderName").value = "";
             document.getElementById("newFolderPassword").value = "";
+            showMessage("Success", "Folder created successfully!");
             loadFolders();
         }
     }
@@ -419,28 +408,30 @@
     }
     function filterFiles() {
         const term = document.getElementById("searchFiles").value.toLowerCase();
-        const filtered = allFiles.filter(f => f.name.toLowerCase().includes(term));
-        renderFiles(filtered);
+        renderFiles(allFiles.filter(f => f.name.toLowerCase().includes(term)));
     }
 
+    // ===== UPLOAD (simplified, no loading overlay) =====
     function uploadToFolder() {
         if (!isAdmin) return;
-        showPasswordModal("Enter folder password", async () => {
-            const fileInput = document.getElementById("fileToUpload");
-            if (!fileInput.files.length) return alert("Select a file");
+        const fileInput = document.getElementById("fileToUpload");
+        if (!fileInput.files.length) {
+            showMessage("No File", "Please select a file first.", true);
+            return;
+        }
 
+        showPasswordModal("Enter folder password", async () => {
             const file = fileInput.files[0];
             const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-            showLoading(true);
             const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
-            showLoading(false);
 
-            if (error) alert("Upload failed: " + error.message);
-            else {
-                alert("Uploaded successfully!");
+            if (error) {
+                showMessage("Upload Failed", error.message, true);
+            } else {
                 fileInput.value = "";
+                showMessage("Success", "File uploaded successfully!");
                 loadFilesInFolder();
             }
         });
@@ -449,35 +440,29 @@
     function deleteFile(fileName) {
         if (!isAdmin) return;
         showPasswordModal("Enter password to delete file", () => {
-            showConfirmModal(
-                "Delete File",
-                `Are you sure you want to permanently delete <strong>${fileName}</strong>?`,
-                async () => {
-                    const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
-                    await client.storage.from("notes-files").remove([path]);
-                    loadFilesInFolder();
-                }
-            );
+            showConfirmModal("Delete File", `Are you sure you want to delete <strong>${fileName}</strong>?`, async () => {
+                const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
+                await client.storage.from("notes-files").remove([path]);
+                loadFilesInFolder();
+                showMessage("Deleted", "File deleted successfully.");
+            });
         });
     }
 
     function deleteCurrentFolder() {
         if (!isAdmin) return;
         showPasswordModal("Enter password to delete folder", () => {
-            showConfirmModal(
-                "Delete Folder",
-                `Are you sure you want to permanently delete the folder <strong>${currentFolder.name}</strong> and all its files?`,
-                async () => {
-                    const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-                    const { data: files } = await client.storage.from("notes-files").list(path);
-                    if (files?.length) {
-                        await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
-                    }
-                    await client.from("folders").delete().eq("id", currentFolder.id);
-                    backToYear();
-                    loadFolders();
+            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all its files?`, async () => {
+                const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
+                const { data: files } = await client.storage.from("notes-files").list(path);
+                if (files?.length) {
+                    await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
                 }
-            );
+                await client.from("folders").delete().eq("id", currentFolder.id);
+                backToYear();
+                loadFolders();
+                showMessage("Deleted", "Folder deleted successfully.");
+            });
         });
     }
 </script>

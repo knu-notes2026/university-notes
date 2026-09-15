@@ -25,6 +25,7 @@
         .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
         .folder-card:hover { background: #f3e5f5; border-color: #8e44ad; }
 
+        /* Loading Overlay */
         .loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -34,10 +35,11 @@
         .spinner {
             width: 60px; height: 60px; border: 6px solid rgba(255,255,255,0.25);
             border-top: 6px solid #fff; border-radius: 50%;
-            animation: spin 0.85s linear infinite; margin-bottom: 20px;
+            animation: spin 0.85s linear infinite; margin-bottom: 18px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
@@ -110,7 +112,7 @@
             </select>
             <input type="text" id="tutLink" placeholder="Paste YouTube or video URL here">
             <input type="file" id="tutFile" accept="video/*" style="display:none;">
-            <button class="btn btn-primary" id="addTutBtn" onclick="addTutorial()">Add Tutorial</button>
+            <button class="btn btn-primary" onclick="addTutorial()">Add Tutorial</button>
             <button class="btn btn-danger" onclick="deleteCurrentFolder()" style="margin-left:8px;">Delete this Folder</button>
         </div>
 
@@ -118,7 +120,7 @@
     </div>
 </div>
 
-<!-- Loading -->
+<!-- Loading Overlay -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div id="loadingText">Uploading... Please wait</div>
@@ -140,7 +142,7 @@
     </div>
 </div>
 
-<!-- Delete Confirm -->
+<!-- Delete Confirm Modal -->
 <div class="modal-overlay" id="deleteConfirmModal">
     <div class="modal-box">
         <h3 style="color:#e74c3c;">Confirm Delete</h3>
@@ -208,19 +210,20 @@
         document.getElementById("tutFile").style.display = type === "video" ? "block" : "none";
     }
 
-    // ===== Password Modal =====
+    // ===== Password Modal (Fixed) =====
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
         document.getElementById("modalError").style.display = "none";
         document.getElementById("passwordModal").classList.add("show");
-        setTimeout(() => document.getElementById("modalPassword").focus(), 100);
+        document.getElementById("modalPassword").focus();
         modalCallback = callback;
     }
+
     function closePasswordModal() {
         document.getElementById("passwordModal").classList.remove("show");
-        modalCallback = null;
     }
+
     function toggleModalPassword() {
         const input = document.getElementById("modalPassword");
         const btn = event.target;
@@ -232,21 +235,23 @@
             btn.innerText = "Show";
         }
     }
+
     function submitPasswordModal() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
 
         if (isCorrect) {
-            closePasswordModal();
-            if (typeof modalCallback === "function") {
-                modalCallback();
-            }
+            const cb = modalCallback;
+            modalCallback = null;
+            document.getElementById("passwordModal").classList.remove("show");
+            if (typeof cb === "function") cb();
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
             document.getElementById("modalPassword").focus();
         }
     }
+
     document.getElementById("modalPassword").addEventListener("keyup", e => {
         if (e.key === "Enter") submitPasswordModal();
     });
@@ -411,8 +416,6 @@
 
     // ===== MAIN UPLOAD FUNCTION =====
     function addTutorial() {
-        console.log("Add Tutorial clicked");
-
         if (!currentFolder) {
             showMessage("No Folder Open", "Please open a folder first before adding a tutorial.", true);
             return;
@@ -426,9 +429,7 @@
             return;
         }
 
-        // Always show password modal first
-        showPasswordModal("Enter folder password to continue", function() {
-            // This runs AFTER correct password is entered
+        showPasswordModal("Enter folder password to continue", function () {
             performUpload(title, type);
         });
     }
@@ -458,8 +459,6 @@
                 const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
                 const path = `tutorials/${school}/${year}/${currentFolder.id}/${Date.now()}_${cleanName}`;
 
-                console.log("Uploading to path:", path);
-
                 const { error: upError } = await client.storage
                     .from("notes-files")
                     .upload(path, file);
@@ -472,7 +471,6 @@
                 content = path;
             }
 
-            // Insert into database
             const { error } = await client.from("tutorials").insert({
                 school: school,
                 year: year,
@@ -485,13 +483,11 @@
             showLoading(false);
 
             if (error) {
-                console.error(error);
                 showMessage("Database Error", 
                     error.message + 
                     "<br><br><strong>Most common cause:</strong> the <code>folder_id</code> column does not exist yet.<br>" +
-                    "Please run this SQL in Supabase:<br><code>ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS folder_id UUID;</code>", true);
+                    "Run this SQL in Supabase:<br><code>ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS folder_id UUID;</code>", true);
             } else {
-                // Clear form
                 document.getElementById("tutTitle").value = "";
                 document.getElementById("tutLink").value = "";
                 document.getElementById("tutFile").value = "";
@@ -500,7 +496,6 @@
             }
         } catch (err) {
             showLoading(false);
-            console.error(err);
             showMessage("Unexpected Error", err.message, true);
         }
     }

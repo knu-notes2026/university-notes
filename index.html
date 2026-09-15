@@ -21,6 +21,7 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
         }
+
         .welcome-container {
             background: rgba(255, 255, 255, 0.95);
             padding: 45px 35px;
@@ -32,20 +33,161 @@
             border-top: 6px solid #1a73e8;
             backdrop-filter: blur(5px);
         }
-        h1 { color: #1a73e8; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; }
-        h3 { color: #5f6368; font-weight: 500; margin-top: 0; margin-bottom: 30px; }
+
+        h1 {
+            color: #1a73e8;
+            font-size: 26px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        h3 {
+            color: #5f6368;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+
         .enter-btn {
-            display: inline-block; width: 90%; padding: 15px; background: #1a73e8; color: white;
-            border: none; border-radius: 6px; font-size: 18px; cursor: pointer; font-weight: bold;
-            margin-bottom: 15px; transition: 0.2s;
+            display: inline-block;
+            width: 90%;
+            padding: 15px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+            transition: 0.2s;
         }
-        .enter-btn:hover { background: #1557b0; transform: translateY(-2px); }
+        .enter-btn:hover {
+            background: #1557b0;
+            transform: translateY(-2px);
+        }
+
         .admin-btn {
-            background: #f39c12; color: white; border: none; padding: 12px 28px;
-            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: 0.2s;
         }
-        .admin-btn:hover { background: #d35400; }
-        .credits { font-size: 14px; color: #70757a; margin-top: 30px; font-style: italic; border-top: 1px solid #eee; padding-top: 15px; }
+        .admin-btn:hover {
+            background: #d35400;
+        }
+
+        .credits {
+            font-size: 14px;
+            color: #70757a;
+            margin-top: 30px;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        /* ===== Modern Sliding Modal ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(-50px);
+            transition: transform 0.35s ease;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+
+        .modal-overlay.show .modal-box {
+            transform: translateY(0);
+        }
+
+        .modal-box h3 {
+            margin-top: 0;
+            color: #1a73e8;
+            font-size: 20px;
+        }
+
+        .modal-box input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-box input:focus {
+            border-color: #1a73e8;
+        }
+
+        .modal-error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-confirm {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #1557b0;
+        }
     </style>
 </head>
 <body>
@@ -58,23 +200,71 @@
         Enter Into Main Notes Library
     </button>
 
-    <button class="admin-btn" onclick="goToAdmin()">
+    <button class="admin-btn" onclick="openAdminModal()">
         🔑 Admin Login
     </button>
 
     <div class="credits">Created by Kamima Nkhata</div>
 </div>
 
+<!-- Modern Password Modal -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <h3>🔑 Admin Login</h3>
+        <p style="margin: 8px 0 5px; color: #555;">Enter Admin Secure Passcode</p>
+        <input type="password" id="adminPassInput" placeholder="Enter passcode..." autocomplete="off">
+        <div class="modal-error" id="adminError">Wrong password or passcode. Please try again.</div>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeAdminModal()">Cancel</button>
+            <button class="btn-confirm" onclick="checkAdminPassword()">Login</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    function goToAdmin() {
-        const code = prompt("Enter Admin Secure Passcode:");
-        if (code === "KNUstuff@2026") {
+    function openAdminModal() {
+        document.getElementById("adminPassInput").value = "";
+        document.getElementById("adminError").style.display = "none";
+        document.getElementById("adminModal").classList.add("show");
+        setTimeout(() => {
+            document.getElementById("adminPassInput").focus();
+        }, 100);
+    }
+
+    function closeAdminModal() {
+        document.getElementById("adminModal").classList.remove("show");
+    }
+
+    function checkAdminPassword() {
+        const password = document.getElementById("adminPassInput").value;
+
+        if (password === "KNUstuff@2026") {
+            // Correct password
             sessionStorage.setItem("isAdmin", "true");
+            closeAdminModal();
             window.location.href = "dashboard.html";
         } else {
-            alert("Access Denied!");
+            // Wrong password
+            document.getElementById("adminError").style.display = "block";
+            document.getElementById("adminPassInput").value = "";
+            document.getElementById("adminPassInput").focus();
         }
     }
+
+    // Allow pressing Enter key
+    document.getElementById("adminPassInput").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            checkAdminPassword();
+        }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById("adminModal").addEventListener("click", function(e) {
+        if (e.target === this) {
+            closeAdminModal();
+        }
+    });
 </script>
 </body>
 </html>

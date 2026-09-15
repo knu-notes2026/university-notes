@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - KNU Notes</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #1565c0;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h2 { margin: 0; }
+        .tabs {
+            display: flex;
+            background: #e3f2fd;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #1565c0;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #1565c0;
+        }
+        .form-section {
+            padding: 30px;
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        .phone-input {
+            display: flex;
+            gap: 8px;
+        }
+        .phone-prefix {
+            background: #f5f5f5;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: #888;
+            font-weight: bold;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn:hover { background: #0d47a1; }
+        .btn:disabled {
+            background: #90caf9;
+            cursor: not-allowed;
+        }
+        .error {
+            color: #c62828;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+        .success {
+            color: #2e7d32;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+        .back {
+            text-align: center;
+            padding: 15px;
+            background: #f5f5f5;
+        }
+        .back a {
+            color: #555;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Student Portal</h2>
+        <p style="margin:8px 0 0; opacity:0.9;">Test Results & Continuous Assessment</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('login')">Login</div>
+        <div class="tab" onclick="showTab('register')">Register</div>
+        <div class="tab" onclick="showTab('forgot')">Forgot Password</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login" class="form-section active">
+        <label>Student Number</label>
+        <input type="text" id="loginStudentNo" placeholder="e.g. 20252799" maxlength="8">
+
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password">
+
+        <div class="error" id="loginError"></div>
+
+        <button class="btn" onclick="loginStudent()">Login</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register" class="form-section">
+        <label>Student Number</label>
+        <input type="text" id="regStudentNo" placeholder="Must start with 202 (8 digits)" maxlength="8">
+
+        <label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="yourname@example.com">
+
+        <label>Phone Number</label>
+        <div class="phone-input">
+            <div class="phone-prefix">+260</div>
+            <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
+        </div>
+
+        <label>Year of Study</label>
+        <select id="regYear">
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+        </select>
+
+        <label>Password (minimum 6 characters)</label>
+        <input type="password" id="regPassword" placeholder="Create password">
+
+        <label>Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Re-enter password">
+
+        <div class="error" id="regError"></div>
+        <div class="success" id="regSuccess"></div>
+
+        <button class="btn" onclick="registerStudent()">Create Account</button>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div id="forgot" class="form-section">
+        <div id="forgotStep1">
+            <label>Student Number</label>
+            <input type="text" id="forgotStudentNo" placeholder="e.g. 20252799" maxlength="8">
+
+            <label>Email Address used during registration</label>
+            <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+
+            <div class="error" id="forgotError"></div>
+            <div class="success" id="forgotSuccess"></div>
+
+            <button class="btn" id="sendCodeBtn" onclick="sendVerificationCode()">Send Verification Code</button>
+        </div>
+
+        <div id="forgotStep2" style="display:none;">
+            <p>We have sent a 6-digit code to your email.</p>
+            <label>Enter Verification Code</label>
+            <input type="text" id="verificationCode" placeholder="Enter 6-digit code" maxlength="6">
+
+            <div class="error" id="codeError"></div>
+
+            <button class="btn" onclick="verifyCode()">Verify Code</button>
+        </div>
+
+        <div id="forgotStep3" style="display:none;">
+            <label>New Password</label>
+            <input type="password" id="newPassword" placeholder="Minimum 6 characters">
+
+            <label>Confirm New Password</label>
+            <input type="password" id="newConfirm" placeholder="Re-enter new password">
+
+            <div class="error" id="resetError"></div>
+
+            <button class="btn" onclick="resetPassword()">Set New Password</button>
+        </div>
+    </div>
+
+    <div class="back">
+        <a href="dashboard.html">← Back to Main Portal</a>
+    </div>
+</div>
+
+<script>
+    // EmailJS Config
+    const EMAILJS_PUBLIC_KEY = "GzC9jPWbMEmQP9FWF";
+    const EMAILJS_SERVICE_ID = "service_20m7yx8";
+    const EMAILJS_TEMPLATE_ID = "template_4mqzobi";
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    // Supabase
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const client = supabase.createClient(DB_URL, DB_KEY);
+
+    let verifiedStudentId = null;
+    let generatedCode = null;
+
+    function showTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tab).classList.add('active');
+    }
+
+    // REGISTER
+    async function registerStudent() {
+        const studentNo = document.getElementById("regStudentNo").value.trim();
+        const email = document.getElementById("regEmail").value.trim();
+        const phone = document.getElementById("regPhone").value.trim();
+        const year = document.getElementById("regYear").value;
+        const password = document.getElementById("regPassword").value;
+        const confirm = document.getElementById("regConfirm").value;
+
+        const errorDiv = document.getElementById("regError");
+        const successDiv = document.getElementById("regSuccess");
+        errorDiv.style.display = "none";
+        successDiv.style.display = "none";
+
+        if (!/^202\d{5}$/.test(studentNo)) {
+            errorDiv.innerText = "Student Number must start with 202 and be exactly 8 digits (e.g. 20252799)";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (!email || !email.includes("@")) {
+            errorDiv.innerText = "Please enter a valid email address";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password.length < 6) {
+            errorDiv.innerText = "Password must be at least 6 characters";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password !== confirm) {
+            errorDiv.innerText = "Passwords do not match";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { error } = await client.from("students").insert({
+            student_number: studentNo,
+            email: email,
+            phone: phone ? "+260" + phone : null,
+            year: year,
+            password: password
+        });
+
+        if (error) {
+            if (error.message.includes("duplicate") || error.message.includes("unique")) {
+                errorDiv.innerText = "Student Number or Email already registered";
+            } else {
+                errorDiv.innerText = "Registration failed: " + error.message;
+            }
+            errorDiv.style.display = "block";
+        } else {
+            successDiv.innerText = "Account created successfully! You can now login.";
+            successDiv.style.display = "block";
+            document.getElementById("regStudentNo").value = "";
+            document.getElementById("regEmail").value = "";
+            document.getElementById("regPhone").value = "";
+            document.getElementById("regPassword").value = "";
+            document.getElementById("regConfirm").value = "";
+        }
+    }
+
+    // LOGIN
+    async function loginStudent() {
+        const studentNo = document.getElementById("loginStudentNo").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const errorDiv = document.getElementById("loginError");
+        errorDiv.style.display = "none";
+
+        if (!studentNo || !password) {
+            errorDiv.innerText = "Please enter both Student Number and Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data, error } = await client
+            .from("students")
+            .select("*")
+            .eq("student_number", studentNo)
+            .eq("password", password)
+            .single();
+
+        if (error || !data) {
+            errorDiv.innerText = "Invalid Student Number or Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        sessionStorage.setItem("studentLoggedIn", "true");
+        sessionStorage.setItem("studentNumber", data.student_number);
+        sessionStorage.setItem("studentYear", data.year);
+        sessionStorage.setItem("studentEmail", data.email);
+        sessionStorage.setItem("studentId", data.id);
+
+        window.location.href = "student-dashboard.html";
+    }
+
+    // SEND VERIFICATION CODE
+    async function sendVerificationCode() {
+        const studentNo = document.getElementById("forgotStudentNo").value.trim();
+        const email = document.getElementById("forgotEmail").value.trim();
+        const errorDiv = document.getElementById("forgotError");
+        const successDiv = document.getElementById("forgotSuccess");
+        const sendBtn = document.getElementById("sendCodeBtn");
+
+        errorDiv.style.display = "none";
+        successDiv.style.display = "none";
+
+        if (!studentNo || !email) {
+            errorDiv.innerText = "Please fill in both fields";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data, error } = await client
+            .from("students")
+            .select("*")
+            .eq("student_number", studentNo)
+            .eq("email", email)
+            .single();
+
+        if (error || !data) {
+            errorDiv.innerText = "Student Number and Email do not match our records";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+        verifiedStudentId = data.id;
+
+        sendBtn.disabled = true;
+        sendBtn.innerText = "Sending...";
+
+        try {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                to_email: email,
+                code: generatedCode,
+                student_number: studentNo
+            });
+
+            successDiv.innerText = "Verification code sent to your email!";
+            successDiv.style.display = "block";
+            document.getElementById("forgotStep1").style.display = "none";
+            document.getElementById("forgotStep2").style.display = "block";
+        } catch (err) {
+            console.error(err);
+            errorDiv.innerText = "Failed to send email. Please try again.";
+            errorDiv.style.display = "block";
+        }
+
+        sendBtn.disabled = false;
+        sendBtn.innerText = "Send Verification Code";
+    }
+
+    function verifyCode() {
+        const enteredCode = document.getElementById("verificationCode").value.trim();
+        const errorDiv = document.getElementById("codeError");
+        errorDiv.style.display = "none";
+
+        if (enteredCode !== generatedCode) {
+            errorDiv.innerText = "Incorrect verification code.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        document.getElementById("forgotStep2").style.display = "none";
+        document.getElementById("forgotStep3").style.display = "block";
+    }
+
+    async function resetPassword() {
+        const newPass = document.getElementById("newPassword").value;
+        const confirm = document.getElementById("newConfirm").value;
+        const errorDiv = document.getElementById("resetError");
+        errorDiv.style.display = "none";
+
+        if (newPass.length < 6) {
+            errorDiv.innerText = "Password must be at least 6 characters";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (newPass !== confirm) {
+            errorDiv.innerText = "Passwords do not match";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { error } = await client
+            .from("students")
+            .update({ password: newPass })
+            .eq("id", verifiedStudentId);
+
+        if (error) {
+            errorDiv.innerText = "Failed to update password";
+            errorDiv.style.display = "block";
+        } else {
+            alert("Password updated successfully! Please login.");
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>

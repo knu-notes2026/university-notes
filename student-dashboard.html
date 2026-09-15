@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - KNU</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .header { background: #1565c0; color: white; padding: 18px 25px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h2 { margin: 0; font-size: 20px; }
+        .btn { padding: 9px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-light { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); }
+        .btn-danger { background: #c62828; color: white; }
+        .btn-primary { background: #1565c0; color: white; }
+        .schools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .school-card { background: white; padding: 25px; text-align: center; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border-top: 5px solid #1565c0; }
+        .school-card:hover { transform: translateY(-3px); }
+        .section { background: white; padding: 25px; border-radius: 8px; margin-top: 20px; display: none; }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
+        .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; }
+        .folder-card.locked { opacity: 0.6; cursor: not-allowed; }
+        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .info-box { background: #e3f2fd; border-left: 5px solid #1565c0; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h2>Student Results Portal</h2>
+        <small id="studentInfo"></small>
+    </div>
+    <div>
+        <button class="btn btn-light" onclick="logout()">Logout</button>
+        <button class="btn btn-danger" onclick="deleteAccount()" style="margin-left:8px;">Delete Account</button>
+    </div>
+</div>
+
+<div id="schoolView">
+    <div class="info-box">
+        You can only <strong>view and download</strong> results for your registered year. Other years will appear locked.
+    </div>
+
+    <h3>Select a School</h3>
+    <div class="schools-grid">
+        <div class="school-card" onclick="selectSchool('business')">🏢 <h3>School of Business</h3></div>
+        <div class="school-card" onclick="selectSchool('education')">🍎 <h3>School of Education</h3></div>
+        <div class="school-card" onclick="selectSchool('natural-sciences')">🔬 <h3>School of Natural Sciences</h3></div>
+        <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
+    </div>
+</div>
+
+<div id="mainView" class="section">
+    <button class="btn btn-primary" onclick="backToSchools()">← Back to Schools</button>
+    <h2 id="schoolTitle" style="margin-top:15px;"></h2>
+
+    <h3 style="margin-top:25px;">📊 Available Results Folders</h3>
+    <div class="folder-grid" id="resultsFolders"></div>
+</div>
+
+<div id="folderView" class="section">
+    <button class="btn btn-primary" onclick="backToYear()">← Back</button>
+    <h2 id="folderTitle" style="margin-top:15px;"></h2>
+    <div id="filesList" style="margin-top:20px;"></div>
+</div>
+
+<script>
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const client = supabase.createClient(DB_URL, DB_KEY);
+
+    if (sessionStorage.getItem("studentLoggedIn") !== "true") {
+        window.location.href = "student-auth.html";
+    }
+
+    const studentYear = sessionStorage.getItem("studentYear");
+    const studentNumber = sessionStorage.getItem("studentNumber");
+    document.getElementById("studentInfo").innerText = `Logged in as: ${studentNumber} (Year ${studentYear})`;
+
+    let currentSchool = "";
+    let currentFolder = null;
+
+    function selectSchool(school) {
+        currentSchool = school;
+        document.getElementById("schoolView").style.display = "none";
+        document.getElementById("mainView").style.display = "block";
+        document.getElementById("schoolTitle").innerText = school.replace("-", " ").toUpperCase();
+        loadResultsFolders();
+    }
+
+    function backToSchools() {
+        document.getElementById("mainView").style.display = "none";
+        document.getElementById("schoolView").style.display = "block";
+    }
+
+    async function loadResultsFolders() {
+        const { data, error } = await client
+            .from("folders")
+            .select("*")
+            .eq("school", currentSchool)
+            .eq("type", "results");
+
+        const container = document.getElementById("resultsFolders");
+        if (error || !data || data.length === 0) {
+            container.innerHTML = "<p style='color:#888;'>No results folders available yet.</p>";
+            return;
+        }
+
+        container.innerHTML = data.map(f => {
+            const isLocked = f.year !== studentYear;
+            return `
+                <div class="folder-card ${isLocked ? 'locked' : ''}" 
+                     onclick="${isLocked ? `alert('You can only view results for Year ${studentYear}')` : `openFolder(${JSON.stringify(f).replace(/"/g, '&quot;')})`}">
+                    <div style="font-size:28px;">${isLocked ? '🔒' : '📊'}</div>
+                    <div style="font-weight:bold; margin-top:8px;">${f.name}</div>
+                    <small>Year ${f.year}</small>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function openFolder(folder) {
+        currentFolder = folder;
+        document.getElementById("mainView").style.display = "none";
+        document.getElementById("folderView").style.display = "block";
+        document.getElementById("folderTitle").innerText = folder.name;
+        loadFiles();
+    }
+
+    function backToYear() {
+        document.getElementById("folderView").style.display = "none";
+        document.getElementById("mainView").style.display = "block";
+    }
+
+    async function loadFiles() {
+        const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
+        const { data, error } = await client.storage.from("notes-files").list(path);
+        const container = document.getElementById("filesList");
+
+        if (error || !data || data.length === 0) {
+            container.innerHTML = "<p style='color:#888;'>No files in this folder.</p>";
+            return;
+        }
+
+        container.innerHTML = data.filter(f => f.name && !f.name.startsWith(".")).map(f => {
+            const url = `${DB_URL}/storage/v1/object/public/notes-files/${path}/${f.name}`;
+            return `
+                <div class="note-item">
+                    <span>📄 ${f.name}</span>
+                    <a href="${url}" target="_blank" class="btn btn-primary" style="text-decoration:none;">View / Download</a>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = "student-auth.html";
+    }
+
+    async function deleteAccount() {
+        if (!confirm("Are you sure you want to permanently delete your account?")) return;
+
+        const password = prompt("Enter your password to confirm deletion:");
+        if (!password) return;
+
+        const studentId = sessionStorage.getItem("studentId");
+        const { data } = await client.from("students").select("password").eq("id", studentId).single();
+        
+        if (!data || data.password !== password) {
+            alert("Wrong password");
+            return;
+        }
+
+        const { error } = await client.from("students").delete().eq("id", studentId);
+        if (error) {
+            alert("Failed to delete account");
+        } else {
+            alert("Account deleted successfully");
+            sessionStorage.clear();
+            window.location.href = "index.html";
+        }
+    }
+</script>
+</body>
+</html>

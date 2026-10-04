@@ -1,1 +1,737 @@
-jjkkkk
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Kwame Nkrumah University Notes</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e7e34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KNU Notes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('campus.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .welcome-container {
+            background: rgba(255,255,255,0.96);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 460px;
+            text-align: center;
+            border-top: 6px solid #1a73e8;
+        }
+        h1 {
+            color: #1a73e8;
+            font-size: 24px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        h3 {
+            color: #5f6368;
+            font-weight: 500;
+            margin-bottom: 28px;
+            font-size: 16px;
+        }
+        .enter-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 14px;
+        }
+        .enter-btn:hover { background: #1557b0; }
+        .admin-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .admin-btn:hover { background: #d35400; }
+        .credits {
+            font-size: 13px;
+            color: #777;
+            margin-top: 28px;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 14px;
+        }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            background: #1a73e8;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 14px 14px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { margin: 0; font-size: 18px; color: white; }
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 26px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* Passcode Modal */
+        .passcode-content {
+            padding: 30px 25px;
+            text-align: center;
+        }
+        .passcode-content h3 {
+            color: #1a73e8;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+        .passcode-content p {
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .password-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding: 13px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1a73e8;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .error-msg {
+            color: #c62828;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-confirm { background: #1a73e8; color: white; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #e8f0fe;
+        }
+        .tab {
+            flex: 1;
+            padding: 13px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1a73e8;
+            font-size: 14px;
+            border: none;
+            background: none;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #1a73e8;
+        }
+        .form-section {
+            padding: 20px;
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        input, select {
+            width: 100%;
+            padding: 11px 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .name-row {
+            display: flex;
+            gap: 10px;
+        }
+        .name-row > div { flex: 1; }
+        .phone-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .phone-prefix {
+            background: #f1f3f4;
+            padding: 11px 12px;
+            border-radius: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            margin-top: 18px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-submit:hover { background: #1557b0; }
+        .success-msg {
+            color: #2e7d32;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="welcome-container">
+    <h1>Welcome to</h1>
+    <h1>Kwame Nkrumah University</h1>
+    <h3>Notes & Results Portal</h3>
+
+    <button class="enter-btn" onclick="window.location.href='dashboard.html'">
+        Enter Into Main Notes Library
+    </button>
+
+    <button class="admin-btn" id="adminLoginBtn">
+        🔑 Admin Login
+    </button>
+
+    <div class="credits">Created by Kamima Nkhata & Benard Cox</div>
+</div>
+
+<!-- ========== 1. PASSCODE MODAL ========== -->
+<div class="modal-overlay" id="passcodeModal">
+    <div class="modal-box" style="max-width:400px;">
+        <div class="passcode-content">
+            <h3>🔑 Admin Access</h3>
+            <p>Enter the Admin Passcode to continue</p>
+
+            <div class="password-wrapper">
+                <input type="password" id="passcodeInput" placeholder="Enter passcode...">
+                <button type="button" class="toggle-btn" id="togglePasscode">Show</button>
+            </div>
+
+            <div class="error-msg" id="passcodeError">Wrong passcode. Please try again.</div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancelPasscode">Cancel</button>
+                <button class="btn-confirm" id="confirmPasscode">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 2. FULL ADMIN MODAL ========== -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Admin Portal</h3>
+            <button class="close-btn" id="closeAdminModal">&times;</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="login">Login</button>
+            <button class="tab" data-tab="register">Register</button>
+            <button class="tab" data-tab="forgot">Forgot Password</button>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="tab-login" class="form-section active">
+            <label>Email or Phone Number</label>
+            <input type="text" id="loginIdentity" placeholder="Email or phone number">
+
+            <label>Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="loginPassword" placeholder="Enter password">
+                <button type="button" class="toggle-btn" data-target="loginPassword">Show</button>
+            </div>
+
+            <div class="error-msg" id="loginError"></div>
+            <button class="btn-submit" id="loginBtn">Login</button>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="tab-register" class="form-section">
+            <div class="name-row">
+                <div>
+                    <label>First Name *</label>
+                    <input type="text" id="regFirstName" placeholder="First name">
+                </div>
+                <div>
+                    <label>Middle Name</label>
+                    <input type="text" id="regMiddleName" placeholder="Optional">
+                </div>
+            </div>
+
+            <label>Last Name *</label>
+            <input type="text" id="regLastName" placeholder="Last name">
+
+            <label>Gender *</label>
+            <select id="regGender">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+
+            <label>Email * (must end with @gmail.com)</label>
+            <input type="email" id="regEmail" placeholder="example@gmail.com">
+
+            <label>Phone Number *</label>
+            <div class="phone-row">
+                <div class="phone-prefix">+260</div>
+                <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
+            </div>
+
+            <label>School *</label>
+            <select id="regSchool">
+                <option value="">Select School</option>
+                <option value="business">School of Business</option>
+                <option value="education">School of Education</option>
+                <option value="natural-sciences">School of Natural Sciences</option>
+                <option value="humanities">School of Humanities</option>
+            </select>
+
+            <label>Position *</label>
+            <select id="regPosition">
+                <option value="">Select Position</option>
+                <option value="Class Representative">Class Representative</option>
+                <option value="HOD">HOD</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Dean of Students">Dean of Students</option>
+                <option value="Union Leader">Union Leader / Other</option>
+            </select>
+
+            <div id="customPositionBox" style="display:none;">
+                <label>Specify Position *</label>
+                <input type="text" id="regCustomPosition" placeholder="e.g. SRC President">
+            </div>
+
+            <div id="studentFields" style="display:none;">
+                <label>Student Number *</label>
+                <input type="text" id="regStudentNo" placeholder="202XXXXX" maxlength="8">
+
+                <label>Year of Study *</label>
+                <select id="regYear">
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                </select>
+            </div>
+
+            <label>Password * (min 6 characters)</label>
+            <div class="password-wrapper">
+                <input type="password" id="regPassword" placeholder="Create password">
+                <button type="button" class="toggle-btn" data-target="regPassword">Show</button>
+            </div>
+
+            <label>Confirm Password *</label>
+            <div class="password-wrapper">
+                <input type="password" id="regConfirm" placeholder="Re-enter password">
+                <button type="button" class="toggle-btn" data-target="regConfirm">Show</button>
+            </div>
+
+            <div class="error-msg" id="regError"></div>
+            <div class="success-msg" id="regSuccess"></div>
+            <button class="btn-submit" id="registerBtn">Create Account</button>
+            <p class="info-text">Your account will be pending until approved by the ICT team (within 24 hours).</p>
+        </div>
+
+        <!-- FORGOT -->
+        <div id="tab-forgot" class="form-section">
+            <label>Email Address *</label>
+            <input type="email" id="forgotEmail" placeholder="Your registered email">
+
+            <label>Phone Number *</label>
+            <div class="phone-row">
+                <div class="phone-prefix">+260</div>
+                <input type="text" id="forgotPhone" placeholder="97XXXXXXX" maxlength="9">
+            </div>
+
+            <div class="error-msg" id="forgotError"></div>
+            <div class="success-msg" id="forgotSuccess"></div>
+            <button class="btn-submit" id="forgotBtn">Verify Identity</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========== CONFIG ==========
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const client = supabase.createClient(DB_URL, DB_KEY);
+
+    const ADMIN_PASSCODE = "KNUstaff@2026";
+    const MASTER_PASSWORD = "Staff@KNU.2026";
+
+    // ========== ELEMENTS ==========
+    const passcodeModal = document.getElementById("passcodeModal");
+    const adminModal = document.getElementById("adminModal");
+    const passcodeInput = document.getElementById("passcodeInput");
+    const passcodeError = document.getElementById("passcodeError");
+
+    // ========== OPEN / CLOSE ==========
+    document.getElementById("adminLoginBtn").addEventListener("click", function() {
+        passcodeInput.value = "";
+        passcodeError.style.display = "none";
+        passcodeModal.classList.add("active");
+        setTimeout(() => passcodeInput.focus(), 100);
+    });
+
+    document.getElementById("cancelPasscode").addEventListener("click", function() {
+        passcodeModal.classList.remove("active");
+    });
+
+    document.getElementById("closeAdminModal").addEventListener("click", function() {
+        adminModal.classList.remove("active");
+    });
+
+    // ========== TOGGLE PASSWORD ==========
+    document.getElementById("togglePasscode").addEventListener("click", function() {
+        if (passcodeInput.type === "password") {
+            passcodeInput.type = "text";
+            this.innerText = "Hide";
+        } else {
+            passcodeInput.type = "password";
+            this.innerText = "Show";
+        }
+    });
+
+    document.querySelectorAll(".toggle-btn[data-target]").forEach(btn => {
+        btn.addEventListener("click", function() {
+            const input = document.getElementById(this.dataset.target);
+            if (input.type === "password") {
+                input.type = "text";
+                this.innerText = "Hide";
+            } else {
+                input.type = "password";
+                this.innerText = "Show";
+            }
+        });
+    });
+
+    // ========== CHECK PASSCODE ==========
+    document.getElementById("confirmPasscode").addEventListener("click", checkPasscode);
+    passcodeInput.addEventListener("keyup", function(e) {
+        if (e.key === "Enter") checkPasscode();
+    });
+
+    function checkPasscode() {
+        const code = passcodeInput.value.trim();
+
+        // Master Admin
+        if (code === MASTER_PASSWORD) {
+            sessionStorage.setItem("isAdmin", "true");
+            sessionStorage.setItem("isMaster", "true");
+            sessionStorage.setItem("adminName", "Master Admin");
+            sessionStorage.setItem("adminPosition", "Master Admin");
+            passcodeModal.classList.remove("active");
+            window.location.href = "dashboard.html";
+            return;
+        }
+
+        // Normal Admin Passcode → open full form
+        if (code === ADMIN_PASSCODE) {
+            passcodeModal.classList.remove("active");
+            adminModal.classList.add("active");
+            return;
+        }
+
+        // Wrong
+        passcodeError.style.display = "block";
+        passcodeInput.value = "";
+        passcodeInput.focus();
+    }
+
+    // ========== TABS ==========
+    document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", function() {
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".form-section").forEach(s => s.classList.remove("active"));
+            this.classList.add("active");
+            document.getElementById("tab-" + this.dataset.tab).classList.add("active");
+        });
+    });
+
+    // ========== POSITION FIELDS ==========
+    document.getElementById("regPosition").addEventListener("change", function() {
+        const pos = this.value;
+        document.getElementById("customPositionBox").style.display = pos === "Union Leader" ? "block" : "none";
+        document.getElementById("studentFields").style.display = 
+            (pos === "Class Representative" || pos === "Union Leader") ? "block" : "none";
+    });
+
+    // ========== REGISTER ==========
+    document.getElementById("registerBtn").addEventListener("click", async function() {
+        const firstName = document.getElementById("regFirstName").value.trim();
+        const middleName = document.getElementById("regMiddleName").value.trim();
+        const lastName = document.getElementById("regLastName").value.trim();
+        const gender = document.getElementById("regGender").value;
+        const email = document.getElementById("regEmail").value.trim().toLowerCase();
+        const phone = document.getElementById("regPhone").value.trim();
+        const school = document.getElementById("regSchool").value;
+        const position = document.getElementById("regPosition").value;
+        const customPosition = document.getElementById("regCustomPosition").value.trim();
+        const studentNo = document.getElementById("regStudentNo").value.trim();
+        const year = document.getElementById("regYear").value;
+        const password = document.getElementById("regPassword").value;
+        const confirm = document.getElementById("regConfirm").value;
+
+        const errorDiv = document.getElementById("regError");
+        const successDiv = document.getElementById("regSuccess");
+        errorDiv.style.display = "none";
+        successDiv.style.display = "none";
+
+        if (!firstName || !lastName || !gender || !email || !phone || !school || !position) {
+            errorDiv.innerText = "Please fill all required fields (*)";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (!email.endsWith("@gmail.com")) {
+            errorDiv.innerText = "Email must end with @gmail.com";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (phone.length < 9) {
+            errorDiv.innerText = "Enter a valid 9-digit phone number";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (position === "Union Leader" && !customPosition) {
+            errorDiv.innerText = "Please specify your position";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if ((position === "Class Representative" || position === "Union Leader") && !studentNo) {
+            errorDiv.innerText = "Student Number is required";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password.length < 6) {
+            errorDiv.innerText = "Password must be at least 6 characters";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password !== confirm) {
+            errorDiv.innerText = "Passwords do not match";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data: existing } = await client.from("admin_accounts")
+            .select("email").eq("email", email).maybeSingle();
+
+        if (existing) {
+            errorDiv.innerText = "This email is already registered.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { error } = await client.from("admin_accounts").insert({
+            first_name: firstName,
+            middle_name: middleName || null,
+            last_name: lastName,
+            gender,
+            email,
+            phone: "+260" + phone,
+            school,
+            position,
+            custom_position: position === "Union Leader" ? customPosition : null,
+            student_number: studentNo || null,
+            year: (position === "Class Representative" || position === "Union Leader") ? year : null,
+            password,
+            status: "pending"
+        });
+
+        if (error) {
+            errorDiv.innerText = "Registration failed: " + error.message;
+            errorDiv.style.display = "block";
+        } else {
+            successDiv.innerText = "Account created successfully! Waiting for ICT approval (within 24 hours).";
+            successDiv.style.display = "block";
+        }
+    });
+
+    // ========== LOGIN ==========
+    document.getElementById("loginBtn").addEventListener("click", async function() {
+        const identity = document.getElementById("loginIdentity").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const errorDiv = document.getElementById("loginError");
+        errorDiv.style.display = "none";
+
+        if (!identity || !password) {
+            errorDiv.innerText = "Please enter email/phone and password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        let query = client.from("admin_accounts").select("*");
+        if (identity.includes("@")) {
+            query = query.eq("email", identity.toLowerCase());
+        } else {
+            query = query.or(`phone.eq.+260${identity},phone.eq.${identity}`);
+        }
+
+        const { data, error } = await query.eq("password", password).maybeSingle();
+
+        if (error || !data) {
+            errorDiv.innerText = "Invalid email/phone or password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        if (data.status === "pending") {
+            errorDiv.innerText = "Your account is still pending approval.";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (data.status === "denied") {
+            errorDiv.innerText = "Your account request was denied.";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        sessionStorage.setItem("isAdmin", "true");
+        sessionStorage.setItem("isMaster", "false");
+        sessionStorage.setItem("adminId", data.id);
+        sessionStorage.setItem("adminName", data.first_name + " " + data.last_name);
+        sessionStorage.setItem("adminPosition", data.custom_position || data.position);
+        sessionStorage.setItem("adminSchool", data.school);
+        sessionStorage.setItem("adminProfilePic", data.profile_pic || "");
+        sessionStorage.setItem("needsProfilePic", data.profile_pic ? "false" : "true");
+
+        adminModal.classList.remove("active");
+        window.location.href = "dashboard.html";
+    });
+
+    // ========== FORGOT ==========
+    document.getElementById("forgotBtn").addEventListener("click", async function() {
+        const email = document.getElementById("forgotEmail").value.trim().toLowerCase();
+        const phone = document.getElementById("forgotPhone").value.trim();
+        const errorDiv = document.getElementById("forgotError");
+        const successDiv = document.getElementById("forgotSuccess");
+        errorDiv.style.display = "none";
+        successDiv.style.display = "none";
+
+        if (!email || !phone) {
+            errorDiv.innerText = "Please enter both email and phone number";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data } = await client.from("admin_accounts")
+            .select("*")
+            .eq("email", email)
+            .eq("phone", "+260" + phone)
+            .maybeSingle();
+
+        if (!data) {
+            errorDiv.innerText = "No account found with these details";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        successDiv.innerText = "Account found. Please contact the Master Admin / ICT team to reset your password.";
+        successDiv.style.display = "block";
+    });
+</script>
+</body>
+</html>

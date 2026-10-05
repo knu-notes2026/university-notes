@@ -3,115 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Students</title>
-
-    <!-- PWA Meta Tags -->
+    <title>Manage Accounts - Master Admin</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e7e34">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="KNU Notes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-        .header {
-            background: #6a1b9a; color: white;
-            padding: 18px 25px; border-radius: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 25px;
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e8f5e9;
+            margin: 0;
+            padding: 15px;
         }
-        .header h2 { margin: 0; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-light { background: rgba(255,255,255,0.2); color: white; text-decoration: none; }
+        .header {
+            background: #6a1b9a;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h2 { margin: 0; font-size: 18px; }
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-light { background: rgba(255,255,255,0.2); color: white; }
         .btn-danger { background: #c62828; color: white; }
         .btn-warning { background: #f9a825; color: #333; }
+        .btn-success { background: #2e7d32; color: white; }
         .btn-primary { background: #6a1b9a; color: white; }
-        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f5f5f5; }
-        .search-box { margin-bottom: 20px; }
-        .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 15px; }
+        .btn-secondary { background: #6c757d; color: white; }
 
-        /* Advanced Modal */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .card h3 { margin-top: 0; color: #333; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #e0e0e0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .tab-btn.active {
+            background: #6a1b9a;
+            color: white;
+        }
+
+        .search-box { margin-bottom: 15px; }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-row select {
+            padding: 9px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .count-badge {
+            background: #6a1b9a;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 11px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th { background: #f5f5f5; font-weight: 600; }
+        .profile-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #ddd;
+        }
+        .status-pending { color: #f39c12; font-weight: bold; }
+        .status-approved { color: #2e7d32; font-weight: bold; }
+        .status-denied { color: #c62828; font-weight: bold; }
+
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* Modal */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; transition: opacity 0.3s;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
         }
-        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-overlay.show { display: flex; }
         .modal-box {
-            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
-            transform: translateY(-30px); transition: transform 0.3s;
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.3s ease;
         }
-        .modal-overlay.show .modal-box { transform: translateY(0); }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
         .modal-box h3 { margin-top: 0; }
-        .password-wrapper { position: relative; margin-top: 10px; }
+        .password-wrapper { position: relative; margin-top: 8px; }
         .password-wrapper input {
-            width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ccc;
-            border-radius: 8px; box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
         }
         .toggle-password {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; color: #6a1b9a;
-            font-size: 13px; font-weight: bold;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6a1b9a;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; padding: 11px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
         .btn-cancel { background: #e0e0e0; color: #333; }
         .btn-confirm-danger { background: #c62828; color: white; }
+        .btn-confirm { background: #6a1b9a; color: white; }
+
+        .empty-msg { color: #888; text-align: center; padding: 30px; }
+
+        @media (max-width: 700px) {
+            table { font-size: 12px; }
+            th, td { padding: 8px 6px; }
+            .actions { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
+
 <div class="header">
+    <h2>Master Admin – Manage Accounts</h2>
     <div>
-        <h2>Student Accounts</h2>
-    </div>
-    <div>
-        <a href="dashboard.html" class="btn btn-light">Back to Dashboard</a>
-        <button class="btn btn-light" onclick="logout()" style="margin-left:10px;">Logout</button>
+        <a href="dashboard.html" class="btn btn-light">← Back to Dashboard</a>
+        <button class="btn btn-light" onclick="logout()" style="margin-left:8px;">Logout</button>
     </div>
 </div>
 
-<div class="card">
-    <h3>All Registered Students</h3>
-    <div class="search-box">
-        <input type="text" id="searchStudents" placeholder="Search by Name, Student Number, Email, Phone, School or Year..." oninput="filterStudents()">
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="showTab('pending')">Pending Admins</button>
+    <button class="tab-btn" onclick="showTab('students')">Student Accounts</button>
+    <button class="tab-btn" onclick="showTab('admins')">Approved Admins</button>
+</div>
+
+<!-- ==================== PENDING ADMINS ==================== -->
+<div id="tab-pending" class="card">
+    <h3>Pending Admin Accounts <span class="count-badge" id="pendingCount">0</span></h3>
+    <div id="pendingList">Loading...</div>
+</div>
+
+<!-- ==================== STUDENTS ==================== -->
+<div id="tab-students" class="card" style="display:none;">
+    <h3>Student Accounts <span class="count-badge" id="studentCount">0</span></h3>
+
+    <div class="filter-row">
+        <select id="yearFilter" onchange="filterStudents()">
+            <option value="all">All Years</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+        </select>
+        <select id="schoolFilter" onchange="filterStudents()">
+            <option value="all">All Schools</option>
+            <option value="business">School of Business</option>
+            <option value="education">School of Education</option>
+            <option value="natural-sciences">School of Natural Sciences</option>
+            <option value="humanities">School of Humanities</option>
+        </select>
     </div>
+
+    <div class="search-box">
+        <input type="text" id="searchStudents" placeholder="Search by name, student number, email, phone..." oninput="filterStudents()">
+    </div>
+
     <div id="studentsList">Loading...</div>
 </div>
 
-<!-- Reset Password Modal -->
+<!-- ==================== APPROVED ADMINS ==================== -->
+<div id="tab-admins" class="card" style="display:none;">
+    <h3>Approved Admin Accounts <span class="count-badge" id="adminCount">0</span></h3>
+    <div class="search-box">
+        <input type="text" id="searchAdmins" placeholder="Search admins..." oninput="filterAdmins()">
+    </div>
+    <div id="adminsList">Loading...</div>
+</div>
+
+<!-- RESET PASSWORD MODAL -->
 <div class="modal-overlay" id="resetModal">
     <div class="modal-box">
         <h3 style="color:#6a1b9a;">Reset Password</h3>
-        <p id="resetStudentLabel" style="color:#555;"></p>
-        
-        <label>New Password</label>
+        <p id="resetLabel" style="color:#555;"></p>
         <div class="password-wrapper">
-            <input type="password" id="newPassInput" placeholder="Minimum 6 characters">
-            <button type="button" class="toggle-password" onclick="toggleResetPassword()">Show</button>
+            <input type="password" id="newPassInput" placeholder="New password (min 6 characters)">
+            <button type="button" class="toggle-password" onclick="togglePass()">Show</button>
         </div>
-        
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeResetModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmResetPassword()">Reset Password</button>
+            <button class="btn-confirm" onclick="confirmReset()">Reset Password</button>
         </div>
     </div>
 </div>
 
-<!-- Advanced Delete Student Modal -->
-<div class="modal-overlay" id="deleteStudentModal">
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
-        <h3 style="color:#c62828;">Delete Student Account</h3>
-        <p id="deleteStudentText" style="color:#555; line-height:1.5;"></p>
-        <p style="color:#888; font-size:14px;">This action is permanent and cannot be undone.</p>
+        <h3 style="color:#c62828;">Confirm Delete</h3>
+        <p id="deleteText" style="color:#555; line-height:1.5;"></p>
+        <p style="color:#888; font-size:13px;">This action is permanent and cannot be undone.</p>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeDeleteStudentModal()">Cancel</button>
-            <button class="btn-confirm-danger" onclick="confirmDeleteStudent()">Delete Account</button>
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-confirm-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW PROFILE PIC MODAL -->
+<div class="modal-overlay" id="picModal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0;">Profile Picture</h3>
+        <img id="fullProfilePic" src="" style="max-width:100%; border-radius:12px; margin:15px 0;">
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closePicModal()" style="flex:1;">Close</button>
         </div>
     </div>
 </div>
@@ -121,112 +306,281 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
+    // Security check
     if (sessionStorage.getItem("isMaster") !== "true") {
-        alert("Access Denied");
+        alert("Access Denied – Master Admin only");
         window.location.href = "dashboard.html";
     }
 
     let allStudents = [];
-    let currentStudentId = null;
-    let studentToDelete = null;
+    let allPending = [];
+    let allAdmins = [];
+    let currentResetId = null;
+    let currentResetType = null; // 'student' or 'admin'
+    let deleteId = null;
+    let deleteType = null;
+
+    // ===== TABS =====
+    function showTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        document.getElementById('tab-pending').style.display = tab === 'pending' ? 'block' : 'none';
+        document.getElementById('tab-students').style.display = tab === 'students' ? 'block' : 'none';
+        document.getElementById('tab-admins').style.display = tab === 'admins' ? 'block' : 'none';
+    }
+
+    // ===== LOAD DATA =====
+    async function loadPending() {
+        const { data } = await client.from("admin_accounts")
+            .select("*")
+            .eq("status", "pending")
+            .order("created_at", { ascending: false });
+
+        allPending = data || [];
+        document.getElementById("pendingCount").innerText = allPending.length;
+        renderPending(allPending);
+    }
 
     async function loadStudents() {
-        const { data, error } = await client
-            .from("students")
+        const { data } = await client.from("students")
             .select("*")
             .order("created_at", { ascending: false });
+
         allStudents = data || [];
-        renderStudents(allStudents);
+        document.getElementById("studentCount").innerText = allStudents.length;
+        filterStudents();
+    }
+
+    async function loadAdmins() {
+        const { data } = await client.from("admin_accounts")
+            .select("*")
+            .eq("status", "approved")
+            .order("created_at", { ascending: false });
+
+        allAdmins = data || [];
+        document.getElementById("adminCount").innerText = allAdmins.length;
+        renderAdmins(allAdmins);
+    }
+
+    // ===== RENDER PENDING =====
+    function renderPending(list) {
+        const container = document.getElementById("pendingList");
+        if (!list || list.length === 0) {
+            container.innerHTML = `<div class="empty-msg">No pending admin accounts.</div>`;
+            return;
+        }
+
+        let html = `<table>
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>School</th>
+                    <th>Email / Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        list.forEach(a => {
+            const fullName = [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(" ");
+            const position = a.custom_position || a.position;
+            html += `
+                <tr>
+                    <td>
+                        <img class="profile-thumb" src="${a.profile_pic || 'https://via.placeholder.com/36'}" 
+                             onclick="viewPic('${a.profile_pic || ''}')" style="cursor:pointer;">
+                    </td>
+                    <td><strong>${fullName}</strong><br><small>${a.gender || ''}</small></td>
+                    <td>${position}<br><small>${a.student_number ? 'SN: ' + a.student_number : ''}</small></td>
+                    <td>${(a.school || '').replace('-', ' ')}</td>
+                    <td>${a.email}<br><small>${a.phone || ''}</small></td>
+                    <td class="actions">
+                        <button class="btn btn-success" onclick="approveAdmin('${a.id}')">Approve</button>
+                        <button class="btn btn-danger" onclick="denyAdmin('${a.id}', '${fullName.replace(/'/g, "\\'")}')">Deny</button>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    // ===== RENDER STUDENTS =====
+    function filterStudents() {
+        const term = document.getElementById("searchStudents").value.toLowerCase();
+        const year = document.getElementById("yearFilter").value;
+        const school = document.getElementById("schoolFilter").value;
+
+        let filtered = allStudents.filter(s => {
+            const fullName = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ").toLowerCase();
+            const matchSearch = fullName.includes(term) ||
+                (s.student_number || "").toLowerCase().includes(term) ||
+                (s.email || "").toLowerCase().includes(term) ||
+                (s.phone || "").toLowerCase().includes(term);
+
+            const matchYear = year === "all" || s.year == year;
+            const matchSchool = school === "all" || s.school === school;
+
+            return matchSearch && matchYear && matchSchool;
+        });
+
+        document.getElementById("studentCount").innerText = filtered.length;
+        renderStudents(filtered);
     }
 
     function renderStudents(list) {
         const container = document.getElementById("studentsList");
         if (!list || list.length === 0) {
-            container.innerHTML = "<p>No students found.</p>";
+            container.innerHTML = `<div class="empty-msg">No students found.</div>`;
             return;
         }
-        let html = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Student Number</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>School</th>
-                        <th>Year</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+
+        let html = `<table>
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Student No</th>
+                    <th>School / Year</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
         list.forEach(s => {
             const fullName = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ") || "—";
             html += `
                 <tr>
-                    <td>${fullName}</td>
-                    <td>${s.student_number}</td>
-                    <td>${s.email}</td>
-                    <td>${s.phone || "-"}</td>
-                    <td>${(s.school || "-").replace("-", " ")}</td>
-                    <td>Year ${s.year}</td>
                     <td>
-                        <button class="btn btn-warning" onclick="openResetModal('${s.id}', '${s.student_number}')">Reset Password</button>
-                        <button class="btn btn-danger" onclick="openDeleteStudentModal('${s.id}', '${s.student_number}', '${fullName.replace(/'/g, "\\'")}')">Delete</button>
+                        <img class="profile-thumb" src="${s.profile_pic || 'https://via.placeholder.com/36'}" 
+                             onclick="viewPic('${s.profile_pic || ''}')" style="cursor:pointer;">
                     </td>
-                </tr>
-            `;
+                    <td><strong>${fullName}</strong></td>
+                    <td>${s.student_number}</td>
+                    <td>${(s.school || '-').replace('-', ' ')}<br>Year ${s.year}</td>
+                    <td>${s.email}<br><small>${s.phone || ''}</small></td>
+                    <td class="actions">
+                        <button class="btn btn-warning" onclick="openReset('${s.id}', 'student', '${s.student_number}')">Reset Pass</button>
+                        <button class="btn btn-danger" onclick="openDelete('${s.id}', 'student', '${fullName.replace(/'/g, "\\'")}', '${s.student_number}')">Delete</button>
+                    </td>
+                </tr>`;
         });
+
         html += `</tbody></table>`;
         container.innerHTML = html;
     }
 
-    function filterStudents() {
-        const term = document.getElementById("searchStudents").value.toLowerCase();
-        const filtered = allStudents.filter(s => {
-            const fullName = [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ").toLowerCase();
+    // ===== RENDER APPROVED ADMINS =====
+    function filterAdmins() {
+        const term = document.getElementById("searchAdmins").value.toLowerCase();
+        const filtered = allAdmins.filter(a => {
+            const fullName = [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(" ").toLowerCase();
             return fullName.includes(term) ||
-                (s.student_number || "").toLowerCase().includes(term) ||
-                (s.email || "").toLowerCase().includes(term) ||
-                (s.phone || "").toLowerCase().includes(term) ||
-                (s.school || "").toLowerCase().includes(term) ||
-                (s.year || "").toString().includes(term);
+                (a.email || "").toLowerCase().includes(term) ||
+                (a.phone || "").toLowerCase().includes(term) ||
+                (a.position || "").toLowerCase().includes(term);
         });
-        renderStudents(filtered);
+        renderAdmins(filtered);
     }
 
-    function openResetModal(id, studentNo) {
-        currentStudentId = id;
-        document.getElementById("resetStudentLabel").innerText = "Student: " + studentNo;
-        document.getElementById("newPassInput").value = "";
-        document.getElementById("resetModal").classList.add("show");
-        document.getElementById("newPassInput").focus();
+    function renderAdmins(list) {
+        const container = document.getElementById("adminsList");
+        if (!list || list.length === 0) {
+            container.innerHTML = `<div class="empty-msg">No approved admins yet.</div>`;
+            return;
+        }
+
+        let html = `<table>
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>School</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        list.forEach(a => {
+            const fullName = [a.first_name, a.middle_name, a.last_name].filter(Boolean).join(" ");
+            const position = a.custom_position || a.position;
+            html += `
+                <tr>
+                    <td>
+                        <img class="profile-thumb" src="${a.profile_pic || 'https://via.placeholder.com/36'}" 
+                             onclick="viewPic('${a.profile_pic || ''}')" style="cursor:pointer;">
+                    </td>
+                    <td><strong>${fullName}</strong></td>
+                    <td>${position}</td>
+                    <td>${(a.school || '').replace('-', ' ')}</td>
+                    <td>${a.email}<br><small>${a.phone || ''}</small></td>
+                    <td class="actions">
+                        <button class="btn btn-warning" onclick="openReset('${a.id}', 'admin', '${fullName.replace(/'/g, "\\'")}')">Reset Pass</button>
+                        <button class="btn btn-danger" onclick="openDelete('${a.id}', 'admin', '${fullName.replace(/'/g, "\\'")}', '')">Delete</button>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
     }
 
-    function closeResetModal() {
-        document.getElementById("resetModal").classList.remove("show");
-        currentStudentId = null;
-    }
+    // ===== APPROVE / DENY =====
+    async function approveAdmin(id) {
+        if (!confirm("Approve this admin account?")) return;
+        const { error } = await client.from("admin_accounts")
+            .update({ status: "approved" })
+            .eq("id", id);
 
-    function toggleResetPassword() {
-        const input = document.getElementById("newPassInput");
-        const btn = event.target;
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerText = "Hide";
-        } else {
-            input.type = "password";
-            btn.innerText = "Show";
+        if (error) alert("Failed to approve");
+        else {
+            alert("Admin approved successfully!");
+            loadPending();
+            loadAdmins();
         }
     }
 
-    async function confirmResetPassword() {
+    async function denyAdmin(id, name) {
+        if (!confirm(`Deny and permanently delete the request from ${name}?`)) return;
+        const { error } = await client.from("admin_accounts").delete().eq("id", id);
+        if (error) alert("Failed to deny");
+        else {
+            alert("Request denied and deleted.");
+            loadPending();
+        }
+    }
+
+    // ===== RESET PASSWORD =====
+    function openReset(id, type, label) {
+        currentResetId = id;
+        currentResetType = type;
+        document.getElementById("resetLabel").innerText = "Reset password for: " + label;
+        document.getElementById("newPassInput").value = "";
+        document.getElementById("resetModal").classList.add("show");
+    }
+    function closeResetModal() {
+        document.getElementById("resetModal").classList.remove("show");
+    }
+    function togglePass() {
+        const input = document.getElementById("newPassInput");
+        const btn = event.target;
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
+    }
+    async function confirmReset() {
         const newPass = document.getElementById("newPassInput").value;
         if (!newPass || newPass.length < 6) {
             alert("Password must be at least 6 characters");
             return;
         }
-        const { error } = await client.from("students").update({ password: newPass }).eq("id", currentStudentId);
+        const table = currentResetType === "student" ? "students" : "admin_accounts";
+        const { error } = await client.from(table).update({ password: newPass }).eq("id", currentResetId);
         if (error) alert("Failed to reset password");
         else {
             alert("Password reset successfully!");
@@ -234,27 +588,43 @@
         }
     }
 
-    function openDeleteStudentModal(id, studentNo, fullName) {
-        studentToDelete = id;
-        document.getElementById("deleteStudentText").innerHTML = 
-            `You are about to permanently delete the account of:<br><strong>${fullName}</strong> (${studentNo})`;
-        document.getElementById("deleteStudentModal").classList.add("show");
+    // ===== DELETE =====
+    function openDelete(id, type, name, extra) {
+        deleteId = id;
+        deleteType = type;
+        document.getElementById("deleteText").innerHTML = 
+            `You are about to permanently delete:<br><strong>${name}</strong> ${extra ? '('+extra+')' : ''}`;
+        document.getElementById("deleteModal").classList.add("show");
     }
-
-    function closeDeleteStudentModal() {
-        document.getElementById("deleteStudentModal").classList.remove("show");
-        studentToDelete = null;
+    function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.remove("show");
     }
-
-    async function confirmDeleteStudent() {
-        if (!studentToDelete) return;
-        const { error } = await client.from("students").delete().eq("id", studentToDelete);
-        if (error) alert("Failed to delete account");
+    async function confirmDelete() {
+        const table = deleteType === "student" ? "students" : "admin_accounts";
+        const { error } = await client.from(table).delete().eq("id", deleteId);
+        if (error) alert("Failed to delete");
         else {
-            alert("Student account deleted");
-            closeDeleteStudentModal();
-            loadStudents();
+            alert("Account deleted successfully");
+            closeDeleteModal();
+            if (deleteType === "student") loadStudents();
+            else {
+                loadPending();
+                loadAdmins();
+            }
         }
+    }
+
+    // ===== VIEW PROFILE PIC =====
+    function viewPic(url) {
+        if (!url) {
+            alert("No profile picture uploaded");
+            return;
+        }
+        document.getElementById("fullProfilePic").src = url;
+        document.getElementById("picModal").classList.add("show");
+    }
+    function closePicModal() {
+        document.getElementById("picModal").classList.remove("show");
     }
 
     function logout() {
@@ -262,7 +632,10 @@
         window.location.href = "index.html";
     }
 
+    // Start
+    loadPending();
     loadStudents();
+    loadAdmins();
 </script>
 </body>
 </html>

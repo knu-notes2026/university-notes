@@ -11,7 +11,7 @@
         * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f0f4f8;
+            background: #e8f5e9;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -28,7 +28,7 @@
             overflow: hidden;
         }
         .header {
-            background: #1565c0;
+            background: #1e7e34;
             color: white;
             padding: 25px;
             text-align: center;
@@ -36,7 +36,7 @@
         .header h2 { margin: 0; }
         .tabs {
             display: flex;
-            background: #e3f2fd;
+            background: #c8e6c9;
         }
         .tab {
             flex: 1;
@@ -44,12 +44,12 @@
             text-align: center;
             cursor: pointer;
             font-weight: bold;
-            color: #1565c0;
+            color: #1e7e34;
             font-size: 14px;
         }
         .tab.active {
             background: white;
-            border-bottom: 3px solid #1565c0;
+            border-bottom: 3px solid #1e7e34;
         }
         .form-section {
             padding: 25px;
@@ -80,7 +80,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            color: #1565c0;
+            color: #1e7e34;
             font-size: 13px;
             font-weight: bold;
         }
@@ -105,7 +105,7 @@
             width: 100%;
             padding: 14px;
             margin-top: 22px;
-            background: #1565c0;
+            background: #1e7e34;
             color: white;
             border: none;
             border-radius: 8px;
@@ -113,23 +113,41 @@
             font-weight: bold;
             cursor: pointer;
         }
-        .btn:hover { background: #0d47a1; }
+        .btn:hover { background: #155d27; }
         .error {
             color: #c62828;
             font-size: 13px;
             margin-top: 8px;
             display: none;
         }
-        .success {
-            color: #2e7d32;
-            font-size: 13px;
-            margin-top: 8px;
+        .success-box {
             display: none;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .success-box.show { display: block; }
+        .green-tick {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #2e7d32;
+            color: white;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            animation: pop 0.4s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
         .back {
             text-align: center;
             padding: 15px;
-            background: #f5f5f5;
+            background: #f1f8e9;
         }
         .back a { color: #555; text-decoration: none; }
         .loading-box {
@@ -140,8 +158,8 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid #e3f2fd;
-            border-top: 5px solid #1565c0;
+            border: 5px solid #c8e6c9;
+            border-top: 5px solid #1e7e34;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
@@ -179,64 +197,72 @@
 
     <!-- REGISTER -->
     <div id="register" class="form-section">
-        <label>Student Number *</label>
-        <input type="text" id="regStudentNo" placeholder="Must start with 202 (8 digits)" maxlength="8">
+        <div id="registerForm">
+            <label>Student Number *</label>
+            <input type="text" id="regStudentNo" placeholder="Must start with 202 (8 digits)" maxlength="8">
 
-        <div class="name-row">
-            <div>
-                <label>First Name *</label>
-                <input type="text" id="regFirstName" placeholder="First name">
+            <div class="name-row">
+                <div>
+                    <label>First Name *</label>
+                    <input type="text" id="regFirstName" placeholder="First name">
+                </div>
+                <div>
+                    <label>Middle Name</label>
+                    <input type="text" id="regMiddleName" placeholder="Optional">
+                </div>
             </div>
-            <div>
-                <label>Middle Name</label>
-                <input type="text" id="regMiddleName" placeholder="Optional">
+
+            <label>Last Name *</label>
+            <input type="text" id="regLastName" placeholder="Last name">
+
+            <label>Email Address *</label>
+            <input type="email" id="regEmail" placeholder="yourname@example.com">
+
+            <label>Phone Number *</label>
+            <div class="phone-input">
+                <div class="phone-prefix">+260</div>
+                <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
             </div>
+
+            <label>School *</label>
+            <select id="regSchool">
+                <option value="">Select your School</option>
+                <option value="business">School of Business</option>
+                <option value="education">School of Education</option>
+                <option value="natural-sciences">School of Natural Sciences</option>
+                <option value="humanities">School of Humanities</option>
+            </select>
+
+            <label>Year of Study *</label>
+            <select id="regYear">
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+            </select>
+
+            <label>Password * (minimum 6 characters)</label>
+            <div class="password-wrapper">
+                <input type="password" id="regPassword" placeholder="Create password">
+                <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">Show</button>
+            </div>
+
+            <label>Confirm Password *</label>
+            <div class="password-wrapper">
+                <input type="password" id="regConfirm" placeholder="Re-enter password">
+                <button type="button" class="toggle-password" onclick="togglePassword('regConfirm', this)">Show</button>
+            </div>
+
+            <div class="error" id="regError"></div>
+            <button class="btn" onclick="registerStudent()">Create Account</button>
         </div>
 
-        <label>Last Name *</label>
-        <input type="text" id="regLastName" placeholder="Last name">
-
-        <label>Email Address *</label>
-        <input type="email" id="regEmail" placeholder="yourname@example.com">
-
-        <label>Phone Number *</label>
-        <div class="phone-input">
-            <div class="phone-prefix">+260</div>
-            <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9">
+        <!-- Success Animation -->
+        <div class="success-box" id="regSuccessBox">
+            <div class="green-tick">✓</div>
+            <h3 style="color:#2e7d32; margin:0 0 8px;">Account Created Successfully!</h3>
+            <p style="color:#555;">You can now login with your Student Number and Password.</p>
         </div>
-
-        <label>School *</label>
-        <select id="regSchool">
-            <option value="">Select your School</option>
-            <option value="business">School of Business</option>
-            <option value="education">School of Education</option>
-            <option value="natural-sciences">School of Natural Sciences</option>
-            <option value="humanities">School of Humanities</option>
-        </select>
-
-        <label>Year of Study *</label>
-        <select id="regYear">
-            <option value="1">1st Year</option>
-            <option value="2">2nd Year</option>
-            <option value="3">3rd Year</option>
-            <option value="4">4th Year</option>
-        </select>
-
-        <label>Password * (minimum 6 characters)</label>
-        <div class="password-wrapper">
-            <input type="password" id="regPassword" placeholder="Create password">
-            <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">Show</button>
-        </div>
-
-        <label>Confirm Password *</label>
-        <div class="password-wrapper">
-            <input type="password" id="regConfirm" placeholder="Re-enter password">
-            <button type="button" class="toggle-password" onclick="togglePassword('regConfirm', this)">Show</button>
-        </div>
-
-        <div class="error" id="regError"></div>
-        <div class="success" id="regSuccess"></div>
-        <button class="btn" onclick="registerStudent()">Create Account</button>
     </div>
 
     <!-- FORGOT PASSWORD -->
@@ -261,7 +287,7 @@
         </div>
 
         <div id="forgotStep3" style="display:none;">
-            <h3 style="margin-top:0; color:#1565c0;">Create New Password</h3>
+            <h3 style="margin-top:0; color:#1e7e34;">Create New Password</h3>
             <label>New Password</label>
             <div class="password-wrapper">
                 <input type="password" id="newPassword" placeholder="Minimum 6 characters">
@@ -274,6 +300,13 @@
             </div>
             <div class="error" id="resetError"></div>
             <button class="btn" onclick="resetPassword()">Set New Password</button>
+        </div>
+
+        <!-- Success after reset -->
+        <div class="success-box" id="resetSuccessBox">
+            <div class="green-tick">✓</div>
+            <h3 style="color:#2e7d32; margin:0 0 8px;">Password Updated Successfully!</h3>
+            <p style="color:#555;">You can now login with your new password.</p>
         </div>
     </div>
 
@@ -294,6 +327,13 @@
         document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
         event.target.classList.add('active');
         document.getElementById(tab).classList.add('active');
+    }
+
+    function goToLoginTab() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab')[0].classList.add('active');
+        document.getElementById('login').classList.add('active');
     }
 
     function togglePassword(inputId, btn) {
@@ -320,9 +360,7 @@
         const confirm = document.getElementById("regConfirm").value;
 
         const errorDiv = document.getElementById("regError");
-        const successDiv = document.getElementById("regSuccess");
         errorDiv.style.display = "none";
-        successDiv.style.display = "none";
 
         if (!/^202\d{5}$/.test(studentNo)) {
             errorDiv.innerText = "Student Number must start with 202 and be exactly 8 digits";
@@ -360,7 +398,7 @@
             .or(`student_number.eq.${studentNo},email.eq.${email}`);
 
         if (existing && existing.length > 0) {
-            errorDiv.innerHTML = `You already have an account.<br>Please <b>Login</b> or use <b>Forgot Password</b>.`;
+            errorDiv.innerHTML = `You already have an account.<br>Please Login or use Forgot Password.`;
             errorDiv.style.display = "block";
             return;
         }
@@ -381,8 +419,16 @@
             errorDiv.innerText = "Registration failed. Please try again.";
             errorDiv.style.display = "block";
         } else {
-            successDiv.innerText = "Account created successfully! You can now login.";
-            successDiv.style.display = "block";
+            // Show success animation
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("regSuccessBox").classList.add("show");
+
+            // After 2.5 seconds go to Login tab
+            setTimeout(() => {
+                document.getElementById("regSuccessBox").classList.remove("show");
+                document.getElementById("registerForm").style.display = "block";
+                goToLoginTab();
+            }, 2500);
         }
     }
 
@@ -412,13 +458,7 @@
         sessionStorage.setItem("studentFirstName", data.first_name || "");
         sessionStorage.setItem("studentLastName", data.last_name || "");
         sessionStorage.setItem("studentProfilePic", data.profile_pic || "");
-
-        // Check if profile picture is needed
-        if (!data.profile_pic) {
-            sessionStorage.setItem("needsProfilePic", "true");
-        } else {
-            sessionStorage.setItem("needsProfilePic", "false");
-        }
+        sessionStorage.setItem("needsProfilePic", data.profile_pic ? "false" : "true");
 
         window.location.href = "student-dashboard.html";
     }
@@ -462,7 +502,7 @@
         setTimeout(() => {
             document.getElementById("forgotLoading").style.display = "none";
             document.getElementById("forgotStep3").style.display = "block";
-        }, 4000);
+        }, 3500);
     }
 
     async function resetPassword() {
@@ -490,8 +530,14 @@
             errorDiv.innerText = "Failed to update password";
             errorDiv.style.display = "block";
         } else {
-            alert("Password updated successfully! Please login.");
-            location.reload();
+            document.getElementById("forgotStep3").style.display = "none";
+            document.getElementById("resetSuccessBox").classList.add("show");
+
+            setTimeout(() => {
+                document.getElementById("resetSuccessBox").classList.remove("show");
+                document.getElementById("forgotStep1").style.display = "block";
+                goToLoginTab();
+            }, 2500);
         }
     }
 </script>

@@ -155,7 +155,7 @@
             flex-wrap: wrap;
         }
 
-        /* ===== MEMOS ===== */
+        /* MEMOS */
         .memo-card {
             background: white;
             border-radius: 12px;
@@ -182,13 +182,14 @@
         .memo-time { font-size: 11px; color: #999; }
         .memo-image {
             width: 100%;
-            max-height: 400px;
+            max-height: 420px;
             object-fit: cover;
             display: block;
         }
         .memo-body { padding: 14px 16px; }
         .memo-title { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
         .memo-desc { font-size: 14px; color: #444; line-height: 1.5; }
+        .memo-desc a { color: #1a73e8; text-decoration: underline; }
         .memo-actions {
             display: flex;
             gap: 15px;
@@ -206,7 +207,7 @@
         }
         .memo-action:hover { color: #1a73e8; }
 
-        /* ===== MODALS ===== */
+        /* MODALS */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -225,7 +226,7 @@
             padding: 25px;
             border-radius: 14px;
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
@@ -310,7 +311,8 @@
             border-radius: 6px;
             font-size: 14px;
         }
-        textarea { resize: vertical; min-height: 80px; }
+        textarea { resize: vertical; min-height: 90px; }
+        label { font-weight: 600; font-size: 13px; display: block; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -335,12 +337,12 @@
         <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
     </div>
 
-    <!-- MEMOS SECTION -->
+    <!-- MEMOS -->
     <h3 style="margin:25px 0 12px;">📢 Recent Memos & Announcements</h3>
     <div id="memosContainer">Loading memos...</div>
 </div>
 
-<!-- MAIN VIEW (after selecting school) -->
+<!-- MAIN VIEW -->
 <div id="mainView" class="section">
     <button class="btn btn-secondary" onclick="backToSchools()">← Back to Schools</button>
     <h2 id="schoolTitle" style="margin-top:12px;"></h2>
@@ -353,9 +355,10 @@
     </div>
 
     <!-- Master Admin Panel -->
-    <div id="masterPanel" style="display:none; margin:12px 0; display:flex; flex-wrap:wrap; gap:8px;">
+    <div id="masterPanel" style="display:none; margin:12px 0; flex-wrap:wrap; gap:8px;">
         <button class="btn btn-master" onclick="window.location.href='admin-students.html'">Manage Student Accounts</button>
         <button class="btn btn-master" onclick="openPendingAdmins()">Pending Admin Accounts</button>
+        <button class="btn btn-master" onclick="openPostMemoModal()">📢 Post Memo</button>
         <button class="btn btn-warning" onclick="openChangePasswords()">Change Passwords</button>
     </div>
 
@@ -406,8 +409,6 @@
         <input type="text" id="fileDisplayName" placeholder="File display name (optional)">
         <input type="file" id="fileToUpload">
         <button class="btn btn-success" onclick="uploadToFolder()">Upload File</button>
-        <button class="btn btn-warning" onclick="openRenameFolder()">Rename Folder</button>
-        <button class="btn btn-warning" onclick="openChangeFolderPass()">Change Password</button>
         <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete Folder</button>
     </div>
 
@@ -420,8 +421,8 @@
 <!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div id="loadingText">Uploading...</div>
-    <div id="loadingPercent">0%</div>
+    <div id="loadingText">Please wait...</div>
+    <div id="loadingPercent"></div>
 </div>
 
 <!-- PASSWORD MODAL -->
@@ -463,7 +464,7 @@
     </div>
 </div>
 
-<!-- CHANGE PASSWORDS (Master only) -->
+<!-- CHANGE PASSWORDS -->
 <div class="modal-overlay" id="changePassModal">
     <div class="modal-box">
         <h3 style="color:#6a1b9a;">Change Passwords</h3>
@@ -478,11 +479,32 @@
         <label>Change Master Admin Password</label>
         <input type="password" id="newMasterPass" placeholder="New Master Password">
         <input type="password" id="confirmMasterPass" placeholder="Confirm Master Password">
-        <input type="text" id="masterConfirmPin" placeholder="Enter PIN 886644 or type KAMIMA NKHATA">
+        <input type="text" id="masterConfirmPin" placeholder="Enter creator's secret code">
         <button class="btn btn-master" style="width:100%;margin-top:8px;" onclick="changeMasterPassword()">Update Master Password</button>
 
         <div class="modal-actions" style="margin-top:15px;">
             <button class="btn-cancel" onclick="closeChangePassModal()" style="flex:1;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- POST MEMO MODAL -->
+<div class="modal-overlay" id="postMemoModal">
+    <div class="modal-box" style="max-width:500px;">
+        <h3 style="color:#6a1b9a; margin-top:0;">📢 Post New Memo</h3>
+        
+        <label>Title</label>
+        <input type="text" id="memoTitle" placeholder="Memo title">
+
+        <label>Description (links will automatically become clickable)</label>
+        <textarea id="memoDescription" placeholder="Write the memo content here..."></textarea>
+
+        <label>Upload Image (recommended)</label>
+        <input type="file" id="memoImage" accept="image/*">
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closePostMemoModal()">Cancel</button>
+            <button class="btn-confirm" onclick="postMemo()">Post Memo</button>
         </div>
     </div>
 </div>
@@ -492,7 +514,6 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // Default passcodes (can be changed by Master)
     let ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
     let MASTER_PASSWORD = localStorage.getItem("masterPassword") || "Staff@KNU.2026";
 
@@ -507,12 +528,10 @@
     let allResultsFolders = [];
     let allFiles = [];
 
-    // Show admin UI
     if (isAdmin) {
         document.getElementById("adminBadge").style.display = "inline-block";
         document.getElementById("adminResultsSection").style.display = "block";
-        const name = sessionStorage.getItem("adminName") || "Admin";
-        document.getElementById("userName").innerText = name;
+        document.getElementById("userName").innerText = sessionStorage.getItem("adminName") || "Admin";
         
         const pic = sessionStorage.getItem("adminProfilePic");
         if (pic) {
@@ -583,6 +602,15 @@
     function executeConfirm() {
         if (confirmCallback) confirmCallback();
         closeConfirmModal();
+    }
+
+    // Convert plain text links to clickable links
+    function linkify(text) {
+        if (!text) return "";
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, url => 
+            `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
+        );
     }
 
     // ===== NAVIGATION =====
@@ -736,12 +764,11 @@
 
             showLoading(true, "Uploading file...", 0);
             try {
-                // Simulate progress (Supabase doesn't give real progress easily)
                 let progress = 0;
                 const interval = setInterval(() => {
-                    progress += 10;
+                    progress += 12;
                     if (progress <= 90) showLoading(true, "Uploading file...", progress);
-                }, 200);
+                }, 180);
 
                 const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
                 clearInterval(interval);
@@ -795,7 +822,7 @@
         });
     }
 
-    // ===== CHANGE PASSWORDS (Master) =====
+    // ===== CHANGE PASSWORDS =====
     function openChangePasswords() {
         if (!isMaster) return;
         document.getElementById("changePassModal").classList.add("show");
@@ -834,7 +861,7 @@
             return;
         }
         if (pin !== "886644" && pin !== "KAMIMA NKHATA") {
-            showMessage("Error", "Invalid confirmation PIN or name", true);
+            showMessage("Error", "Invalid creator's secret code", true);
             return;
         }
         localStorage.setItem("masterPassword", newPass);
@@ -846,6 +873,70 @@
     }
 
     // ===== MEMOS =====
+    function openPostMemoModal() {
+        if (!isMaster) return;
+        document.getElementById("memoTitle").value = "";
+        document.getElementById("memoDescription").value = "";
+        document.getElementById("memoImage").value = "";
+        document.getElementById("postMemoModal").classList.add("show");
+    }
+    function closePostMemoModal() {
+        document.getElementById("postMemoModal").classList.remove("show");
+    }
+
+    async function postMemo() {
+        const title = document.getElementById("memoTitle").value.trim();
+        const description = document.getElementById("memoDescription").value.trim();
+        const imageInput = document.getElementById("memoImage");
+
+        if (!title && !description) {
+            showMessage("Missing Content", "Please enter at least a title or description.", true);
+            return;
+        }
+
+        showLoading(true, "Posting memo...");
+
+        let imageUrl = null;
+
+        if (imageInput.files && imageInput.files.length > 0) {
+            const file = imageInput.files[0];
+            const fileName = `memos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+            
+            const { error: uploadError } = await client.storage
+                .from("notes-files")
+                .upload(fileName, file);
+
+            if (uploadError) {
+                showLoading(false);
+                showMessage("Upload Failed", uploadError.message, true);
+                return;
+            }
+            imageUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
+        }
+
+        const { error } = await client.from("memos").insert({
+            title: title,
+            description: description,
+            image_url: imageUrl,
+            poster_name: "ICT Team",
+            poster_position: "Kwame Nkrumah University",
+            poster_school: null,
+            poster_pic: null,
+            likes: 0,
+            dislikes: 0
+        });
+
+        showLoading(false);
+
+        if (error) {
+            showMessage("Error", "Failed to post memo: " + error.message, true);
+        } else {
+            closePostMemoModal();
+            showMessage("Success", "Memo posted successfully as ICT Team!");
+            loadMemos();
+        }
+    }
+
     async function loadMemos() {
         const container = document.getElementById("memosContainer");
         try {
@@ -872,14 +963,14 @@
                         <img class="memo-avatar" src="${m.poster_pic || 'https://via.placeholder.com/42'}" alt="">
                         <div class="memo-meta">
                             <div class="memo-name">${m.poster_name}</div>
-                            <div class="memo-position">${m.poster_position}${m.poster_school ? " • " + m.poster_school : ""}</div>
+                            <div class="memo-position">${m.poster_position}</div>
                             <div class="memo-time">${timeStr}</div>
                         </div>
                     </div>
                     ${m.image_url ? `<img class="memo-image" src="${m.image_url}" alt="Memo">` : ""}
                     <div class="memo-body">
                         <div class="memo-title">${m.title || ""}</div>
-                        <div class="memo-desc">${m.description || ""}</div>
+                        <div class="memo-desc">${linkify(m.description || "")}</div>
                     </div>
                     <div class="memo-actions">
                         <div class="memo-action">👍 ${m.likes || 0} Likes</div>

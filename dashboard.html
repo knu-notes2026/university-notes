@@ -4,151 +4,369 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Notes & Results Portal</title>
-
-    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e7e34">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="KNU Notes">
-    <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="icon-192.png">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #e8f5e9; margin: 0; padding: 20px; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e8f5e9;
+            margin: 0;
+            padding: 15px;
+        }
         .header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #1e7e34; color: white; padding: 15px 25px;
-            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e7e34;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .header h2 { margin: 0; color: white; font-size: 20px; }
+        .header h2 { margin: 0; font-size: 18px; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .admin-badge {
+            background: #f1c40f;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+        }
+        .profile-pic {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            display: none;
+        }
         .back-btn {
-            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);
-            padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 14px;
         }
-        #adminBadge {
-            display: none; background: #f1c40f; color: #333; padding: 5px 12px;
-            border-radius: 20px; font-size: 13px; margin-right: 10px; font-weight: bold;
+        .schools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
         }
-        .schools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
         .school-card {
-            background: white; padding: 28px; text-align: center; border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; border-top: 5px solid #1a73e8; transition: 0.2s;
+            background: white;
+            padding: 25px 15px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+            cursor: pointer;
+            border-top: 5px solid #1a73e8;
+            transition: 0.2s;
         }
-        .school-card:hover { transform: translateY(-4px); }
+        .school-card:hover { transform: translateY(-3px); }
         .level-btn {
-            padding: 9px 16px; margin: 4px; border: 1px solid #1a73e8; background: white;
-            color: #1a73e8; border-radius: 4px; cursor: pointer; font-weight: bold;
+            padding: 8px 14px;
+            margin: 3px;
+            border: 1px solid #1a73e8;
+            background: white;
+            color: #1a73e8;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
         }
         .level-btn.active { background: #1a73e8; color: white; }
-        .section { background: white; padding: 25px; border-radius: 8px; margin-top: 20px; display: none; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
         .folder-card {
-            background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;
-            padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
         }
         .folder-card:hover { background: #e8f0fe; border-color: #1a73e8; }
-        .admin-panel {
-            background: #fff8e6; border: 1px solid #ffe0a3; padding: 20px;
-            border-radius: 8px; margin-bottom: 20px; display: none;
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            margin: 3px;
         }
-        .btn { padding: 9px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 4px; }
         .btn-primary { background: #1a73e8; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-success { background: #27ae60; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-purple { background: #8e44ad; color: white; }
-        .btn-blue { background: #1565c0; color: white; }
         .btn-master { background: #6a1b9a; color: white; }
-        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; gap: 10px; }
-        input, select { padding: 9px; margin: 6px 0; width: 100%; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .search-box { margin: 15px 0; }
-        .search-box input { padding: 12px; font-size: 15px; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
-
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center;
-            z-index: 10000; flex-direction: column; color: white;
+        .btn-warning { background: #f39c12; color: white; }
+        .admin-panel {
+            background: #fff8e6;
+            border: 1px solid #ffe0a3;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
         }
-        .loading-overlay.show { display: flex; }
-        .spinner {
-            width: 60px; height: 60px; border: 6px solid rgba(255,255,255,0.25);
-            border-top: 6px solid #fff; border-radius: 50%;
-            animation: spin 0.85s linear infinite; margin-bottom: 18px;
+        .search-box { margin: 12px 0; }
+        .search-box input {
+            width: 100%;
+            padding: 11px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
 
+        /* ===== MEMOS ===== */
+        .memo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+        .memo-header {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 12px;
+        }
+        .memo-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #ddd;
+        }
+        .memo-meta { flex: 1; }
+        .memo-name { font-weight: 700; font-size: 15px; color: #222; }
+        .memo-position { font-size: 12px; color: #666; }
+        .memo-time { font-size: 11px; color: #999; }
+        .memo-image {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+        .memo-body { padding: 14px 16px; }
+        .memo-title { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+        .memo-desc { font-size: 14px; color: #444; line-height: 1.5; }
+        .memo-actions {
+            display: flex;
+            gap: 15px;
+            padding: 10px 16px;
+            border-top: 1px solid #eee;
+            font-size: 13px;
+        }
+        .memo-action {
+            cursor: pointer;
+            color: #555;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .memo-action:hover { color: #1a73e8; }
+
+        /* ===== MODALS ===== */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; transition: opacity 0.3s;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
+            overflow-y: auto;
         }
-        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-overlay.show { display: flex; }
         .modal-box {
-            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
-            transform: translateY(-40px); transition: transform 0.35s;
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 440px;
+            animation: slideUp 0.3s ease;
         }
-        .modal-overlay.show .modal-box { transform: translateY(0); }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
         .modal-box h3 { margin-top: 0; }
-        .modal-error { color: #e74c3c; font-size: 14px; margin-top: 8px; display: none; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .password-wrapper { position: relative; margin-top: 8px; }
+        .password-wrapper input {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1a73e8;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
         .btn-cancel { background: #e0e0e0; color: #333; }
         .btn-confirm { background: #1a73e8; color: white; }
         .btn-confirm-danger { background: #e74c3c; color: white; }
-        .btn-ok { background: #1a73e8; color: white; }
-        .password-wrapper { position: relative; margin-top: 10px; }
-        .password-wrapper input {
-            width: 100%; padding: 13px; font-size: 15px; border: 2px solid #ddd;
-            border-radius: 8px; box-sizing: border-box;
+        .modal-error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
         }
-        .toggle-password {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; color: #1a73e8;
-            font-size: 13px; font-weight: bold;
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            flex-direction: column;
+            color: white;
         }
+        .loading-overlay.show { display: flex; }
+        .spinner {
+            width: 55px;
+            height: 55px;
+            border: 5px solid rgba(255,255,255,0.25);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loadingPercent { font-size: 18px; font-weight: bold; margin-top: 8px; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        textarea { resize: vertical; min-height: 80px; }
     </style>
 </head>
 <body>
+
 <div class="header">
     <h2>Kwame Nkrumah University – Notes & Results</h2>
-    <div>
-        <span id="adminBadge">ADMIN MODE</span>
+    <div class="header-right">
+        <img id="headerProfilePic" class="profile-pic" src="" alt="Profile">
+        <span id="adminBadge" class="admin-badge">ADMIN MODE</span>
+        <span id="userName" style="font-size:13px;"></span>
         <a href="index.html" class="back-btn">← Exit</a>
     </div>
 </div>
 
+<!-- SCHOOL VIEW -->
 <div id="schoolView">
-    <h3 style="margin-top:0;">Select a School</h3>
+    <h3 style="margin:0 0 15px;">Select a School</h3>
     <div class="schools-grid">
-        <div class="school-card" onclick="selectSchool('business')">🏢🥇 <h3>School of Business</h3></div>
-        <div class="school-card" onclick="selectSchool('education')">📚📖 <h3>School of Education</h3></div>
-        <div class="school-card" onclick="selectSchool('natural-sciences')">🔬🫶🏽 <h3>School of Natural Sciences</h3></div>
-        <div class="school-card" onclick="selectSchool('humanities')">🎨🤝🏾 <h3>School of Humanities</h3></div>
+        <div class="school-card" onclick="selectSchool('business')">🏢 <h3>School of Business</h3></div>
+        <div class="school-card" onclick="selectSchool('education')">📚 <h3>School of Education</h3></div>
+        <div class="school-card" onclick="selectSchool('natural-sciences')">🔬 <h3>School of Natural Sciences</h3></div>
+        <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
     </div>
+
+    <!-- MEMOS SECTION -->
+    <h3 style="margin:25px 0 12px;">📢 Recent Memos & Announcements</h3>
+    <div id="memosContainer">Loading memos...</div>
 </div>
 
+<!-- MAIN VIEW (after selecting school) -->
 <div id="mainView" class="section">
     <button class="btn btn-secondary" onclick="backToSchools()">← Back to Schools</button>
-    <h2 id="schoolTitle" style="margin-top:15px;"></h2>
-    <div style="margin:15px 0;">
+    <h2 id="schoolTitle" style="margin-top:12px;"></h2>
+
+    <div style="margin:12px 0;">
         <button class="level-btn" id="lvl1" onclick="selectYear('1')">1st Year</button>
         <button class="level-btn" id="lvl2" onclick="selectYear('2')">2nd Year</button>
         <button class="level-btn" id="lvl3" onclick="selectYear('3')">3rd Year</button>
         <button class="level-btn" id="lvl4" onclick="selectYear('4')">4th Year</button>
     </div>
 
-    <div id="masterPanel" style="display:none; margin: 15px 0;">
+    <!-- Master Admin Panel -->
+    <div id="masterPanel" style="display:none; margin:12px 0; display:flex; flex-wrap:wrap; gap:8px;">
         <button class="btn btn-master" onclick="window.location.href='admin-students.html'">Manage Student Accounts</button>
+        <button class="btn btn-master" onclick="openPendingAdmins()">Pending Admin Accounts</button>
+        <button class="btn btn-warning" onclick="openChangePasswords()">Change Passwords</button>
     </div>
 
-    <button class="btn btn-purple" onclick="openTutorials()" style="margin-top:10px;">📺 Tutorial Videos for this Year</button>
+    <button class="btn btn-purple" onclick="openTutorials()" style="margin-top:8px;">📺 Tutorial Videos</button>
 
+    <!-- Admin Create Folder -->
     <div class="admin-panel" id="adminCreatePanel">
-        <h4 style="margin-top:0;">🛠️ Admin: Create New Folder</h4>
+        <h4 style="margin-top:0;">🛠️ Create New Folder</h4>
         <input type="text" id="newFolderName" placeholder="Folder name">
-        <input type="password" id="newFolderPassword" placeholder="Set a password for this folder">
+        <input type="password" id="newFolderPassword" placeholder="Set password">
+        <input type="password" id="newFolderPassword2" placeholder="Confirm password">
         <select id="newFolderType">
             <option value="notes">Notes Folder</option>
             <option value="results">Test Results Folder</option>
@@ -156,60 +374,63 @@
         <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
-    <h3 style="margin-top:25px;">📁 Notes Folders</h3>
+    <h3 style="margin-top:22px;">📁 Notes Folders</h3>
     <div class="search-box">
         <input type="text" id="searchNotes" placeholder="Search notes folders..." oninput="filterNotes()">
     </div>
     <div class="folder-grid" id="notesFolders"></div>
 
-    <!-- Test Results Section -->
-    <h3 style="margin-top:35px;">📊 Test Results & Continuous Assessment</h3>
-
-    <div style="background:#e3f2fd; border:1px solid #90caf9; padding:20px; border-radius:8px; margin-top:15px;">
-        <p style="margin-top:0; margin-bottom:15px;">Students must log in to view their Test Results and CA.</p>
-        <button class="btn btn-blue" style="padding:12px 24px; font-size:16px;" 
-                onclick="window.location.href='student-auth.html'">
+    <h3 style="margin-top:30px;">📊 Test Results & Continuous Assessment</h3>
+    <div style="background:#e3f2fd; border:1px solid #90caf9; padding:16px; border-radius:8px; margin-top:12px;">
+        <p style="margin:0 0 12px;">Students must log in to view their Test Results and CA.</p>
+        <button class="btn btn-primary" style="padding:11px 20px;" onclick="window.location.href='student-auth.html'">
             🔐 Login to View Test Results / CA
         </button>
     </div>
 
-    <!-- Only visible to Admins -->
     <div id="adminResultsSection" style="display:none;">
-        <div class="search-box" style="margin-top:20px;">
+        <div class="search-box" style="margin-top:15px;">
             <input type="text" id="searchResults" placeholder="Search results folders..." oninput="filterResults()">
         </div>
         <div class="folder-grid" id="resultsFolders"></div>
     </div>
 </div>
 
+<!-- FOLDER VIEW -->
 <div id="folderView" class="section">
     <button class="btn btn-secondary" onclick="backToYear()">← Back to Folders</button>
-    <h2 id="folderTitle" style="margin-top:15px;"></h2>
+    <h2 id="folderTitle" style="margin-top:12px;"></h2>
+
     <div class="admin-panel" id="folderAdminPanel">
         <h4 style="margin-top:0;">Admin Actions</h4>
+        <input type="text" id="fileDisplayName" placeholder="File display name (optional)">
         <input type="file" id="fileToUpload">
         <button class="btn btn-success" onclick="uploadToFolder()">Upload File</button>
-        <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete this Folder</button>
+        <button class="btn btn-warning" onclick="openRenameFolder()">Rename Folder</button>
+        <button class="btn btn-warning" onclick="openChangeFolderPass()">Change Password</button>
+        <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete Folder</button>
     </div>
+
     <div class="search-box">
-        <input type="text" id="searchFiles" placeholder="Search files inside this folder..." oninput="filterFiles()">
+        <input type="text" id="searchFiles" placeholder="Search files..." oninput="filterFiles()">
     </div>
-    <div id="filesList" style="margin-top:15px;"></div>
+    <div id="filesList" style="margin-top:12px;"></div>
 </div>
 
-<!-- Loading Overlay -->
+<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div id="loadingText">Uploading... Please wait</div>
+    <div id="loadingText">Uploading...</div>
+    <div id="loadingPercent">0%</div>
 </div>
 
-<!-- Password Modal -->
+<!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
         <h3 id="modalTitle" style="color:#1a73e8;">Enter Password</h3>
         <div class="password-wrapper">
             <input type="password" id="modalPassword" placeholder="Enter password">
-            <button type="button" class="toggle-password" onclick="toggleModalPassword()">Show</button>
+            <button type="button" class="toggle-password" onclick="toggleModalPass()">Show</button>
         </div>
         <div class="modal-error" id="modalError">Wrong password. Please try again.</div>
         <div class="modal-actions">
@@ -219,25 +440,49 @@
     </div>
 </div>
 
-<!-- Confirm Modal -->
+<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
-        <h3 style="color:#e74c3c;" id="confirmTitle">Confirm Delete</h3>
-        <p id="confirmText" style="color:#555; line-height:1.5;"></p>
+        <h3 style="color:#e74c3c;" id="confirmTitle">Confirm</h3>
+        <p id="confirmText" style="color:#555;"></p>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
-            <button class="btn-confirm-danger" onclick="executeConfirmAction()">Delete</button>
+            <button class="btn-confirm-danger" onclick="executeConfirm()">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Message Modal -->
+<!-- MESSAGE MODAL -->
 <div class="modal-overlay" id="messageModal">
     <div class="modal-box">
         <h3 id="messageTitle" style="color:#1a73e8;">Message</h3>
-        <p id="messageText" style="color:#555; line-height:1.5; margin:0;"></p>
+        <p id="messageText" style="color:#555;"></p>
         <div class="modal-actions">
-            <button class="btn-ok" onclick="closeMessageModal()" style="flex:1;">OK</button>
+            <button class="btn-confirm" onclick="closeMessageModal()" style="flex:1;">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- CHANGE PASSWORDS (Master only) -->
+<div class="modal-overlay" id="changePassModal">
+    <div class="modal-box">
+        <h3 style="color:#6a1b9a;">Change Passwords</h3>
+        
+        <label>Change Normal Admin Passcode</label>
+        <input type="password" id="newAdminPass" placeholder="New Admin Passcode">
+        <input type="password" id="confirmAdminPass" placeholder="Confirm Admin Passcode">
+        <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="changeAdminPasscode()">Update Admin Passcode</button>
+
+        <hr style="margin:20px 0;">
+
+        <label>Change Master Admin Password</label>
+        <input type="password" id="newMasterPass" placeholder="New Master Password">
+        <input type="password" id="confirmMasterPass" placeholder="Confirm Master Password">
+        <input type="text" id="masterConfirmPin" placeholder="Enter PIN 886644 or type KAMIMA NKHATA">
+        <button class="btn btn-master" style="width:100%;margin-top:8px;" onclick="changeMasterPassword()">Update Master Password</button>
+
+        <div class="modal-actions" style="margin-top:15px;">
+            <button class="btn-cancel" onclick="closeChangePassModal()" style="flex:1;">Close</button>
         </div>
     </div>
 </div>
@@ -246,7 +491,10 @@
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
-    const MASTER_PASSWORD = "Stuff@KNU.2026";
+
+    // Default passcodes (can be changed by Master)
+    let ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
+    let MASTER_PASSWORD = localStorage.getItem("masterPassword") || "Staff@KNU.2026";
 
     let isAdmin = sessionStorage.getItem("isAdmin") === "true";
     let isMaster = sessionStorage.getItem("isMaster") === "true";
@@ -259,17 +507,30 @@
     let allResultsFolders = [];
     let allFiles = [];
 
+    // Show admin UI
     if (isAdmin) {
         document.getElementById("adminBadge").style.display = "inline-block";
         document.getElementById("adminResultsSection").style.display = "block";
+        const name = sessionStorage.getItem("adminName") || "Admin";
+        document.getElementById("userName").innerText = name;
+        
+        const pic = sessionStorage.getItem("adminProfilePic");
+        if (pic) {
+            const img = document.getElementById("headerProfilePic");
+            img.src = pic;
+            img.style.display = "block";
+        }
     }
-    if (isMaster) document.getElementById("masterPanel").style.display = "block";
+    if (isMaster) {
+        document.getElementById("masterPanel").style.display = "flex";
+    }
 
-    function showLoading(show, text = "Uploading... Please wait") {
+    // ===== HELPERS =====
+    function showLoading(show, text = "Please wait...", percent = null) {
         document.getElementById("loadingText").innerText = text;
+        document.getElementById("loadingPercent").innerText = percent !== null ? percent + "%" : "";
         document.getElementById("loadingOverlay").classList.toggle("show", show);
     }
-
     function showMessage(title, text, isError = false) {
         document.getElementById("messageTitle").innerText = title;
         document.getElementById("messageTitle").style.color = isError ? "#e74c3c" : "#1a73e8";
@@ -279,7 +540,6 @@
     function closeMessageModal() {
         document.getElementById("messageModal").classList.remove("show");
     }
-
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
@@ -288,43 +548,28 @@
         document.getElementById("modalPassword").focus();
         modalCallback = callback;
     }
-
     function closeModal() {
         document.getElementById("passwordModal").classList.remove("show");
     }
-
-    function toggleModalPassword() {
+    function toggleModalPass() {
         const input = document.getElementById("modalPassword");
         const btn = event.target;
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerText = "Hide";
-        } else {
-            input.type = "password";
-            btn.innerText = "Show";
-        }
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
     }
-
     function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
         const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
-
         if (isCorrect) {
             const cb = modalCallback;
             modalCallback = null;
-            document.getElementById("passwordModal").classList.remove("show");
+            closeModal();
             if (typeof cb === "function") cb();
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
-            document.getElementById("modalPassword").focus();
         }
     }
-
-    document.getElementById("modalPassword").addEventListener("keyup", e => {
-        if (e.key === "Enter") submitModalPassword();
-    });
-
     function showConfirmModal(title, text, callback) {
         document.getElementById("confirmTitle").innerText = title;
         document.getElementById("confirmText").innerHTML = text;
@@ -335,11 +580,12 @@
         document.getElementById("confirmModal").classList.remove("show");
         confirmCallback = null;
     }
-    function executeConfirmAction() {
+    function executeConfirm() {
         if (confirmCallback) confirmCallback();
         closeConfirmModal();
     }
 
+    // ===== NAVIGATION =====
     function selectSchool(school) {
         currentSchool = school;
         document.getElementById("schoolView").style.display = "none";
@@ -350,6 +596,7 @@
     function backToSchools() {
         document.getElementById("mainView").style.display = "none";
         document.getElementById("schoolView").style.display = "block";
+        loadMemos();
     }
     function selectYear(year) {
         currentYear = year;
@@ -364,6 +611,7 @@
         window.location.href = "tutorials.html";
     }
 
+    // ===== FOLDERS =====
     async function loadFolders() {
         const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
@@ -381,8 +629,8 @@
         }
         container.innerHTML = folders.map(f => `
             <div class="folder-card" onclick='openFolder(${JSON.stringify(f)})'>
-                <div style="font-size:28px;">${f.type === "results" ? "📊" : "📁"}</div>
-                <div style="font-weight:bold; margin-top:8px;">${f.name}</div>
+                <div style="font-size:26px;">${f.type === "results" ? "📊" : "📁"}</div>
+                <div style="font-weight:bold; margin-top:6px; font-size:13px;">${f.name}</div>
             </div>
         `).join("");
     }
@@ -399,21 +647,30 @@
         if (!isAdmin) return;
         const name = document.getElementById("newFolderName").value.trim();
         const password = document.getElementById("newFolderPassword").value;
+        const password2 = document.getElementById("newFolderPassword2").value;
         const type = document.getElementById("newFolderType").value;
+
         if (!name || !password) {
-            showMessage("Missing Information", "Please enter both folder name and password.", true);
+            showMessage("Missing Information", "Please enter folder name and password.", true);
             return;
         }
+        if (password !== password2) {
+            showMessage("Password Mismatch", "The two passwords do not match.", true);
+            return;
+        }
+
         showLoading(true, "Creating folder...");
         const { error } = await client.from("folders").insert({
             school: currentSchool, year: currentYear, name, password, type
         });
         showLoading(false);
+
         if (error) {
-            showMessage("Error", "Failed: " + error.message, true);
+            showMessage("Error", error.message, true);
         } else {
             document.getElementById("newFolderName").value = "";
             document.getElementById("newFolderPassword").value = "";
+            document.getElementById("newFolderPassword2").value = "";
             showMessage("Success", "Folder created successfully!");
             loadFolders();
         }
@@ -471,22 +728,30 @@
             showMessage("No File", "Please select a file first.", true);
             return;
         }
-
         showPasswordModal("Enter folder password", async () => {
             const file = fileInput.files[0];
-            const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+            const displayName = document.getElementById("fileDisplayName").value.trim();
+            const cleanName = (displayName || file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-            showLoading(true, "Uploading file... Please wait");
-
+            showLoading(true, "Uploading file...", 0);
             try {
+                // Simulate progress (Supabase doesn't give real progress easily)
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    if (progress <= 90) showLoading(true, "Uploading file...", progress);
+                }, 200);
+
                 const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
+                clearInterval(interval);
                 showLoading(false);
 
                 if (error) {
                     showMessage("Upload Failed", error.message, true);
                 } else {
                     fileInput.value = "";
+                    document.getElementById("fileDisplayName").value = "";
                     showMessage("Success", "File uploaded successfully!");
                     loadFilesInFolder();
                 }
@@ -499,14 +764,14 @@
 
     function deleteFile(fileName) {
         if (!isAdmin) return;
-        showPasswordModal("Enter password to delete file", () => {
-            showConfirmModal("Delete File", `Are you sure you want to delete <strong>${fileName}</strong>?`, async () => {
-                showLoading(true, "Deleting file...");
+        showPasswordModal("Enter password to delete", () => {
+            showConfirmModal("Delete File", `Delete <strong>${fileName}</strong>?`, async () => {
+                showLoading(true, "Deleting...");
                 const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
                 await client.storage.from("notes-files").remove([path]);
                 showLoading(false);
                 loadFilesInFolder();
-                showMessage("Deleted", "File deleted successfully.");
+                showMessage("Deleted", "File deleted.");
             });
         });
     }
@@ -514,7 +779,7 @@
     function deleteCurrentFolder() {
         if (!isAdmin) return;
         showPasswordModal("Enter password to delete folder", () => {
-            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all its files?`, async () => {
+            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all files?`, async () => {
                 showLoading(true, "Deleting folder...");
                 const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
                 const { data: files } = await client.storage.from("notes-files").list(path);
@@ -525,10 +790,111 @@
                 showLoading(false);
                 backToYear();
                 loadFolders();
-                showMessage("Deleted", "Folder deleted successfully.");
+                showMessage("Deleted", "Folder deleted.");
             });
         });
     }
+
+    // ===== CHANGE PASSWORDS (Master) =====
+    function openChangePasswords() {
+        if (!isMaster) return;
+        document.getElementById("changePassModal").classList.add("show");
+    }
+    function closeChangePassModal() {
+        document.getElementById("changePassModal").classList.remove("show");
+    }
+    function changeAdminPasscode() {
+        const newPass = document.getElementById("newAdminPass").value;
+        const confirm = document.getElementById("confirmAdminPass").value;
+        if (!newPass || newPass.length < 6) {
+            showMessage("Error", "Password must be at least 6 characters", true);
+            return;
+        }
+        if (newPass !== confirm) {
+            showMessage("Error", "Passwords do not match", true);
+            return;
+        }
+        localStorage.setItem("adminPasscode", newPass);
+        ADMIN_PASSCODE = newPass;
+        showMessage("Success", "Admin passcode updated successfully!");
+        document.getElementById("newAdminPass").value = "";
+        document.getElementById("confirmAdminPass").value = "";
+    }
+    function changeMasterPassword() {
+        const newPass = document.getElementById("newMasterPass").value;
+        const confirm = document.getElementById("confirmMasterPass").value;
+        const pin = document.getElementById("masterConfirmPin").value.trim().toUpperCase();
+
+        if (!newPass || newPass.length < 6) {
+            showMessage("Error", "Password must be at least 6 characters", true);
+            return;
+        }
+        if (newPass !== confirm) {
+            showMessage("Error", "Passwords do not match", true);
+            return;
+        }
+        if (pin !== "886644" && pin !== "KAMIMA NKHATA") {
+            showMessage("Error", "Invalid confirmation PIN or name", true);
+            return;
+        }
+        localStorage.setItem("masterPassword", newPass);
+        MASTER_PASSWORD = newPass;
+        showMessage("Success", "Master password updated successfully!");
+        document.getElementById("newMasterPass").value = "";
+        document.getElementById("confirmMasterPass").value = "";
+        document.getElementById("masterConfirmPin").value = "";
+    }
+
+    // ===== MEMOS =====
+    async function loadMemos() {
+        const container = document.getElementById("memosContainer");
+        try {
+            const { data, error } = await client.from("memos")
+                .select("*")
+                .gt("expires_at", new Date().toISOString())
+                .order("created_at", { ascending: false })
+                .limit(20);
+
+            if (error || !data || data.length === 0) {
+                container.innerHTML = `<p style="color:#888;">No active memos at the moment.</p>`;
+                return;
+            }
+
+            container.innerHTML = data.map(m => {
+                const date = new Date(m.created_at);
+                const timeStr = date.toLocaleString("en-GB", {
+                    weekday: "short", day: "numeric", month: "short",
+                    hour: "2-digit", minute: "2-digit"
+                });
+                return `
+                <div class="memo-card">
+                    <div class="memo-header">
+                        <img class="memo-avatar" src="${m.poster_pic || 'https://via.placeholder.com/42'}" alt="">
+                        <div class="memo-meta">
+                            <div class="memo-name">${m.poster_name}</div>
+                            <div class="memo-position">${m.poster_position}${m.poster_school ? " • " + m.poster_school : ""}</div>
+                            <div class="memo-time">${timeStr}</div>
+                        </div>
+                    </div>
+                    ${m.image_url ? `<img class="memo-image" src="${m.image_url}" alt="Memo">` : ""}
+                    <div class="memo-body">
+                        <div class="memo-title">${m.title || ""}</div>
+                        <div class="memo-desc">${m.description || ""}</div>
+                    </div>
+                    <div class="memo-actions">
+                        <div class="memo-action">👍 ${m.likes || 0} Likes</div>
+                        <div class="memo-action">👎 ${m.dislikes || 0} Dislikes</div>
+                        <div class="memo-action">💬 Comments</div>
+                    </div>
+                </div>`;
+            }).join("");
+        } catch (err) {
+            container.innerHTML = `<p style="color:#888;">Memos will appear here once created.</p>`;
+        }
+    }
+
+    // Start
+    loadMemos();
 </script>
 </body>
 </html>

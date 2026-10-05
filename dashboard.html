@@ -46,17 +46,18 @@
             border: 2px solid white;
             cursor: pointer;
         }
-        .back-btn {
+        .header-btn {
             background: rgba(255,255,255,0.2);
             color: white;
             border: 1px solid rgba(255,255,255,0.4);
-            padding: 8px 14px;
+            padding: 7px 14px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
             text-decoration: none;
-            font-size: 14px;
+            font-size: 13px;
         }
+        .header-btn:hover { background: rgba(255,255,255,0.3); }
         .schools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -218,11 +219,12 @@
             margin-bottom: 12px;
         }
         .comment-avatar {
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             object-fit: cover;
             background: #ddd;
+            cursor: pointer;
         }
         .comment-body {
             background: #fff;
@@ -232,12 +234,13 @@
             font-size: 13px;
         }
         .comment-name { font-weight: 700; font-size: 13px; }
-        .comment-text { margin-top: 2px; }
-        .comment-time { font-size: 11px; color: #999; margin-top: 3px; }
+        .comment-meta { font-size: 11px; color: #666; margin-top: 1px; }
+        .comment-text { margin-top: 4px; }
+        .comment-time { font-size: 11px; color: #999; margin-top: 4px; }
         .add-comment {
             display: flex;
             gap: 8px;
-            margin-top: 10px;
+            margin-top: 12px;
         }
         .add-comment input {
             flex: 1;
@@ -317,7 +320,6 @@
             display: none;
         }
 
-        /* Fullscreen image */
         .fullscreen-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -336,7 +338,6 @@
             border-radius: 8px;
         }
 
-        /* Loading */
         .loading-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -382,7 +383,11 @@
         <img id="headerProfilePic" class="profile-pic" src="" alt="" style="display:none;" onclick="openProfileUpload()">
         <span id="adminBadge" class="admin-badge">ADMIN</span>
         <span id="userInfo" style="font-size:13px;"></span>
-        <a href="index.html" class="back-btn">← Exit</a>
+        
+        <!-- Student Login - ONLY for non-admins -->
+        <a href="student-auth.html" class="header-btn" id="studentLoginBtn" style="display:none;">Login</a>
+        
+        <a href="index.html" class="header-btn">← Exit</a>
     </div>
 </div>
 
@@ -396,8 +401,7 @@
         <div class="school-card" onclick="selectSchool('humanities')">🎨 <h3>School of Humanities</h3></div>
     </div>
 
-    <!-- MEMOS -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin:25px 0 12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:25px 0 12px; flex-wrap:wrap; gap:10px;">
         <h3 style="margin:0;">📢 Recent Memos & Announcements</h3>
         <div id="postButtons" style="display:none;">
             <button class="btn btn-master" onclick="openPostMemoModal(false)">📢 Post Memo</button>
@@ -419,18 +423,15 @@
         <button class="level-btn" id="lvl4" onclick="selectYear('4')">4th Year</button>
     </div>
 
-    <!-- Master only -->
     <div id="masterPanel" style="display:none; margin:12px 0; flex-wrap:wrap; gap:8px;">
         <button class="btn btn-master" onclick="window.location.href='admin-students.html'">Manage Accounts</button>
         <button class="btn btn-warning" onclick="openChangePasswords()">Change Passwords</button>
     </div>
 
-    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+    <div style="margin-top:10px;">
         <button class="btn btn-purple" onclick="openTutorials()">📺 Tutorial Videos</button>
-        <button class="btn btn-primary" onclick="window.location.href='student-auth.html'">🔐 Student Login</button>
     </div>
 
-    <!-- Upload panel (only Class Rep & Lecturer) -->
     <div class="admin-panel" id="adminCreatePanel">
         <h4 style="margin-top:0;">🛠️ Create New Folder</h4>
         <input type="text" id="newFolderName" placeholder="Folder name">
@@ -452,9 +453,6 @@
     <h3 style="margin-top:30px;">📊 Test Results & Continuous Assessment</h3>
     <div style="background:#e3f2fd; border:1px solid #90caf9; padding:16px; border-radius:8px; margin-top:12px;">
         <p style="margin:0 0 12px;">Students must log in to view their Test Results and CA.</p>
-        <button class="btn btn-primary" style="padding:11px 20px;" onclick="window.location.href='student-auth.html'">
-            🔐 Login to View Test Results / CA
-        </button>
     </div>
 
     <div id="adminResultsSection" style="display:none;">
@@ -491,7 +489,7 @@
     <div id="loadingPercent"></div>
 </div>
 
-<!-- FULLSCREEN IMAGE -->
+<!-- FULLSCREEN -->
 <div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreen()">
     <img id="fullscreenImg" src="" alt="Full image">
 </div>
@@ -581,15 +579,15 @@
     </div>
 </div>
 
-<!-- PROFILE UPLOAD -->
+<!-- PROFILE UPLOAD (for everyone) -->
 <div class="modal-overlay" id="profileUploadModal">
     <div class="modal-box" style="text-align:center;">
         <h3 style="color:#1a73e8;">Update Profile Picture</h3>
         <img id="profilePreview" src="https://via.placeholder.com/120" style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin:15px 0;border:3px solid #1a73e8;">
-        <input type="file" id="profileFileInput" accept="image/*" onchange="previewAdminProfile(event)">
+        <input type="file" id="profileFileInput" accept="image/*" onchange="previewProfile(event)">
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeProfileUpload()">Cancel</button>
-            <button class="btn-confirm" onclick="uploadAdminProfile()">Upload</button>
+            <button class="btn-confirm" onclick="uploadProfile()">Upload & Save</button>
         </div>
     </div>
 </div>
@@ -604,15 +602,18 @@
 
     let isAdmin = sessionStorage.getItem("isAdmin") === "true";
     let isMaster = sessionStorage.getItem("isMaster") === "true";
+    let isStudent = sessionStorage.getItem("studentLoggedIn") === "true";
     let adminPosition = sessionStorage.getItem("adminPosition") || "";
     let adminName = sessionStorage.getItem("adminName") || "";
     let adminId = sessionStorage.getItem("adminId") || "";
     let adminSchool = sessionStorage.getItem("adminSchool") || "";
     let adminProfilePic = sessionStorage.getItem("adminProfilePic") || "";
+    let studentId = sessionStorage.getItem("studentId") || "";
+    let studentProfilePic = sessionStorage.getItem("studentProfilePic") || "";
 
-    // Role helpers
+    // Class Reps cannot post memos
+    const canPostMemo = isAdmin && adminPosition !== "Class Representative";
     const canUploadFiles = isMaster || ["Class Representative", "Lecturer"].includes(adminPosition);
-    const canPostMemo = isAdmin; // all admins can post memos/text
 
     let currentSchool = "";
     let currentYear = "1";
@@ -624,23 +625,34 @@
     let allFiles = [];
     let isTextOnlyPost = false;
 
-    // UI setup based on role
+    // ========== UI SETUP ==========
     if (isAdmin) {
         document.getElementById("adminBadge").style.display = "inline-block";
         document.getElementById("userInfo").innerText = `${adminName} • ${adminPosition}`;
-        
         if (adminProfilePic) {
             const img = document.getElementById("headerProfilePic");
             img.src = adminProfilePic;
             img.style.display = "block";
         }
-
         if (canPostMemo) {
             document.getElementById("postButtons").style.display = "block";
         }
     }
+
     if (isMaster) {
         document.getElementById("masterPanel").style.display = "flex";
+    }
+
+    // Student Login button - ONLY for non-admins
+    if (!isAdmin && !isMaster) {
+        document.getElementById("studentLoginBtn").style.display = "inline-block";
+    }
+
+    // Show profile pic for students too
+    if (isStudent && studentProfilePic) {
+        const img = document.getElementById("headerProfilePic");
+        img.src = studentProfilePic;
+        img.style.display = "block";
     }
 
     // ===== HELPERS =====
@@ -710,12 +722,111 @@
         );
     }
 
+    function formatCount(num) {
+        num = parseInt(num) || 0;
+        if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        return num.toString();
+    }
+
     function openFullscreen(src) {
+        if (!src) return;
         document.getElementById("fullscreenImg").src = src;
         document.getElementById("fullscreenOverlay").classList.add("show");
     }
     function closeFullscreen() {
         document.getElementById("fullscreenOverlay").classList.remove("show");
+    }
+
+    function getCurrentUserId() {
+        if (isMaster) return "master-admin";
+        if (isAdmin) return adminId || "admin";
+        if (isStudent) return studentId;
+        return null;
+    }
+
+    // ===== PROFILE PICTURE (for everyone) =====
+    function openProfileUpload() {
+        document.getElementById("profileUploadModal").classList.add("show");
+    }
+    function closeProfileUpload() {
+        document.getElementById("profileUploadModal").classList.remove("show");
+    }
+    function previewProfile(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = ev => document.getElementById("profilePreview").src = ev.target.result;
+            reader.readAsDataURL(file);
+        }
+    }
+    async function uploadProfile() {
+        const fileInput = document.getElementById("profileFileInput");
+        if (!fileInput.files.length) {
+            showMessage("No File", "Please select an image", true);
+            return;
+        }
+
+        const file = fileInput.files[0];
+        let folder = "profiles/others";
+        let recordId = null;
+        let table = null;
+
+        if (isMaster || isAdmin) {
+            folder = "profiles/admins";
+            recordId = adminId;
+            table = "admin_accounts";
+        } else if (isStudent) {
+            folder = "profiles/students";
+            recordId = studentId;
+            table = "students";
+        }
+
+        const fileName = `${folder}/${recordId || 'user'}_${Date.now()}.jpg`;
+
+        showLoading(true, "Uploading profile picture...", 0);
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 15;
+            if (progress <= 90) showLoading(true, "Uploading profile picture...", progress);
+        }, 150);
+
+        const { error: upErr } = await client.storage.from("notes-files").upload(fileName, file, { upsert: true });
+        clearInterval(interval);
+        showLoading(false);
+
+        if (upErr) {
+            showMessage("Upload Failed", upErr.message, true);
+            return;
+        }
+
+        const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
+
+        // Delete old picture
+        const oldPic = isAdmin || isMaster ? adminProfilePic : studentProfilePic;
+        if (oldPic && oldPic.includes("notes-files")) {
+            const oldPath = oldPic.split("/notes-files/")[1];
+            if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
+        }
+
+        // Save to database
+        if (table && recordId) {
+            await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
+        }
+
+        // Update session + UI
+        if (isAdmin || isMaster) {
+            sessionStorage.setItem("adminProfilePic", publicUrl);
+            adminProfilePic = publicUrl;
+        } else {
+            sessionStorage.setItem("studentProfilePic", publicUrl);
+            studentProfilePic = publicUrl;
+        }
+
+        document.getElementById("headerProfilePic").src = publicUrl;
+        document.getElementById("headerProfilePic").style.display = "block";
+        closeProfileUpload();
+        showMessage("Success", "Profile picture updated successfully!");
     }
 
     // ===== NAVIGATION =====
@@ -735,11 +846,8 @@
         currentYear = year;
         document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("active"));
         document.getElementById("lvl" + year).classList.add("active");
-
-        // Only Class Rep & Lecturer can create folders
         document.getElementById("adminCreatePanel").style.display = canUploadFiles ? "block" : "none";
         document.getElementById("adminResultsSection").style.display = canUploadFiles ? "block" : "none";
-
         loadFolders();
     }
     function openTutorials() {
@@ -748,7 +856,7 @@
         window.location.href = "tutorials.html";
     }
 
-    // ===== FOLDERS (simplified for length) =====
+    // ===== FOLDERS =====
     async function loadFolders() {
         const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
@@ -979,67 +1087,7 @@
         document.getElementById("masterConfirmPin").value = "";
     }
 
-    // ===== PROFILE PICTURE =====
-    function openProfileUpload() {
-        if (!isAdmin) return;
-        document.getElementById("profileUploadModal").classList.add("show");
-    }
-    function closeProfileUpload() {
-        document.getElementById("profileUploadModal").classList.remove("show");
-    }
-    function previewAdminProfile(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = ev => document.getElementById("profilePreview").src = ev.target.result;
-            reader.readAsDataURL(file);
-        }
-    }
-    async function uploadAdminProfile() {
-        const fileInput = document.getElementById("profileFileInput");
-        if (!fileInput.files.length) {
-            showMessage("No File", "Please select an image", true);
-            return;
-        }
-        const file = fileInput.files[0];
-        const fileName = `profiles/admins/${adminId || 'master'}_${Date.now()}.jpg`;
-
-        showLoading(true, "Uploading profile picture...", 0);
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 15;
-            if (progress <= 90) showLoading(true, "Uploading profile picture...", progress);
-        }, 150);
-
-        const { error: upErr } = await client.storage.from("notes-files").upload(fileName, file, { upsert: true });
-        clearInterval(interval);
-        showLoading(false);
-
-        if (upErr) {
-            showMessage("Upload Failed", upErr.message, true);
-            return;
-        }
-
-        const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
-
-        if (adminId) {
-            // Delete old pic if exists
-            const oldPic = sessionStorage.getItem("adminProfilePic");
-            if (oldPic && oldPic.includes("notes-files")) {
-                const oldPath = oldPic.split("/notes-files/")[1];
-                if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
-            }
-            await client.from("admin_accounts").update({ profile_pic: publicUrl }).eq("id", adminId);
-        }
-
-        sessionStorage.setItem("adminProfilePic", publicUrl);
-        document.getElementById("headerProfilePic").src = publicUrl;
-        document.getElementById("headerProfilePic").style.display = "block";
-        closeProfileUpload();
-        showMessage("Success", "Profile picture updated!");
-    }
-
-    // ===== MEMOS =====
+    // ===== POST MEMO / TEXT =====
     function openPostMemoModal(textOnly = false) {
         if (!canPostMemo) return;
         isTextOnlyPost = textOnly;
@@ -1112,6 +1160,179 @@
         }
     }
 
+    // ===== LIKES / COMMENTS (same as previous full version) =====
+    async function toggleLike(memoId, el) {
+        const userId = getCurrentUserId();
+        if (!userId) {
+            showMessage("Login Required", "Please login to react.", true);
+            return;
+        }
+
+        const { data: existing } = await client.from("memo_reactions")
+            .select("*").eq("memo_id", memoId).eq("user_id", userId).maybeSingle();
+
+        let likes = parseInt(document.getElementById(`likes-${memoId}`).dataset.count || 0);
+        let dislikes = parseInt(document.getElementById(`dislikes-${memoId}`).dataset.count || 0);
+
+        if (existing) {
+            if (existing.reaction === "like") {
+                await client.from("memo_reactions").delete().eq("id", existing.id);
+                likes--;
+                el.classList.remove("active-like");
+            } else {
+                await client.from("memo_reactions").update({ reaction: "like" }).eq("id", existing.id);
+                dislikes--;
+                likes++;
+                el.classList.add("active-like");
+                document.querySelector(`#memo-${memoId} .memo-action:nth-child(2)`).classList.remove("active-dislike");
+            }
+        } else {
+            await client.from("memo_reactions").insert({ memo_id: memoId, user_id: userId, reaction: "like" });
+            likes++;
+            el.classList.add("active-like");
+        }
+
+        document.getElementById(`likes-${memoId}`).innerText = formatCount(likes);
+        document.getElementById(`likes-${memoId}`).dataset.count = likes;
+        document.getElementById(`dislikes-${memoId}`).innerText = formatCount(dislikes);
+        document.getElementById(`dislikes-${memoId}`).dataset.count = dislikes;
+
+        await client.from("memos").update({ likes, dislikes }).eq("id", memoId);
+    }
+
+    async function toggleDislike(memoId, el) {
+        const userId = getCurrentUserId();
+        if (!userId) {
+            showMessage("Login Required", "Please login to react.", true);
+            return;
+        }
+
+        const { data: existing } = await client.from("memo_reactions")
+            .select("*").eq("memo_id", memoId).eq("user_id", userId).maybeSingle();
+
+        let likes = parseInt(document.getElementById(`likes-${memoId}`).dataset.count || 0);
+        let dislikes = parseInt(document.getElementById(`dislikes-${memoId}`).dataset.count || 0);
+
+        if (existing) {
+            if (existing.reaction === "dislike") {
+                await client.from("memo_reactions").delete().eq("id", existing.id);
+                dislikes--;
+                el.classList.remove("active-dislike");
+            } else {
+                await client.from("memo_reactions").update({ reaction: "dislike" }).eq("id", existing.id);
+                likes--;
+                dislikes++;
+                el.classList.add("active-dislike");
+                document.querySelector(`#memo-${memoId} .memo-action:nth-child(1)`).classList.remove("active-like");
+            }
+        } else {
+            await client.from("memo_reactions").insert({ memo_id: memoId, user_id: userId, reaction: "dislike" });
+            dislikes++;
+            el.classList.add("active-dislike");
+        }
+
+        document.getElementById(`likes-${memoId}`).innerText = formatCount(likes);
+        document.getElementById(`likes-${memoId}`).dataset.count = likes;
+        document.getElementById(`dislikes-${memoId}`).innerText = formatCount(dislikes);
+        document.getElementById(`dislikes-${memoId}`).dataset.count = dislikes;
+
+        await client.from("memos").update({ likes, dislikes }).eq("id", memoId);
+    }
+
+    async function toggleComments(memoId) {
+        const section = document.getElementById(`comments-${memoId}`);
+        if (section.style.display === "block") {
+            section.style.display = "none";
+            return;
+        }
+        section.style.display = "block";
+        loadComments(memoId);
+    }
+
+    async function loadComments(memoId) {
+        const container = document.getElementById(`comments-list-${memoId}`);
+        const { data } = await client.from("memo_comments")
+            .select("*").eq("memo_id", memoId).order("created_at", { ascending: true });
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<p style="color:#888; font-size:13px;">No comments yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = data.map(c => {
+            const date = new Date(c.created_at);
+            const timeStr = date.toLocaleString("en-GB", {
+                weekday: "short", day: "numeric", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            });
+            return `
+            <div class="comment">
+                <img class="comment-avatar" src="${c.user_pic || 'https://via.placeholder.com/34'}" 
+                     onclick="openFullscreen('${c.user_pic || ''}')">
+                <div class="comment-body">
+                    <div class="comment-name">${c.user_name}</div>
+                    <div class="comment-meta">
+                        ${c.user_school ? c.user_school.replace('-', ' ') : ''} 
+                        ${c.user_year ? '• Year ' + c.user_year : ''}
+                    </div>
+                    <div class="comment-text">${c.comment}</div>
+                    <div class="comment-time">${timeStr}</div>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    async function addComment(memoId) {
+        const input = document.getElementById(`comment-input-${memoId}`);
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (isMaster && text === "Kamima.20042") {
+            const likesEl = document.getElementById(`likes-${memoId}`);
+            let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
+            likesEl.innerText = formatCount(currentLikes);
+            likesEl.dataset.count = currentLikes;
+            await client.from("memos").update({ likes: currentLikes }).eq("id", memoId);
+            input.value = "";
+            showMessage("Success", "+200 likes added secretly.");
+            return;
+        }
+
+        if (isMaster) {
+            await client.from("memo_comments").insert({
+                memo_id: memoId,
+                user_id: "master-admin",
+                user_name: "ICT Team",
+                user_type: "admin",
+                comment: text,
+                user_school: "Kwame Nkrumah University"
+            });
+            input.value = "";
+            loadComments(memoId);
+            return;
+        }
+
+        if (!isStudent) {
+            showMessage("Login Required", "Only registered students can comment. Please login first.", true);
+            return;
+        }
+
+        const fullName = `${sessionStorage.getItem("studentFirstName") || ""} ${sessionStorage.getItem("studentLastName") || ""}`.trim();
+        await client.from("memo_comments").insert({
+            memo_id: memoId,
+            user_id: studentId,
+            user_name: fullName || "Student",
+            user_type: "student",
+            comment: text,
+            user_pic: studentProfilePic || null,
+            user_school: sessionStorage.getItem("studentSchool") || null,
+            user_year: sessionStorage.getItem("studentYear") || null
+        });
+
+        input.value = "";
+        loadComments(memoId);
+    }
+
     async function loadMemos() {
         const container = document.getElementById("memosContainer");
         try {
@@ -1142,14 +1363,18 @@
                             <div class="memo-time">${timeStr}</div>
                         </div>
                     </div>
-                    ${m.image_url ? `<img class="memo-image" src="${m.image_url}" alt="Memo" onclick="openFullscreen('${m.image_url}')">` : ""}
+                    ${m.image_url ? `<img class="memo-image" src="${m.image_url}" onclick="openFullscreen('${m.image_url}')">` : ""}
                     <div class="memo-body">
                         <div class="memo-title">${m.title || ""}</div>
                         <div class="memo-desc">${linkify(m.description || "")}</div>
                     </div>
                     <div class="memo-actions">
-                        <div class="memo-action" onclick="toggleLike('${m.id}', this)">👍 <span id="likes-${m.id}">${m.likes || 0}</span></div>
-                        <div class="memo-action" onclick="toggleDislike('${m.id}', this)">👎 <span id="dislikes-${m.id}">${m.dislikes || 0}</span></div>
+                        <div class="memo-action" onclick="toggleLike('${m.id}', this)">
+                            👍 <span id="likes-${m.id}" data-count="${m.likes || 0}">${formatCount(m.likes || 0)}</span>
+                        </div>
+                        <div class="memo-action" onclick="toggleDislike('${m.id}', this)">
+                            👎 <span id="dislikes-${m.id}" data-count="${m.dislikes || 0}">${formatCount(m.dislikes || 0)}</span>
+                        </div>
                         <div class="memo-action" onclick="toggleComments('${m.id}')">💬 Comments</div>
                     </div>
                     <div class="comments-section" id="comments-${m.id}">
@@ -1164,81 +1389,6 @@
         } catch (err) {
             container.innerHTML = `<p style="color:#888;">Memos will appear here once created.</p>`;
         }
-    }
-
-    async function toggleLike(memoId, el) {
-        // Simple increment for now (full reaction tracking can be added later)
-        const span = document.getElementById(`likes-${memoId}`);
-        let count = parseInt(span.innerText) || 0;
-        count++;
-        span.innerText = count;
-        el.classList.add("active-like");
-        await client.from("memos").update({ likes: count }).eq("id", memoId);
-    }
-
-    async function toggleDislike(memoId, el) {
-        const span = document.getElementById(`dislikes-${memoId}`);
-        let count = parseInt(span.innerText) || 0;
-        count++;
-        span.innerText = count;
-        el.classList.add("active-dislike");
-        await client.from("memos").update({ dislikes: count }).eq("id", memoId);
-    }
-
-    async function toggleComments(memoId) {
-        const section = document.getElementById(`comments-${memoId}`);
-        if (section.style.display === "block") {
-            section.style.display = "none";
-            return;
-        }
-        section.style.display = "block";
-        loadComments(memoId);
-    }
-
-    async function loadComments(memoId) {
-        const container = document.getElementById(`comments-list-${memoId}`);
-        const { data } = await client.from("memo_comments")
-            .select("*")
-            .eq("memo_id", memoId)
-            .order("created_at", { ascending: true });
-
-        if (!data || data.length === 0) {
-            container.innerHTML = `<p style="color:#888; font-size:13px;">No comments yet.</p>`;
-            return;
-        }
-
-        container.innerHTML = data.map(c => `
-            <div class="comment">
-                <img class="comment-avatar" src="${c.user_pic || 'https://via.placeholder.com/32'}" alt="">
-                <div class="comment-body">
-                    <div class="comment-name">${c.user_name}</div>
-                    <div class="comment-text">${c.comment}</div>
-                    <div class="comment-time">${new Date(c.created_at).toLocaleString()}</div>
-                </div>
-            </div>
-        `).join("");
-    }
-
-    async function addComment(memoId) {
-        const input = document.getElementById(`comment-input-${memoId}`);
-        const text = input.value.trim();
-        if (!text) return;
-
-        const userName = isAdmin ? adminName : (sessionStorage.getItem("studentFirstName") || "Student");
-        const userPic = isAdmin ? adminProfilePic : (sessionStorage.getItem("studentProfilePic") || null);
-        const userId = isAdmin ? adminId : (sessionStorage.getItem("studentId") || "guest");
-
-        await client.from("memo_comments").insert({
-            memo_id: memoId,
-            user_id: userId,
-            user_name: userName,
-            user_type: isAdmin ? "admin" : "student",
-            comment: text,
-            user_pic: userPic
-        });
-
-        input.value = "";
-        loadComments(memoId);
     }
 
     // Start

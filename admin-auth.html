@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - KNU Notes</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e7e34">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e8f5e9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #1e7e34;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h2 { margin: 0; }
+        .tabs {
+            display: flex;
+            background: #c8e6c9;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #1e7e34;
+            font-size: 14px;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #1e7e34;
+        }
+        .form-section {
+            padding: 25px;
+            display: none;
+        }
+        .form-section.active { display: block; }
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .password-wrapper { position: relative; }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #1e7e34;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 22px;
+            background: #1e7e34;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn:hover { background: #155d27; }
+        .error {
+            color: #c62828;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+        .success-box {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .success-box.show { display: block; }
+        .green-tick {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #2e7d32;
+            color: white;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            animation: pop 0.4s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .back {
+            text-align: center;
+            padding: 15px;
+            background: #f1f8e9;
+        }
+        .back a { color: #555; text-decoration: none; }
+        .name-row {
+            display: flex;
+            gap: 10px;
+        }
+        .name-row > div { flex: 1; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Admin Portal</h2>
+        <p style="margin:8px 0 0; opacity:0.9;">Login or Register as Staff</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('login')">Login</div>
+        <div class="tab" onclick="showTab('register')">Register</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login" class="form-section active">
+        <label>Email or Phone Number</label>
+        <input type="text" id="loginUsername" placeholder="Email or Phone">
+
+        <label>Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="loginPassword" placeholder="Enter your password">
+            <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">Show</button>
+        </div>
+
+        <div class="error" id="loginError"></div>
+        <button class="btn" onclick="loginAdmin()">Login</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register" class="form-section">
+        <div id="registerForm">
+            <div class="name-row">
+                <div>
+                    <label>First Name *</label>
+                    <input type="text" id="regFirstName" placeholder="First name">
+                </div>
+                <div>
+                    <label>Last Name *</label>
+                    <input type="text" id="regLastName" placeholder="Last name">
+                </div>
+            </div>
+
+            <label>Email Address *</label>
+            <input type="email" id="regEmail" placeholder="yourname@gmail.com">
+
+            <label>Phone Number *</label>
+            <input type="text" id="regPhone" placeholder="+26097XXXXXXX">
+
+            <label>Position *</label>
+            <select id="regPosition">
+                <option value="">Select Position</option>
+                <option value="Class Representative">Class Representative</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="HOD">HOD</option>
+                <option value="Dean of Students">Dean of Students</option>
+                <option value="Union Leader">Union Leader</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <div id="customPositionBox" style="display:none;">
+                <label>Specify Position</label>
+                <input type="text" id="regCustomPosition" placeholder="Type your position">
+            </div>
+
+            <label>School *</label>
+            <select id="regSchool">
+                <option value="">Select School</option>
+                <option value="business">School of Business</option>
+                <option value="education">School of Education</option>
+                <option value="natural-sciences">School of Natural Sciences</option>
+                <option value="humanities">School of Humanities</option>
+            </select>
+
+            <label>Password * (min 6 characters)</label>
+            <div class="password-wrapper">
+                <input type="password" id="regPassword" placeholder="Create password">
+                <button type="button" class="toggle-password" onclick="togglePassword('regPassword', this)">Show</button>
+            </div>
+
+            <label>Confirm Password *</label>
+            <div class="password-wrapper">
+                <input type="password" id="regConfirm" placeholder="Re-enter password">
+                <button type="button" class="toggle-password" onclick="togglePassword('regConfirm', this)">Show</button>
+            </div>
+
+            <div class="error" id="regError"></div>
+            <button class="btn" onclick="registerAdmin()">Create Account</button>
+        </div>
+
+        <div class="success-box" id="regSuccessBox">
+            <div class="green-tick">✓</div>
+            <h3 style="color:#2e7d32; margin:0 0 8px;">Account Submitted!</h3>
+            <p style="color:#555;">Your account is pending approval by the ICT team. You will be able to login once approved.</p>
+        </div>
+    </div>
+
+    <div class="back">
+        <a href="index.html">← Back to Welcome Page</a>
+    </div>
+</div>
+
+<script>
+    const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
+    const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
+    const client = supabase.createClient(DB_URL, DB_KEY);
+
+    document.getElementById("regPosition").addEventListener("change", function() {
+        document.getElementById("customPositionBox").style.display = 
+            this.value === "Other" ? "block" : "none";
+    });
+
+    function showTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tab).classList.add('active');
+    }
+
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "Hide";
+        } else {
+            input.type = "password";
+            btn.innerText = "Show";
+        }
+    }
+
+    async function loginAdmin() {
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const errorDiv = document.getElementById("loginError");
+        errorDiv.style.display = "none";
+
+        if (!username || !password) {
+            errorDiv.innerText = "Please enter email/phone and password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        // Try email first, then phone
+        let { data, error } = await client.from("admin_accounts")
+            .select("*")
+            .eq("email", username)
+            .eq("password", password)
+            .eq("status", "approved")
+            .maybeSingle();
+
+        if (!data) {
+            // Try phone
+            ({ data, error } = await client.from("admin_accounts")
+                .select("*")
+                .eq("phone", username)
+                .eq("password", password)
+                .eq("status", "approved")
+                .maybeSingle());
+        }
+
+        if (error || !data) {
+            errorDiv.innerText = "Invalid credentials or account not yet approved";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        // Save session
+        sessionStorage.setItem("isAdmin", "true");
+        sessionStorage.setItem("isMaster", "false");
+        sessionStorage.setItem("adminId", data.id);
+        sessionStorage.setItem("adminName", [data.first_name, data.last_name].filter(Boolean).join(" "));
+        sessionStorage.setItem("adminPosition", data.custom_position || data.position);
+        sessionStorage.setItem("adminSchool", data.school || "");
+        sessionStorage.setItem("adminProfilePic", data.profile_pic || "");
+
+        window.location.href = "dashboard.html";
+    }
+
+    async function registerAdmin() {
+        const firstName = document.getElementById("regFirstName").value.trim();
+        const lastName = document.getElementById("regLastName").value.trim();
+        const email = document.getElementById("regEmail").value.trim();
+        const phone = document.getElementById("regPhone").value.trim();
+        const position = document.getElementById("regPosition").value;
+        const customPosition = document.getElementById("regCustomPosition").value.trim();
+        const school = document.getElementById("regSchool").value;
+        const password = document.getElementById("regPassword").value;
+        const confirm = document.getElementById("regConfirm").value;
+
+        const errorDiv = document.getElementById("regError");
+        errorDiv.style.display = "none";
+
+        if (!firstName || !lastName || !email || !phone || !position || !school) {
+            errorDiv.innerText = "Please fill all required fields";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password.length < 6) {
+            errorDiv.innerText = "Password must be at least 6 characters";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (password !== confirm) {
+            errorDiv.innerText = "Passwords do not match";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const finalPosition = position === "Other" ? customPosition : position;
+
+        const { error } = await client.from("admin_accounts").insert({
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: phone,
+            position: finalPosition,
+            custom_position: position === "Other" ? customPosition : null,
+            school: school,
+            password: password,
+            status: "pending"
+        });
+
+        if (error) {
+            errorDiv.innerText = "Registration failed. Email may already exist.";
+            errorDiv.style.display = "block";
+        } else {
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("regSuccessBox").classList.add("show");
+        }
+    }
+</script>
+</body>
+</html>

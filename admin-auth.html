@@ -280,36 +280,44 @@
             return;
         }
 
-        // Try email first, then phone
+        // First try by email
         let { data, error } = await client.from("admin_accounts")
             .select("*")
             .eq("email", username)
             .eq("password", password)
-            .eq("status", "approved")
             .maybeSingle();
 
+        // If not found, try by phone
         if (!data) {
-            // Try phone
             ({ data, error } = await client.from("admin_accounts")
                 .select("*")
                 .eq("phone", username)
                 .eq("password", password)
-                .eq("status", "approved")
                 .maybeSingle());
         }
 
         if (error || !data) {
-            errorDiv.innerText = "Invalid credentials or account not yet approved";
+            errorDiv.innerText = "Invalid email/phone or password";
             errorDiv.style.display = "block";
             return;
         }
 
-        // Save session
+        // Allow login if:
+        // 1. status is "approved"
+        // 2. status is null (old accounts)
+        // 3. status column doesn't exist / is empty
+        if (data.status && data.status !== "approved") {
+            errorDiv.innerText = "Your account is still pending approval by the ICT team";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        // Login successful
         sessionStorage.setItem("isAdmin", "true");
         sessionStorage.setItem("isMaster", "false");
         sessionStorage.setItem("adminId", data.id);
-        sessionStorage.setItem("adminName", [data.first_name, data.last_name].filter(Boolean).join(" "));
-        sessionStorage.setItem("adminPosition", data.custom_position || data.position);
+        sessionStorage.setItem("adminName", [data.first_name, data.last_name].filter(Boolean).join(" ") || "Admin");
+        sessionStorage.setItem("adminPosition", data.custom_position || data.position || "Admin");
         sessionStorage.setItem("adminSchool", data.school || "");
         sessionStorage.setItem("adminProfilePic", data.profile_pic || "");
 

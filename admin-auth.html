@@ -22,7 +22,7 @@
         .container {
             background: white;
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             overflow: hidden;
@@ -40,12 +40,12 @@
         }
         .tab {
             flex: 1;
-            padding: 14px;
+            padding: 14px 8px;
             text-align: center;
             cursor: pointer;
             font-weight: bold;
             color: #1e7e34;
-            font-size: 14px;
+            font-size: 13px;
         }
         .tab.active {
             background: white;
@@ -84,6 +84,20 @@
             font-size: 13px;
             font-weight: bold;
         }
+        .phone-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .phone-prefix {
+            background: #f1f8e9;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: #1e7e34;
+            font-weight: bold;
+            border: 1px solid #c8e6c9;
+            white-space: nowrap;
+        }
         .btn {
             width: 100%;
             padding: 14px;
@@ -120,17 +134,12 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
-            animation: pop 0.4s ease;
-        }
-        @keyframes pop {
-            0% { transform: scale(0); }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); }
         }
         .back {
             text-align: center;
             padding: 15px;
             background: #f1f8e9;
+            font-size: 13px;
         }
         .back a { color: #555; text-decoration: none; }
         .name-row {
@@ -138,24 +147,35 @@
             gap: 10px;
         }
         .name-row > div { flex: 1; }
+        .help-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+        .help-text a {
+            color: #1e7e34;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <h2>Admin Portal</h2>
-        <p style="margin:8px 0 0; opacity:0.9;">Login or Register as Staff</p>
+        <p style="margin:8px 0 0; opacity:0.9;">Login • Register • Reset Password</p>
     </div>
 
     <div class="tabs">
         <div class="tab active" onclick="showTab('login')">Login</div>
         <div class="tab" onclick="showTab('register')">Register</div>
+        <div class="tab" onclick="showTab('forgot')">Forgot Password</div>
     </div>
 
-    <!-- LOGIN -->
+    <!-- ==================== LOGIN ==================== -->
     <div id="login" class="form-section active">
         <label>Email or Phone Number</label>
-        <input type="text" id="loginUsername" placeholder="Email or Phone">
+        <input type="text" id="loginUsername" placeholder="Email or Phone (e.g. 97XXXXXXX)">
 
         <label>Password</label>
         <div class="password-wrapper">
@@ -165,9 +185,13 @@
 
         <div class="error" id="loginError"></div>
         <button class="btn" onclick="loginAdmin()">Login</button>
+
+        <div class="help-text">
+            For assistance email: <a href="mailto:knu.notes@gmail.com">knu.notes@gmail.com</a>
+        </div>
     </div>
 
-    <!-- REGISTER -->
+    <!-- ==================== REGISTER ==================== -->
     <div id="register" class="form-section">
         <div id="registerForm">
             <div class="name-row">
@@ -176,31 +200,42 @@
                     <input type="text" id="regFirstName" placeholder="First name">
                 </div>
                 <div>
-                    <label>Last Name *</label>
-                    <input type="text" id="regLastName" placeholder="Last name">
+                    <label>Middle Name</label>
+                    <input type="text" id="regMiddleName" placeholder="Optional">
                 </div>
             </div>
+
+            <label>Last Name *</label>
+            <input type="text" id="regLastName" placeholder="Last name">
 
             <label>Email Address *</label>
             <input type="email" id="regEmail" placeholder="yourname@gmail.com">
 
             <label>Phone Number *</label>
-            <input type="text" id="regPhone" placeholder="+26097XXXXXXX">
+            <div class="phone-group">
+                <div class="phone-prefix">+260</div>
+                <input type="text" id="regPhone" placeholder="97XXXXXXX" maxlength="9" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            </div>
 
             <label>Position *</label>
-            <select id="regPosition">
+            <select id="regPosition" onchange="handlePositionChange()">
                 <option value="">Select Position</option>
                 <option value="Class Representative">Class Representative</option>
+                <option value="Union Leader">Union Leader</option>
                 <option value="Lecturer">Lecturer</option>
                 <option value="HOD">HOD</option>
                 <option value="Dean of Students">Dean of Students</option>
-                <option value="Union Leader">Union Leader</option>
                 <option value="Other">Other</option>
             </select>
 
+            <div id="studentNumberBox" style="display:none;">
+                <label>Student Number *</label>
+                <input type="text" id="regStudentNumber" placeholder="e.g. 20252799" maxlength="8">
+            </div>
+
             <div id="customPositionBox" style="display:none;">
-                <label>Specify Position</label>
-                <input type="text" id="regCustomPosition" placeholder="Type your position">
+                <label>Specify Your Position *</label>
+                <input type="text" id="regCustomPosition" placeholder="Type your exact position">
             </div>
 
             <label>School *</label>
@@ -231,7 +266,70 @@
         <div class="success-box" id="regSuccessBox">
             <div class="green-tick">✓</div>
             <h3 style="color:#2e7d32; margin:0 0 8px;">Account Submitted!</h3>
-            <p style="color:#555;">Your account is pending approval by the ICT team. You will be able to login once approved.</p>
+            <p style="color:#555;">Your account is pending approval by the ICT team.</p>
+        </div>
+
+        <div class="help-text">
+            For assistance email: <a href="mailto:knu.notes@gmail.com">knu.notes@gmail.com</a>
+        </div>
+    </div>
+
+    <!-- ==================== FORGOT PASSWORD ==================== -->
+    <div id="forgot" class="form-section">
+        <div id="forgotStep1">
+            <label>Email Address *</label>
+            <input type="email" id="forgotEmail" placeholder="Enter the email you used">
+
+            <label>Position *</label>
+            <select id="forgotPosition" onchange="handleForgotPositionChange()">
+                <option value="">Select your Position</option>
+                <option value="Class Representative">Class Representative</option>
+                <option value="Union Leader">Union Leader</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="HOD">HOD</option>
+                <option value="Dean of Students">Dean of Students</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <div id="forgotStudentBox" style="display:none;">
+                <label>Student Number *</label>
+                <input type="text" id="forgotStudentNumber" placeholder="e.g. 20252799" maxlength="8">
+
+                <label>Phone Number *</label>
+                <div class="phone-group">
+                    <div class="phone-prefix">+260</div>
+                    <input type="text" id="forgotPhone" placeholder="97XXXXXXX" maxlength="9" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
+            </div>
+
+            <div class="error" id="forgotError"></div>
+            <button class="btn" onclick="verifyForgot()">Verify Identity</button>
+        </div>
+
+        <div id="forgotStep2" style="display:none;">
+            <h3 style="margin-top:0; color:#1e7e34;">Create New Password</h3>
+            <label>New Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="newPassword" placeholder="Minimum 6 characters">
+                <button type="button" class="toggle-password" onclick="togglePassword('newPassword', this)">Show</button>
+            </div>
+            <label>Confirm New Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="newConfirm" placeholder="Re-enter new password">
+                <button type="button" class="toggle-password" onclick="togglePassword('newConfirm', this)">Show</button>
+            </div>
+            <div class="error" id="resetError"></div>
+            <button class="btn" onclick="resetAdminPassword()">Set New Password</button>
+        </div>
+
+        <div class="success-box" id="forgotSuccessBox">
+            <div class="green-tick">✓</div>
+            <h3 style="color:#2e7d32; margin:0 0 8px;">Password Updated!</h3>
+            <p style="color:#555;">You can now login with your new password.</p>
+        </div>
+
+        <div class="help-text">
+            For assistance email: <a href="mailto:knu.notes@gmail.com">knu.notes@gmail.com</a>
         </div>
     </div>
 
@@ -245,10 +343,7 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    document.getElementById("regPosition").addEventListener("change", function() {
-        document.getElementById("customPositionBox").style.display = 
-            this.value === "Other" ? "block" : "none";
-    });
+    let verifiedAdminId = null;
 
     function showTab(tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -268,8 +363,23 @@
         }
     }
 
+    function handlePositionChange() {
+        const pos = document.getElementById("regPosition").value;
+        document.getElementById("studentNumberBox").style.display = 
+            (pos === "Class Representative" || pos === "Union Leader") ? "block" : "none";
+        document.getElementById("customPositionBox").style.display = 
+            (pos === "Other" || pos === "Class Representative" || pos === "Union Leader") ? "block" : "none";
+    }
+
+    function handleForgotPositionChange() {
+        const pos = document.getElementById("forgotPosition").value;
+        document.getElementById("forgotStudentBox").style.display = 
+            (pos === "Class Representative" || pos === "Union Leader") ? "block" : "none";
+    }
+
+    // ========== LOGIN ==========
     async function loginAdmin() {
-        const username = document.getElementById("loginUsername").value.trim();
+        let username = document.getElementById("loginUsername").value.trim();
         const password = document.getElementById("loginPassword").value;
         const errorDiv = document.getElementById("loginError");
         errorDiv.style.display = "none";
@@ -280,14 +390,19 @@
             return;
         }
 
-        // First try by email
+        // If user entered only 9 digits, add +260
+        if (/^\d{9}$/.test(username)) {
+            username = "+260" + username;
+        }
+
+        // Try email first
         let { data, error } = await client.from("admin_accounts")
             .select("*")
             .eq("email", username)
             .eq("password", password)
             .maybeSingle();
 
-        // If not found, try by phone
+        // Try phone
         if (!data) {
             ({ data, error } = await client.from("admin_accounts")
                 .select("*")
@@ -302,21 +417,17 @@
             return;
         }
 
-        // Allow login if:
-        // 1. status is "approved"
-        // 2. status is null (old accounts)
-        // 3. status column doesn't exist / is empty
+        // Allow old accounts (null status) and approved ones
         if (data.status && data.status !== "approved") {
-            errorDiv.innerText = "Your account is still pending approval by the ICT team";
+            errorDiv.innerText = "Your account is still pending approval";
             errorDiv.style.display = "block";
             return;
         }
 
-        // Login successful
         sessionStorage.setItem("isAdmin", "true");
         sessionStorage.setItem("isMaster", "false");
         sessionStorage.setItem("adminId", data.id);
-        sessionStorage.setItem("adminName", [data.first_name, data.last_name].filter(Boolean).join(" ") || "Admin");
+        sessionStorage.setItem("adminName", [data.first_name, data.middle_name, data.last_name].filter(Boolean).join(" "));
         sessionStorage.setItem("adminPosition", data.custom_position || data.position || "Admin");
         sessionStorage.setItem("adminSchool", data.school || "");
         sessionStorage.setItem("adminProfilePic", data.profile_pic || "");
@@ -324,13 +435,16 @@
         window.location.href = "dashboard.html";
     }
 
+    // ========== REGISTER ==========
     async function registerAdmin() {
         const firstName = document.getElementById("regFirstName").value.trim();
+        const middleName = document.getElementById("regMiddleName").value.trim();
         const lastName = document.getElementById("regLastName").value.trim();
         const email = document.getElementById("regEmail").value.trim();
         const phone = document.getElementById("regPhone").value.trim();
         const position = document.getElementById("regPosition").value;
         const customPosition = document.getElementById("regCustomPosition").value.trim();
+        const studentNumber = document.getElementById("regStudentNumber").value.trim();
         const school = document.getElementById("regSchool").value;
         const password = document.getElementById("regPassword").value;
         const confirm = document.getElementById("regConfirm").value;
@@ -343,6 +457,25 @@
             errorDiv.style.display = "block";
             return;
         }
+
+        if ((position === "Class Representative" || position === "Union Leader") && !studentNumber) {
+            errorDiv.innerText = "Student Number is required for Class Reps and Union Leaders";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        if ((position === "Other" || position === "Class Representative" || position === "Union Leader") && !customPosition) {
+            errorDiv.innerText = "Please specify your exact position";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        if (phone.length !== 9) {
+            errorDiv.innerText = "Phone number must be 9 digits";
+            errorDiv.style.display = "block";
+            return;
+        }
+
         if (password.length < 6) {
             errorDiv.innerText = "Password must be at least 6 characters";
             errorDiv.style.display = "block";
@@ -354,15 +487,17 @@
             return;
         }
 
-        const finalPosition = position === "Other" ? customPosition : position;
+        const finalPosition = customPosition || position;
 
         const { error } = await client.from("admin_accounts").insert({
             first_name: firstName,
+            middle_name: middleName || null,
             last_name: lastName,
             email: email,
-            phone: phone,
-            position: finalPosition,
-            custom_position: position === "Other" ? customPosition : null,
+            phone: "+260" + phone,
+            position: position,
+            custom_position: finalPosition,
+            student_number: studentNumber || null,
             school: school,
             password: password,
             status: "pending"
@@ -374,6 +509,78 @@
         } else {
             document.getElementById("registerForm").style.display = "none";
             document.getElementById("regSuccessBox").classList.add("show");
+        }
+    }
+
+    // ========== FORGOT PASSWORD ==========
+    async function verifyForgot() {
+        const email = document.getElementById("forgotEmail").value.trim();
+        const position = document.getElementById("forgotPosition").value;
+        const studentNumber = document.getElementById("forgotStudentNumber").value.trim();
+        const phone = document.getElementById("forgotPhone").value.trim();
+        const errorDiv = document.getElementById("forgotError");
+        errorDiv.style.display = "none";
+
+        if (!email || !position) {
+            errorDiv.innerText = "Please fill Email and Position";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        let query = client.from("admin_accounts")
+            .select("*")
+            .eq("email", email)
+            .eq("position", position);
+
+        if (position === "Class Representative" || position === "Union Leader") {
+            if (!studentNumber || !phone) {
+                errorDiv.innerText = "Student Number and Phone are required";
+                errorDiv.style.display = "block";
+                return;
+            }
+            query = query.eq("student_number", studentNumber).eq("phone", "+260" + phone);
+        }
+
+        const { data, error } = await query.maybeSingle();
+
+        if (error || !data) {
+            errorDiv.innerText = "Details do not match our records";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        verifiedAdminId = data.id;
+        document.getElementById("forgotStep1").style.display = "none";
+        document.getElementById("forgotStep2").style.display = "block";
+    }
+
+    async function resetAdminPassword() {
+        const newPass = document.getElementById("newPassword").value;
+        const confirm = document.getElementById("newConfirm").value;
+        const errorDiv = document.getElementById("resetError");
+        errorDiv.style.display = "none";
+
+        if (newPass.length < 6) {
+            errorDiv.innerText = "Password must be at least 6 characters";
+            errorDiv.style.display = "block";
+            return;
+        }
+        if (newPass !== confirm) {
+            errorDiv.innerText = "Passwords do not match";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { error } = await client.from("admin_accounts")
+            .update({ password: newPass })
+            .eq("id", verifiedAdminId);
+
+        if (error) {
+            errorDiv.innerText = "Failed to update password";
+            errorDiv.style.display = "block";
+        } else {
+            document.getElementById("forgotStep2").style.display = "none";
+            document.getElementById("forgotSuccessBox").classList.add("show");
         }
     }
 </script>

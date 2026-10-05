@@ -4,71 +4,192 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - KNU</title>
-
-    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e7e34">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="KNU Notes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-        .header { background: #1565c0; color: white; padding: 18px 25px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header h2 { margin: 0; font-size: 20px; }
-        .btn { padding: 9px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-light { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 15px;
+        }
+        .header {
+            background: #1565c0;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h2 { margin: 0; font-size: 18px; }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-light {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
         .btn-danger { background: #c62828; color: white; }
         .btn-primary { background: #1565c0; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
-        .section { background: white; padding: 25px; border-radius: 8px; margin-top: 20px; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
-        .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; }
-        .folder-card.locked { opacity: 0.55; cursor: not-allowed; }
-        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .info-box { background: #e3f2fd; border-left: 5px solid #1565c0; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        .search-box { margin: 15px 0; }
-        .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .folder-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .folder-card.locked {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 5px solid #1565c0;
+            padding: 14px;
+            margin-bottom: 18px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-box { margin: 12px 0; }
+        .search-box input {
+            width: 100%;
+            padding: 11px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
 
-        /* Advanced Modal */
+        /* Profile Picture Upload Modal */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; transition: opacity 0.3s;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
         }
-        .modal-overlay.show { display: flex; opacity: 1; }
+        .modal-overlay.show { display: flex; }
         .modal-box {
-            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
-            transform: translateY(-40px); transition: transform 0.35s;
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
         }
-        .modal-overlay.show .modal-box { transform: translateY(0); }
-        .modal-box h3 { margin-top: 0; color: #c62828; }
-        .modal-box p { color: #555; line-height: 1.5; }
-        .password-wrapper { position: relative; margin-top: 12px; }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-box h3 { margin-top: 0; color: #1565c0; }
+        .preview-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 15px auto;
+            display: block;
+            border: 3px solid #1565c0;
+            background: #eee;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-confirm { background: #1565c0; color: white; }
+        .btn-confirm-danger { background: #c62828; color: white; }
+
+        .password-wrapper { position: relative; margin-top: 10px; }
         .password-wrapper input {
-            width: 100%; padding: 13px; font-size: 15px; border: 2px solid #ddd;
-            border-radius: 8px; box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
         .toggle-password {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; color: #1565c0;
-            font-size: 13px; font-weight: bold;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1565c0;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .modal-error { color: #c62828; font-size: 14px; margin-top: 10px; display: none; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 25px; }
-        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background: #e0e0e0; color: #333; }
-        .btn-confirm-danger { background: #c62828; color: white; }
+        .modal-error {
+            color: #c62828;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
     </style>
 </head>
 <body>
+
 <div class="header">
-    <div>
-        <h2>Student Results Portal</h2>
-        <small id="studentInfo"></small>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <img id="headerPic" class="profile-pic" src="" alt="" style="display:none;">
+        <div>
+            <h2>Student Results Portal</h2>
+            <small id="studentInfo"></small>
+        </div>
     </div>
     <div>
         <button class="btn btn-light" onclick="logout()">Logout</button>
@@ -80,6 +201,7 @@
     <div class="info-box">
         You can only <strong>view and download</strong> results for your registered <strong>School</strong> and <strong>Year</strong>.
     </div>
+
     <h3>Your Results</h3>
     <div class="search-box">
         <input type="text" id="searchFolders" placeholder="Search your results folders..." oninput="filterFolders()">
@@ -89,22 +211,38 @@
 
 <div id="folderView" class="section" style="display:none;">
     <button class="btn btn-primary" onclick="backToFolders()">← Back</button>
-    <h2 id="folderTitle" style="margin-top:15px;"></h2>
+    <h2 id="folderTitle" style="margin-top:12px;"></h2>
     <div class="search-box">
         <input type="text" id="searchFiles" placeholder="Search files..." oninput="filterFiles()">
     </div>
-    <div id="filesList" style="margin-top:15px;"></div>
+    <div id="filesList" style="margin-top:12px;"></div>
 </div>
 
-<!-- Advanced Delete Account Modal -->
+<!-- MANDATORY PROFILE PICTURE MODAL -->
+<div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+        <h3>Upload Profile Picture</h3>
+        <p style="color:#555; font-size:14px;">You must upload a profile picture before continuing.</p>
+        
+        <img id="previewPic" class="preview-pic" src="https://via.placeholder.com/120" alt="Preview">
+        
+        <input type="file" id="profileInput" accept="image/*" onchange="previewProfile(event)" style="margin:15px 0;">
+        
+        <div class="modal-actions">
+            <button class="btn-confirm" onclick="uploadProfilePic()" style="flex:1;">Upload & Continue</button>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE ACCOUNT MODAL -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
-        <h3>Delete Your Account</h3>
-        <p>This action is <strong>permanent</strong>. All your account data will be removed and cannot be recovered.</p>
-        <p style="margin-bottom:8px;">Enter your password to confirm:</p>
+        <h3 style="color:#c62828;">Delete Your Account</h3>
+        <p style="color:#555;">This action is permanent. All your data will be removed.</p>
+        <p style="margin-bottom:6px;">Enter your password to confirm:</p>
         <div class="password-wrapper">
             <input type="password" id="deletePassword" placeholder="Enter your password">
-            <button type="button" class="toggle-password" onclick="toggleDeletePassword()">Show</button>
+            <button type="button" class="toggle-password" onclick="toggleDeletePass()">Show</button>
         </div>
         <div class="modal-error" id="deleteError">Wrong password. Please try again.</div>
         <div class="modal-actions">
@@ -128,52 +266,122 @@
     const studentNumber = sessionStorage.getItem("studentNumber");
     const firstName = sessionStorage.getItem("studentFirstName") || "";
     const lastName = sessionStorage.getItem("studentLastName") || "";
+    const studentId = sessionStorage.getItem("studentId");
+    const profilePic = sessionStorage.getItem("studentProfilePic");
 
     document.getElementById("studentInfo").innerText = 
         `${firstName} ${lastName}`.trim() 
-            ? `Logged in as: ${firstName} ${lastName} (${studentNumber}) | ${(studentSchool || "").replace("-", " ").toUpperCase()} | Year ${studentYear}`
-            : `Logged in as: ${studentNumber} | ${(studentSchool || "").replace("-", " ").toUpperCase()} | Year ${studentYear}`;
+            ? `${firstName} ${lastName} (${studentNumber}) | ${studentSchool.replace("-", " ").toUpperCase()} | Year ${studentYear}`
+            : `${studentNumber} | ${studentSchool.replace("-", " ").toUpperCase()} | Year ${studentYear}`;
+
+    if (profilePic) {
+        const img = document.getElementById("headerPic");
+        img.src = profilePic;
+        img.style.display = "block";
+    }
+
+    // Force profile picture upload if missing
+    if (sessionStorage.getItem("needsProfilePic") === "true") {
+        document.getElementById("profileModal").classList.add("show");
+    }
 
     let allMyFolders = [];
     let allFiles = [];
     let currentFolder = null;
 
+    function previewProfile(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById("previewPic").src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function uploadProfilePic() {
+        const fileInput = document.getElementById("profileInput");
+        if (!fileInput.files.length) {
+            alert("Please select a profile picture");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const fileName = `profiles/students/${studentId}_${Date.now()}.jpg`;
+
+        const { error: uploadError } = await client.storage
+            .from("notes-files")
+            .upload(fileName, file, { upsert: true });
+
+        if (uploadError) {
+            alert("Upload failed: " + uploadError.message);
+            return;
+        }
+
+        const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
+
+        const { error } = await client.from("students")
+            .update({ profile_pic: publicUrl })
+            .eq("id", studentId);
+
+        if (error) {
+            alert("Failed to save profile picture");
+            return;
+        }
+
+        sessionStorage.setItem("studentProfilePic", publicUrl);
+        sessionStorage.setItem("needsProfilePic", "false");
+
+        document.getElementById("headerPic").src = publicUrl;
+        document.getElementById("headerPic").style.display = "block";
+        document.getElementById("profileModal").classList.remove("show");
+
+        alert("Profile picture uploaded successfully!");
+    }
+
     async function loadResultsFolders() {
         const { data } = await client.from("folders").select("*").eq("type", "results");
         const container = document.getElementById("resultsFolders");
+
         if (!data || data.length === 0) {
             container.innerHTML = "<p style='color:#888;'>No results uploaded yet.</p>";
             return;
         }
+
         allMyFolders = data.filter(f => f.school === studentSchool && f.year === studentYear);
         const otherFolders = data.filter(f => !(f.school === studentSchool && f.year === studentYear));
+
         renderFolders(allMyFolders, otherFolders);
     }
 
     function renderFolders(myFolders, otherFolders = []) {
         const container = document.getElementById("resultsFolders");
         let html = "";
+
         if (myFolders.length === 0) {
             html += `<p style="color:#888;">No results available for your School and Year yet.</p>`;
         } else {
             html += myFolders.map(f => `
-                <div class="folder-card" onclick='openFolder(${JSON.stringify(f).replace(/"/g, '&quot;')})'>
-                    <div style="font-size:28px;">📊</div>
-                    <div style="font-weight:bold; margin-top:8px;">${f.name}</div>
+                <div class="folder-card" onclick='openFolder(${JSON.stringify(f).replace(/"/g, "&quot;")})'>
+                    <div style="font-size:26px;">📊</div>
+                    <div style="font-weight:bold; margin-top:6px;">${f.name}</div>
                     <small>Year ${f.year}</small>
                 </div>
             `).join("");
         }
+
         if (otherFolders.length > 0) {
-            html += `<div style="grid-column:1/-1; margin-top:20px; color:#888; font-size:14px;">Other results (locked):</div>`;
+            html += `<div style="grid-column:1/-1; margin-top:18px; color:#888; font-size:13px;">Other results (locked):</div>`;
             html += otherFolders.map(f => `
                 <div class="folder-card locked" onclick="alert('You can only access results for your School and Year')">
-                    <div style="font-size:28px;">🔒</div>
-                    <div style="font-weight:bold; margin-top:8px;">${f.name}</div>
+                    <div style="font-size:26px;">🔒</div>
+                    <div style="font-weight:bold; margin-top:6px;">${f.name}</div>
                     <small>${f.school} - Year ${f.year}</small>
                 </div>
             `).join("");
         }
+
         container.innerHTML = html;
     }
 
@@ -212,8 +420,10 @@
         const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
         container.innerHTML = files.map(f => {
             const url = `${DB_URL}/storage/v1/object/public/notes-files/${path}/${f.name}`;
-            return `<div class="note-item"><span>📄 ${f.name}</span>
-                <a href="${url}" target="_blank" class="btn btn-primary" style="text-decoration:none;">View / Download</a></div>`;
+            return `<div class="note-item">
+                <span>📄 ${f.name}</span>
+                <a href="${url}" target="_blank" class="btn btn-primary" style="text-decoration:none;">View / Download</a>
+            </div>`;
         }).join("");
     }
 
@@ -227,30 +437,21 @@
         window.location.href = "student-auth.html";
     }
 
-    // Advanced Delete Account Modal
+    // Delete Account
     function openDeleteModal() {
         document.getElementById("deletePassword").value = "";
         document.getElementById("deleteError").style.display = "none";
         document.getElementById("deleteModal").classList.add("show");
-        document.getElementById("deletePassword").focus();
     }
-
     function closeDeleteModal() {
         document.getElementById("deleteModal").classList.remove("show");
     }
-
-    function toggleDeletePassword() {
+    function toggleDeletePass() {
         const input = document.getElementById("deletePassword");
         const btn = event.target;
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerText = "Hide";
-        } else {
-            input.type = "password";
-            btn.innerText = "Show";
-        }
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
     }
-
     async function confirmDeleteAccount() {
         const password = document.getElementById("deletePassword").value;
         if (!password) {
@@ -259,19 +460,16 @@
             return;
         }
 
-        const studentId = sessionStorage.getItem("studentId");
         const { data } = await client.from("students").select("password").eq("id", studentId).single();
-
         if (!data || data.password !== password) {
             document.getElementById("deleteError").innerText = "Wrong password. Please try again.";
             document.getElementById("deleteError").style.display = "block";
-            document.getElementById("deletePassword").value = "";
             return;
         }
 
         const { error } = await client.from("students").delete().eq("id", studentId);
         if (error) {
-            document.getElementById("deleteError").innerText = "Failed to delete account. Please try again.";
+            document.getElementById("deleteError").innerText = "Failed to delete account.";
             document.getElementById("deleteError").style.display = "block";
         } else {
             alert("Account deleted successfully.");
@@ -279,10 +477,6 @@
             window.location.href = "index.html";
         }
     }
-
-    document.getElementById("deletePassword").addEventListener("keyup", function(e) {
-        if (e.key === "Enter") confirmDeleteAccount();
-    });
 
     loadResultsFolders();
 </script>

@@ -52,7 +52,7 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .card h3 { margin-top: 0; color: #333; }
+        .card h3 { margin-top: 0; color: #333; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
         .tabs {
             display: flex;
@@ -99,10 +99,18 @@
         .count-badge {
             background: #6a1b9a;
             color: white;
-            padding: 4px 12px;
+            padding: 3px 11px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: bold;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         table {
@@ -122,12 +130,11 @@
             border-radius: 50%;
             object-fit: cover;
             background: #ddd;
+            cursor: pointer;
         }
-        .status-pending { color: #f39c12; font-weight: bold; }
-        .status-approved { color: #2e7d32; font-weight: bold; }
-        .status-denied { color: #c62828; font-weight: bold; }
-
         .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .empty-msg { color: #888; text-align: center; padding: 30px; }
 
         /* Modal */
         .modal-overlay {
@@ -192,8 +199,6 @@
         .btn-confirm-danger { background: #c62828; color: white; }
         .btn-confirm { background: #6a1b9a; color: white; }
 
-        .empty-msg { color: #888; text-align: center; padding: 30px; }
-
         @media (max-width: 700px) {
             table { font-size: 12px; }
             th, td { padding: 8px 6px; }
@@ -221,6 +226,15 @@
 <!-- ==================== PENDING ADMINS ==================== -->
 <div id="tab-pending" class="card">
     <h3>Pending Admin Accounts <span class="count-badge" id="pendingCount">0</span></h3>
+
+    <div class="action-bar" id="pendingActions" style="display:none;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="selectAllPending" onchange="toggleSelectAll()"> Select All
+        </label>
+        <button class="btn btn-success" onclick="approveSelected()">Approve Selected</button>
+        <button class="btn btn-danger" onclick="denySelected()">Deny Selected</button>
+    </div>
+
     <div id="pendingList">Loading...</div>
 </div>
 
@@ -290,7 +304,7 @@
     </div>
 </div>
 
-<!-- VIEW PROFILE PIC MODAL -->
+<!-- VIEW PROFILE PIC -->
 <div class="modal-overlay" id="picModal">
     <div class="modal-box" style="text-align:center;">
         <h3 style="margin-top:0;">Profile Picture</h3>
@@ -316,7 +330,7 @@
     let allPending = [];
     let allAdmins = [];
     let currentResetId = null;
-    let currentResetType = null; // 'student' or 'admin'
+    let currentResetType = null;
     let deleteId = null;
     let deleteType = null;
 
@@ -339,6 +353,7 @@
 
         allPending = data || [];
         document.getElementById("pendingCount").innerText = allPending.length;
+        document.getElementById("pendingActions").style.display = allPending.length > 0 ? "flex" : "none";
         renderPending(allPending);
     }
 
@@ -374,11 +389,12 @@
         let html = `<table>
             <thead>
                 <tr>
+                    <th style="width:40px;"></th>
                     <th>Photo</th>
                     <th>Name</th>
                     <th>Position</th>
                     <th>School</th>
-                    <th>Email / Phone</th>
+                    <th>Contact</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -389,9 +405,10 @@
             const position = a.custom_position || a.position;
             html += `
                 <tr>
+                    <td><input type="checkbox" class="pending-check" value="${a.id}"></td>
                     <td>
                         <img class="profile-thumb" src="${a.profile_pic || 'https://via.placeholder.com/36'}" 
-                             onclick="viewPic('${a.profile_pic || ''}')" style="cursor:pointer;">
+                             onclick="viewPic('${a.profile_pic || ''}')">
                     </td>
                     <td><strong>${fullName}</strong><br><small>${a.gender || ''}</small></td>
                     <td>${position}<br><small>${a.student_number ? 'SN: ' + a.student_number : ''}</small></td>
@@ -406,6 +423,46 @@
 
         html += `</tbody></table>`;
         container.innerHTML = html;
+    }
+
+    function toggleSelectAll() {
+        const checked = document.getElementById("selectAllPending").checked;
+        document.querySelectorAll(".pending-check").forEach(cb => cb.checked = checked);
+    }
+
+    function getSelectedPendingIds() {
+        return Array.from(document.querySelectorAll(".pending-check:checked")).map(cb => cb.value);
+    }
+
+    async function approveSelected() {
+        const ids = getSelectedPendingIds();
+        if (ids.length === 0) {
+            alert("Please select at least one account");
+            return;
+        }
+        if (!confirm(`Approve ${ids.length} selected account(s)?`)) return;
+
+        for (const id of ids) {
+            await client.from("admin_accounts").update({ status: "approved" }).eq("id", id);
+        }
+        alert("Selected accounts approved successfully!");
+        loadPending();
+        loadAdmins();
+    }
+
+    async function denySelected() {
+        const ids = getSelectedPendingIds();
+        if (ids.length === 0) {
+            alert("Please select at least one account");
+            return;
+        }
+        if (!confirm(`Deny and permanently delete ${ids.length} selected account(s)?`)) return;
+
+        for (const id of ids) {
+            await client.from("admin_accounts").delete().eq("id", id);
+        }
+        alert("Selected accounts denied and deleted.");
+        loadPending();
     }
 
     // ===== RENDER STUDENTS =====
@@ -457,7 +514,7 @@
                 <tr>
                     <td>
                         <img class="profile-thumb" src="${s.profile_pic || 'https://via.placeholder.com/36'}" 
-                             onclick="viewPic('${s.profile_pic || ''}')" style="cursor:pointer;">
+                             onclick="viewPic('${s.profile_pic || ''}')">
                     </td>
                     <td><strong>${fullName}</strong></td>
                     <td>${s.student_number}</td>
@@ -514,7 +571,7 @@
                 <tr>
                     <td>
                         <img class="profile-thumb" src="${a.profile_pic || 'https://via.placeholder.com/36'}" 
-                             onclick="viewPic('${a.profile_pic || ''}')" style="cursor:pointer;">
+                             onclick="viewPic('${a.profile_pic || ''}')">
                     </td>
                     <td><strong>${fullName}</strong></td>
                     <td>${position}</td>
@@ -531,7 +588,7 @@
         container.innerHTML = html;
     }
 
-    // ===== APPROVE / DENY =====
+    // ===== APPROVE / DENY SINGLE =====
     async function approveAdmin(id) {
         if (!confirm("Approve this admin account?")) return;
         const { error } = await client.from("admin_accounts")

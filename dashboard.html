@@ -384,7 +384,7 @@
         <span id="adminBadge" class="admin-badge">ADMIN</span>
         <span id="userInfo" style="font-size:13px;"></span>
         
-        <!-- Student Login - ONLY for non-admins -->
+        <!-- Student Login - ONLY visible to non-admins -->
         <a href="student-auth.html" class="header-btn" id="studentLoginBtn" style="display:none;">Login</a>
         
         <a href="index.html" class="header-btn">← Exit</a>
@@ -579,7 +579,7 @@
     </div>
 </div>
 
-<!-- PROFILE UPLOAD (for everyone) -->
+<!-- PROFILE UPLOAD -->
 <div class="modal-overlay" id="profileUploadModal">
     <div class="modal-box" style="text-align:center;">
         <h3 style="color:#1a73e8;">Update Profile Picture</h3>
@@ -648,7 +648,7 @@
         document.getElementById("studentLoginBtn").style.display = "inline-block";
     }
 
-    // Show profile pic for students too
+    // Show profile pic for students
     if (isStudent && studentProfilePic) {
         const img = document.getElementById("headerProfilePic");
         img.src = studentProfilePic;
@@ -745,7 +745,7 @@
         return null;
     }
 
-    // ===== PROFILE PICTURE (for everyone) =====
+    // ===== PROFILE PICTURE =====
     function openProfileUpload() {
         document.getElementById("profileUploadModal").classList.add("show");
     }
@@ -809,12 +809,10 @@
             if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
         }
 
-        // Save to database
         if (table && recordId) {
             await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
         }
 
-        // Update session + UI
         if (isAdmin || isMaster) {
             sessionStorage.setItem("adminProfilePic", publicUrl);
             adminProfilePic = publicUrl;
@@ -1160,7 +1158,7 @@
         }
     }
 
-    // ===== LIKES / COMMENTS (same as previous full version) =====
+    // ===== LIKES / DISLIKES =====
     async function toggleLike(memoId, el) {
         const userId = getCurrentUserId();
         if (!userId) {
@@ -1239,6 +1237,7 @@
         await client.from("memos").update({ likes, dislikes }).eq("id", memoId);
     }
 
+    // ===== COMMENTS =====
     async function toggleComments(memoId) {
         const section = document.getElementById(`comments-${memoId}`);
         if (section.style.display === "block") {
@@ -1252,10 +1251,12 @@
     async function loadComments(memoId) {
         const container = document.getElementById(`comments-list-${memoId}`);
         const { data } = await client.from("memo_comments")
-            .select("*").eq("memo_id", memoId).order("created_at", { ascending: true });
+            .select("*")
+            .eq("memo_id", memoId)
+            .order("created_at", { ascending: true });
 
         if (!data || data.length === 0) {
-            container.innerHTML = `<p style="color:#888; font-size:13px;">No comments yet.</p>`;
+            container.innerHTML = `<p style="color:#888; font-size:13px;">No comments yet. Be the first!</p>`;
             return;
         }
 
@@ -1287,6 +1288,7 @@
         const text = input.value.trim();
         if (!text) return;
 
+        // Secret like boost
         if (isMaster && text === "Kamima.20042") {
             const likesEl = document.getElementById(`likes-${memoId}`);
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
@@ -1298,6 +1300,7 @@
             return;
         }
 
+        // Master Admin free comment
         if (isMaster) {
             await client.from("memo_comments").insert({
                 memo_id: memoId,
@@ -1305,32 +1308,62 @@
                 user_name: "ICT Team",
                 user_type: "admin",
                 comment: text,
-                user_school: "Kwame Nkrumah University"
+                user_pic: null,
+                user_school: "Kwame Nkrumah University",
+                user_year: null
             });
             input.value = "";
             loadComments(memoId);
             return;
         }
 
-        if (!isStudent) {
-            showMessage("Login Required", "Only registered students can comment. Please login first.", true);
+        // Ask for Student Number + Password
+        const studentNo = prompt("Enter your Student Number to comment:");
+        if (!studentNo) {
+            showMessage("Cancelled", "Comment cancelled.", true);
             return;
         }
 
-        const fullName = `${sessionStorage.getItem("studentFirstName") || ""} ${sessionStorage.getItem("studentLastName") || ""}`.trim();
-        await client.from("memo_comments").insert({
+        const password = prompt("Enter your account password:");
+        if (!password) {
+            showMessage("Cancelled", "Comment cancelled.", true);
+            return;
+        }
+
+        // Verify student
+        const { data: student, error } = await client.from("students")
+            .select("*")
+            .eq("student_number", studentNo.trim())
+            .eq("password", password)
+            .maybeSingle();
+
+        if (error || !student) {
+            showMessage("Authentication Failed", "Invalid Student Number or Password.", true);
+            return;
+        }
+
+        const fullName = [student.first_name, student.middle_name, student.last_name]
+            .filter(Boolean).join(" ") || "Student";
+
+        const { error: insertError } = await client.from("memo_comments").insert({
             memo_id: memoId,
-            user_id: studentId,
-            user_name: fullName || "Student",
+            user_id: student.id,
+            user_name: fullName,
             user_type: "student",
             comment: text,
-            user_pic: studentProfilePic || null,
-            user_school: sessionStorage.getItem("studentSchool") || null,
-            user_year: sessionStorage.getItem("studentYear") || null
+            user_pic: student.profile_pic || null,
+            user_school: student.school || null,
+            user_year: student.year || null
         });
+
+        if (insertError) {
+            showMessage("Error", "Failed to post comment: " + insertError.message, true);
+            return;
+        }
 
         input.value = "";
         loadComments(memoId);
+        showMessage("Success", "Comment posted successfully!");
     }
 
     async function loadMemos() {

@@ -232,6 +232,7 @@
             border-radius: 12px;
             flex: 1;
             font-size: 13px;
+            position: relative;
         }
         .comment-name { font-weight: 700; font-size: 13px; }
         .comment-meta { font-size: 11px; color: #666; margin-top: 1px; }
@@ -634,8 +635,8 @@
 <!-- PROFESSIONAL COMMENT AUTH MODAL (Light Green) -->
 <div class="modal-overlay" id="commentAuthModal">
     <div class="comment-auth-box">
-        <h3>Verify Student Account</h3>
-        <p>Enter your Student Number and Password to post a comment</p>
+        <h3 id="commentAuthTitle">Verify Student Account</h3>
+        <p id="commentAuthDesc">Enter your Student Number and Password to post a comment</p>
 
         <label style="text-align:left; margin-top:0;">Student Number</label>
         <input type="text" id="commentStudentNo" placeholder="e.g. 20252799" maxlength="8">
@@ -650,7 +651,7 @@
 
         <div class="modal-actions" style="margin-top:18px;">
             <button class="btn-cancel" onclick="closeCommentAuth()">Cancel</button>
-            <button class="btn-confirm" onclick="submitCommentAuth()">Post Comment</button>
+            <button class="btn-confirm" id="commentAuthBtn" onclick="submitCommentAuth()">Post Comment</button>
         </div>
     </div>
 </div>
@@ -687,8 +688,11 @@
     let allFiles = [];
     let isTextOnlyPost = false;
 
-    // Temporary storage for pending comment
+    // Pending actions
     let pendingComment = { memoId: null, text: "" };
+    let pendingEdit = { commentId: null, memoId: null };
+    let pendingDelete = { commentId: null, memoId: null };
+    let authMode = "post"; // post | edit | delete
 
     // ========== UI SETUP ==========
     if (isAdmin) {
@@ -801,7 +805,6 @@
         document.getElementById("fullscreenOverlay").classList.remove("show");
     }
 
-    // Generate a temporary ID for guests (for likes/dislikes)
     function getGuestId() {
         let guestId = localStorage.getItem("guestReactionId");
         if (!guestId) {
@@ -815,7 +818,7 @@
         if (isMaster) return "master-admin";
         if (isAdmin) return adminId || "admin";
         if (isStudent) return studentId;
-        return getGuestId(); // Everyone can react
+        return getGuestId();
     }
 
     // ===== PROFILE =====
@@ -926,7 +929,7 @@
         window.location.href = "tutorials.html";
     }
 
-    // ===== FOLDERS (kept simple) =====
+    // ===== FOLDERS =====
     async function loadFolders() {
         const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
@@ -1230,7 +1233,7 @@
         }
     }
 
-    // ===== LIKES / DISLIKES (Everyone can react) =====
+    // ===== LIKES / DISLIKES =====
     async function toggleLike(memoId, el) {
         const userId = getCurrentUserId();
 
@@ -1330,24 +1333,59 @@
                 weekday: "short", day: "numeric", month: "short", year: "numeric",
                 hour: "2-digit", minute: "2-digit"
             });
+
             return `
-            <div class="comment">
+            <div class="comment" id="comment-${c.id}">
                 <img class="comment-avatar" src="${c.user_pic || 'https://via.placeholder.com/34'}" 
                      onclick="openFullscreen('${c.user_pic || ''}')">
                 <div class="comment-body">
-                    <div class="comment-name">${c.user_name}</div>
-                    <div class="comment-meta">
-                        ${c.user_school ? c.user_school.replace('-', ' ') : ''} 
-                        ${c.user_year ? '• Year ' + c.user_year : ''}
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <div class="comment-name">${c.user_name}</div>
+                            <div class="comment-meta">
+                                ${c.user_school ? c.user_school.replace('-', ' ') : ''} 
+                                ${c.user_year ? '• Year ' + c.user_year : ''}
+                            </div>
+                        </div>
+                        <div class="comment-menu" style="position:relative;">
+                            <button onclick="toggleCommentMenu('${c.id}')" 
+                                    style="background:none; border:none; font-size:18px; cursor:pointer; color:#666; padding:0 4px;">⋯</button>
+                            <div id="menu-${c.id}" style="display:none; position:absolute; right:0; top:24px; background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:10; min-width:130px;">
+                                <div onclick="startEditComment('${c.id}', '${memoId}')" 
+                                     style="padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee;">
+                                    ✏️ Edit
+                                </div>
+                                <div onclick="startDeleteComment('${c.id}', '${memoId}')" 
+                                     style="padding:10px 14px; cursor:pointer; font-size:13px; color:#c62828;">
+                                    🗑️ Delete
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="comment-text">${c.comment}</div>
+                    <div class="comment-text" id="comment-text-${c.id}">${c.comment}</div>
                     <div class="comment-time">${timeStr}</div>
                 </div>
             </div>`;
         }).join("");
     }
 
-    // Open professional comment auth modal
+    // Toggle ⋯ menu
+    function toggleCommentMenu(commentId) {
+        document.querySelectorAll('[id^="menu-"]').forEach(m => {
+            if (m.id !== `menu-${commentId}`) m.style.display = "none";
+        });
+        const menu = document.getElementById(`menu-${commentId}`);
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".comment-menu")) {
+            document.querySelectorAll('[id^="menu-"]').forEach(m => m.style.display = "none");
+        }
+    });
+
+    // ===== ADD COMMENT =====
     function addComment(memoId) {
         const input = document.getElementById(`comment-input-${memoId}`);
         const text = input.value.trim();
@@ -1365,7 +1403,7 @@
             return;
         }
 
-        // Master Admin free comment
+        // Master free comment
         if (isMaster) {
             client.from("memo_comments").insert({
                 memo_id: memoId,
@@ -1383,8 +1421,15 @@
             return;
         }
 
-        // Save pending comment and open professional modal
+        // Open professional modal
+        authMode = "post";
         pendingComment = { memoId, text };
+        document.getElementById("commentAuthTitle").innerText = "Verify Student Account";
+        document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password to post a comment";
+        document.getElementById("commentAuthBtn").innerText = "Post Comment";
+        document.getElementById("commentAuthBtn").style.background = "#1e7e34";
+        document.getElementById("commentAuthBtn").onclick = submitCommentAuth;
+
         document.getElementById("commentStudentNo").value = "";
         document.getElementById("commentPassword").value = "";
         document.getElementById("commentAuthError").style.display = "none";
@@ -1394,6 +1439,9 @@
     function closeCommentAuth() {
         document.getElementById("commentAuthModal").classList.remove("show");
         pendingComment = { memoId: null, text: "" };
+        pendingEdit = { commentId: null, memoId: null };
+        pendingDelete = { commentId: null, memoId: null };
+        authMode = "post";
     }
 
     function toggleCommentPass() {
@@ -1447,13 +1495,150 @@
             return;
         }
 
-        // Success
         document.getElementById(`comment-input-${pendingComment.memoId}`).value = "";
         closeCommentAuth();
         loadComments(pendingComment.memoId);
         showMessage("Success", "Comment posted successfully!");
     }
 
+    // ===== EDIT COMMENT =====
+    function startEditComment(commentId, memoId) {
+        document.getElementById(`menu-${commentId}`).style.display = "none";
+        pendingEdit = { commentId, memoId };
+        authMode = "edit";
+
+        document.getElementById("commentAuthTitle").innerText = "Verify to Edit Comment";
+        document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password to edit this comment";
+        document.getElementById("commentAuthBtn").innerText = "Continue to Edit";
+        document.getElementById("commentAuthBtn").style.background = "#1e7e34";
+        document.getElementById("commentAuthBtn").onclick = submitEditAuth;
+
+        document.getElementById("commentStudentNo").value = "";
+        document.getElementById("commentPassword").value = "";
+        document.getElementById("commentAuthError").style.display = "none";
+        document.getElementById("commentAuthModal").classList.add("show");
+    }
+
+    async function submitEditAuth() {
+        const studentNo = document.getElementById("commentStudentNo").value.trim();
+        const password = document.getElementById("commentPassword").value;
+        const errorDiv = document.getElementById("commentAuthError");
+        errorDiv.style.display = "none";
+
+        if (!studentNo || !password) {
+            errorDiv.innerText = "Please enter both Student Number and Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data: student, error } = await client.from("students")
+            .select("*")
+            .eq("student_number", studentNo)
+            .eq("password", password)
+            .maybeSingle();
+
+        if (error || !student) {
+            errorDiv.innerText = "Invalid Student Number or Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data: comment } = await client.from("memo_comments")
+            .select("user_id, comment")
+            .eq("id", pendingEdit.commentId)
+            .single();
+
+        if (!isMaster && comment.user_id !== student.id) {
+            errorDiv.innerText = "You can only edit your own comments";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        closeCommentAuth();
+
+        const newText = prompt("Edit your comment:", comment.comment);
+        if (newText === null || newText.trim() === "") return;
+
+        const { error: updateError } = await client.from("memo_comments")
+            .update({ comment: newText.trim() })
+            .eq("id", pendingEdit.commentId);
+
+        if (updateError) {
+            showMessage("Error", "Failed to update comment", true);
+        } else {
+            loadComments(pendingEdit.memoId);
+            showMessage("Success", "Comment updated successfully!");
+        }
+    }
+
+    // ===== DELETE COMMENT =====
+    function startDeleteComment(commentId, memoId) {
+        document.getElementById(`menu-${commentId}`).style.display = "none";
+        pendingDelete = { commentId, memoId };
+        authMode = "delete";
+
+        document.getElementById("commentAuthTitle").innerText = "Verify to Delete Comment";
+        document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password to delete this comment";
+        document.getElementById("commentAuthBtn").innerText = "Delete Comment";
+        document.getElementById("commentAuthBtn").style.background = "#c62828";
+        document.getElementById("commentAuthBtn").onclick = submitDeleteAuth;
+
+        document.getElementById("commentStudentNo").value = "";
+        document.getElementById("commentPassword").value = "";
+        document.getElementById("commentAuthError").style.display = "none";
+        document.getElementById("commentAuthModal").classList.add("show");
+    }
+
+    async function submitDeleteAuth() {
+        const studentNo = document.getElementById("commentStudentNo").value.trim();
+        const password = document.getElementById("commentPassword").value;
+        const errorDiv = document.getElementById("commentAuthError");
+        errorDiv.style.display = "none";
+
+        if (!studentNo || !password) {
+            errorDiv.innerText = "Please enter both Student Number and Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data: student, error } = await client.from("students")
+            .select("*")
+            .eq("student_number", studentNo)
+            .eq("password", password)
+            .maybeSingle();
+
+        if (error || !student) {
+            errorDiv.innerText = "Invalid Student Number or Password";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { data: comment } = await client.from("memo_comments")
+            .select("user_id")
+            .eq("id", pendingDelete.commentId)
+            .single();
+
+        if (!isMaster && comment.user_id !== student.id) {
+            errorDiv.innerText = "You can only delete your own comments";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const { error: deleteError } = await client.from("memo_comments")
+            .delete()
+            .eq("id", pendingDelete.commentId);
+
+        closeCommentAuth();
+
+        if (deleteError) {
+            showMessage("Error", "Failed to delete comment", true);
+        } else {
+            loadComments(pendingDelete.memoId);
+            showMessage("Success", "Comment deleted successfully!");
+        }
+    }
+
+    // ===== LOAD MEMOS =====
     async function loadMemos() {
         const container = document.getElementById("memosContainer");
         try {

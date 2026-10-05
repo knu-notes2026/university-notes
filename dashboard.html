@@ -269,7 +269,7 @@
             padding: 25px;
             border-radius: 14px;
             width: 100%;
-            max-width: 480px;
+            max-width: 420px;
             animation: slideUp 0.3s ease;
         }
         @keyframes slideUp {
@@ -319,6 +319,47 @@
             margin-top: 8px;
             display: none;
         }
+
+        /* Comment Auth Modal - Light Green */
+        .comment-auth-box {
+            background: #e8f5e9;
+            border: 2px solid #a5d6a7;
+            border-radius: 14px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+        .comment-auth-box h3 {
+            margin: 0 0 8px;
+            color: #1e7e34;
+            text-align: center;
+        }
+        .comment-auth-box p {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 18px;
+        }
+        .comment-auth-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+        }
+        .comment-auth-box .modal-actions button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            flex: 1;
+        }
+        .comment-auth-box .btn-cancel { background: #c8e6c9; color: #1e7e34; }
+        .comment-auth-box .btn-confirm { background: #1e7e34; color: white; }
 
         .fullscreen-overlay {
             position: fixed;
@@ -384,9 +425,7 @@
         <span id="adminBadge" class="admin-badge">ADMIN</span>
         <span id="userInfo" style="font-size:13px;"></span>
         
-        <!-- Student Login - ONLY visible to non-admins -->
         <a href="student-auth.html" class="header-btn" id="studentLoginBtn" style="display:none;">Login</a>
-        
         <a href="index.html" class="header-btn">← Exit</a>
     </div>
 </div>
@@ -592,6 +631,30 @@
     </div>
 </div>
 
+<!-- PROFESSIONAL COMMENT AUTH MODAL (Light Green) -->
+<div class="modal-overlay" id="commentAuthModal">
+    <div class="comment-auth-box">
+        <h3>Verify Student Account</h3>
+        <p>Enter your Student Number and Password to post a comment</p>
+
+        <label style="text-align:left; margin-top:0;">Student Number</label>
+        <input type="text" id="commentStudentNo" placeholder="e.g. 20252799" maxlength="8">
+
+        <label style="text-align:left;">Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="commentPassword" placeholder="Enter your password">
+            <button type="button" class="toggle-password" onclick="toggleCommentPass()">Show</button>
+        </div>
+
+        <div class="modal-error" id="commentAuthError" style="display:none; color:#c62828; margin-top:8px;"></div>
+
+        <div class="modal-actions" style="margin-top:18px;">
+            <button class="btn-cancel" onclick="closeCommentAuth()">Cancel</button>
+            <button class="btn-confirm" onclick="submitCommentAuth()">Post Comment</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
@@ -611,7 +674,6 @@
     let studentId = sessionStorage.getItem("studentId") || "";
     let studentProfilePic = sessionStorage.getItem("studentProfilePic") || "";
 
-    // Class Reps cannot post memos
     const canPostMemo = isAdmin && adminPosition !== "Class Representative";
     const canUploadFiles = isMaster || ["Class Representative", "Lecturer"].includes(adminPosition);
 
@@ -624,6 +686,9 @@
     let allResultsFolders = [];
     let allFiles = [];
     let isTextOnlyPost = false;
+
+    // Temporary storage for pending comment
+    let pendingComment = { memoId: null, text: "" };
 
     // ========== UI SETUP ==========
     if (isAdmin) {
@@ -643,12 +708,10 @@
         document.getElementById("masterPanel").style.display = "flex";
     }
 
-    // Student Login button - ONLY for non-admins
     if (!isAdmin && !isMaster) {
         document.getElementById("studentLoginBtn").style.display = "inline-block";
     }
 
-    // Show profile pic for students
     if (isStudent && studentProfilePic) {
         const img = document.getElementById("headerProfilePic");
         img.src = studentProfilePic;
@@ -738,14 +801,24 @@
         document.getElementById("fullscreenOverlay").classList.remove("show");
     }
 
+    // Generate a temporary ID for guests (for likes/dislikes)
+    function getGuestId() {
+        let guestId = localStorage.getItem("guestReactionId");
+        if (!guestId) {
+            guestId = "guest_" + Math.random().toString(36).substr(2, 12);
+            localStorage.setItem("guestReactionId", guestId);
+        }
+        return guestId;
+    }
+
     function getCurrentUserId() {
         if (isMaster) return "master-admin";
         if (isAdmin) return adminId || "admin";
         if (isStudent) return studentId;
-        return null;
+        return getGuestId(); // Everyone can react
     }
 
-    // ===== PROFILE PICTURE =====
+    // ===== PROFILE =====
     function openProfileUpload() {
         document.getElementById("profileUploadModal").classList.add("show");
     }
@@ -802,7 +875,6 @@
 
         const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
 
-        // Delete old picture
         const oldPic = isAdmin || isMaster ? adminProfilePic : studentProfilePic;
         if (oldPic && oldPic.includes("notes-files")) {
             const oldPath = oldPic.split("/notes-files/")[1];
@@ -854,7 +926,7 @@
         window.location.href = "tutorials.html";
     }
 
-    // ===== FOLDERS =====
+    // ===== FOLDERS (kept simple) =====
     async function loadFolders() {
         const { data } = await client.from("folders").select("*")
             .eq("school", currentSchool).eq("year", currentYear);
@@ -1085,7 +1157,7 @@
         document.getElementById("masterConfirmPin").value = "";
     }
 
-    // ===== POST MEMO / TEXT =====
+    // ===== POST MEMO =====
     function openPostMemoModal(textOnly = false) {
         if (!canPostMemo) return;
         isTextOnlyPost = textOnly;
@@ -1158,13 +1230,9 @@
         }
     }
 
-    // ===== LIKES / DISLIKES =====
+    // ===== LIKES / DISLIKES (Everyone can react) =====
     async function toggleLike(memoId, el) {
         const userId = getCurrentUserId();
-        if (!userId) {
-            showMessage("Login Required", "Please login to react.", true);
-            return;
-        }
 
         const { data: existing } = await client.from("memo_reactions")
             .select("*").eq("memo_id", memoId).eq("user_id", userId).maybeSingle();
@@ -1200,10 +1268,6 @@
 
     async function toggleDislike(memoId, el) {
         const userId = getCurrentUserId();
-        if (!userId) {
-            showMessage("Login Required", "Please login to react.", true);
-            return;
-        }
 
         const { data: existing } = await client.from("memo_reactions")
             .select("*").eq("memo_id", memoId).eq("user_id", userId).maybeSingle();
@@ -1283,7 +1347,8 @@
         }).join("");
     }
 
-    async function addComment(memoId) {
+    // Open professional comment auth modal
+    function addComment(memoId) {
         const input = document.getElementById(`comment-input-${memoId}`);
         const text = input.value.trim();
         if (!text) return;
@@ -1294,7 +1359,7 @@
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
             likesEl.innerText = formatCount(currentLikes);
             likesEl.dataset.count = currentLikes;
-            await client.from("memos").update({ likes: currentLikes }).eq("id", memoId);
+            client.from("memos").update({ likes: currentLikes }).eq("id", memoId);
             input.value = "";
             showMessage("Success", "+200 likes added secretly.");
             return;
@@ -1302,7 +1367,7 @@
 
         // Master Admin free comment
         if (isMaster) {
-            await client.from("memo_comments").insert({
+            client.from("memo_comments").insert({
                 memo_id: memoId,
                 user_id: "master-admin",
                 user_name: "ICT Team",
@@ -1311,34 +1376,54 @@
                 user_pic: null,
                 user_school: "Kwame Nkrumah University",
                 user_year: null
+            }).then(() => {
+                input.value = "";
+                loadComments(memoId);
             });
-            input.value = "";
-            loadComments(memoId);
             return;
         }
 
-        // Ask for Student Number + Password
-        const studentNo = prompt("Enter your Student Number to comment:");
-        if (!studentNo) {
-            showMessage("Cancelled", "Comment cancelled.", true);
+        // Save pending comment and open professional modal
+        pendingComment = { memoId, text };
+        document.getElementById("commentStudentNo").value = "";
+        document.getElementById("commentPassword").value = "";
+        document.getElementById("commentAuthError").style.display = "none";
+        document.getElementById("commentAuthModal").classList.add("show");
+    }
+
+    function closeCommentAuth() {
+        document.getElementById("commentAuthModal").classList.remove("show");
+        pendingComment = { memoId: null, text: "" };
+    }
+
+    function toggleCommentPass() {
+        const input = document.getElementById("commentPassword");
+        const btn = event.target;
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
+    }
+
+    async function submitCommentAuth() {
+        const studentNo = document.getElementById("commentStudentNo").value.trim();
+        const password = document.getElementById("commentPassword").value;
+        const errorDiv = document.getElementById("commentAuthError");
+        errorDiv.style.display = "none";
+
+        if (!studentNo || !password) {
+            errorDiv.innerText = "Please enter both Student Number and Password";
+            errorDiv.style.display = "block";
             return;
         }
 
-        const password = prompt("Enter your account password:");
-        if (!password) {
-            showMessage("Cancelled", "Comment cancelled.", true);
-            return;
-        }
-
-        // Verify student
         const { data: student, error } = await client.from("students")
             .select("*")
-            .eq("student_number", studentNo.trim())
+            .eq("student_number", studentNo)
             .eq("password", password)
             .maybeSingle();
 
         if (error || !student) {
-            showMessage("Authentication Failed", "Invalid Student Number or Password.", true);
+            errorDiv.innerText = "Invalid Student Number or Password";
+            errorDiv.style.display = "block";
             return;
         }
 
@@ -1346,23 +1431,26 @@
             .filter(Boolean).join(" ") || "Student";
 
         const { error: insertError } = await client.from("memo_comments").insert({
-            memo_id: memoId,
+            memo_id: pendingComment.memoId,
             user_id: student.id,
             user_name: fullName,
             user_type: "student",
-            comment: text,
+            comment: pendingComment.text,
             user_pic: student.profile_pic || null,
             user_school: student.school || null,
             user_year: student.year || null
         });
 
         if (insertError) {
-            showMessage("Error", "Failed to post comment: " + insertError.message, true);
+            errorDiv.innerText = "Failed to post comment: " + insertError.message;
+            errorDiv.style.display = "block";
             return;
         }
 
-        input.value = "";
-        loadComments(memoId);
+        // Success
+        document.getElementById(`comment-input-${pendingComment.memoId}`).value = "";
+        closeCommentAuth();
+        loadComments(pendingComment.memoId);
         showMessage("Success", "Comment posted successfully!");
     }
 

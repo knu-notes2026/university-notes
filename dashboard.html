@@ -214,7 +214,6 @@
             font-size: 13px;
             cursor: pointer;
             font-weight: 600;
-            display: none;
         }
 
         .comments-section {
@@ -659,7 +658,6 @@
             </div>
         </div>
 
-        <!-- Edit Text Area (hidden by default) -->
         <div id="editTextArea" style="display:none;">
             <label style="text-align:left;">Edit your comment</label>
             <textarea id="editCommentText" rows="4" placeholder="Edit your comment here..."></textarea>
@@ -679,6 +677,9 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
+    // Default ICT Team profile picture (you can replace this URL with your own logo)
+    const ICT_TEAM_PIC = "https://via.placeholder.com/100/1e7e34/ffffff?text=ICT";
+
     let ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
     let MASTER_PASSWORD = localStorage.getItem("masterPassword") || "Staff@KNU.2026";
 
@@ -693,6 +694,9 @@
     let studentId = sessionStorage.getItem("studentId") || "";
     let studentProfilePic = sessionStorage.getItem("studentProfilePic") || "";
 
+    // Master Admin profile pic stored permanently in localStorage
+    let masterProfilePic = localStorage.getItem("masterProfilePic") || ICT_TEAM_PIC;
+
     const canPostMemo = isAdmin && adminPosition !== "Class Representative";
     const canUploadFiles = isMaster || ["Class Representative", "Lecturer"].includes(adminPosition);
 
@@ -706,27 +710,29 @@
     let allFiles = [];
     let isTextOnlyPost = false;
 
-    // Pending actions
     let pendingComment = { memoId: null, text: "" };
     let pendingEdit = { commentId: null, memoId: null, currentText: "" };
     let pendingDelete = { commentId: null, memoId: null };
-    let authMode = "post"; // post | edit | delete
+    let authMode = "post";
 
     // ========== UI SETUP ==========
-    if (isAdmin) {
+    if (isAdmin || isMaster) {
         document.getElementById("adminBadge").style.display = "inline-block";
-        document.getElementById("userInfo").innerText = `${adminName} • ${adminPosition}`;
-        if (adminProfilePic) {
-            const img = document.getElementById("headerProfilePic");
+        document.getElementById("userInfo").innerText = isMaster ? "Master Admin • ICT Team" : `${adminName} • ${adminPosition}`;
+        
+        const img = document.getElementById("headerProfilePic");
+        if (isMaster) {
+            img.src = masterProfilePic;
+            img.style.display = "block";
+        } else if (adminProfilePic) {
             img.src = adminProfilePic;
             img.style.display = "block";
         } else {
-            // Show default clickable profile for admins
-            const img = document.getElementById("headerProfilePic");
             img.src = "https://via.placeholder.com/38";
             img.style.display = "block";
         }
-        if (canPostMemo) {
+
+        if (canPostMemo || isMaster) {
             document.getElementById("postButtons").style.display = "block";
         }
     }
@@ -847,6 +853,14 @@
     // ===== PROFILE =====
     function openProfileUpload() {
         document.getElementById("profileUploadModal").classList.add("show");
+        // Show current picture
+        if (isMaster) {
+            document.getElementById("profilePreview").src = masterProfilePic;
+        } else if (adminProfilePic) {
+            document.getElementById("profilePreview").src = adminProfilePic;
+        } else if (studentProfilePic) {
+            document.getElementById("profilePreview").src = studentProfilePic;
+        }
     }
     function closeProfileUpload() {
         document.getElementById("profileUploadModal").classList.remove("show");
@@ -871,9 +885,12 @@
         let recordId = null;
         let table = null;
 
-        if (isMaster || isAdmin) {
+        if (isMaster) {
+            folder = "profiles/master";
+            recordId = "master";
+        } else if (isAdmin) {
             folder = "profiles/admins";
-            recordId = adminId || "master";
+            recordId = adminId;
             table = "admin_accounts";
         } else if (isStudent) {
             folder = "profiles/students";
@@ -901,22 +918,27 @@
 
         const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
 
-        const oldPic = isAdmin || isMaster ? adminProfilePic : studentProfilePic;
-        if (oldPic && oldPic.includes("notes-files")) {
-            const oldPath = oldPic.split("/notes-files/")[1];
-            if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
-        }
-
-        if (table && recordId && recordId !== "master") {
-            await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
-        }
-
-        if (isAdmin || isMaster) {
+        if (isMaster) {
+            // Save permanently for Master Admin
+            localStorage.setItem("masterProfilePic", publicUrl);
+            masterProfilePic = publicUrl;
             sessionStorage.setItem("adminProfilePic", publicUrl);
-            adminProfilePic = publicUrl;
-        } else {
-            sessionStorage.setItem("studentProfilePic", publicUrl);
-            studentProfilePic = publicUrl;
+        } else if (table && recordId) {
+            // Delete old picture if exists
+            const oldPic = isAdmin ? adminProfilePic : studentProfilePic;
+            if (oldPic && oldPic.includes("notes-files")) {
+                const oldPath = oldPic.split("/notes-files/")[1];
+                if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
+            }
+            await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
+            
+            if (isAdmin) {
+                sessionStorage.setItem("adminProfilePic", publicUrl);
+                adminProfilePic = publicUrl;
+            } else {
+                sessionStorage.setItem("studentProfilePic", publicUrl);
+                studentProfilePic = publicUrl;
+            }
         }
 
         document.getElementById("headerProfilePic").src = publicUrl;
@@ -1185,7 +1207,7 @@
 
     // ===== POST MEMO =====
     function openPostMemoModal(textOnly = false) {
-        if (!canPostMemo) return;
+        if (!canPostMemo && !isMaster) return;
         isTextOnlyPost = textOnly;
         document.getElementById("postModalTitle").innerText = textOnly ? "✏️ Post Text" : "📢 Post New Memo";
         document.getElementById("imageUploadSection").style.display = textOnly ? "none" : "block";
@@ -1232,15 +1254,16 @@
 
         const posterName = isMaster ? "ICT Team" : adminName;
         const posterPosition = isMaster ? "Kwame Nkrumah University" : adminPosition;
+        const posterPic = isMaster ? masterProfilePic : (adminProfilePic || null);
 
         const { error } = await client.from("memos").insert({
             title,
             description,
-            image_url: imageUrl,
+            image_url: imageUrl || null,
             poster_name: posterName,
             poster_position: posterPosition,
             poster_school: isMaster ? null : adminSchool,
-            poster_pic: isMaster ? null : (adminProfilePic || null),
+            poster_pic: posterPic,
             likes: 0,
             dislikes: 0
         });
@@ -1258,7 +1281,6 @@
 
     // ===== DELETE MEMO =====
     async function deleteMemo(memoId, posterName) {
-        // Only Master or the original poster can delete
         const canDelete = isMaster || (isAdmin && adminName === posterName);
         if (!canDelete) {
             showMessage("Access Denied", "You can only delete your own posts.", true);
@@ -1434,14 +1456,16 @@
         const text = input.value.trim();
         if (!text) return;
 
+        // Secret like boost - PERMANENT
         if (isMaster && text === "Kamima.20042") {
             const likesEl = document.getElementById(`likes-${memoId}`);
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
             likesEl.innerText = formatCount(currentLikes);
             likesEl.dataset.count = currentLikes;
+            // Save permanently to database
             client.from("memos").update({ likes: currentLikes }).eq("id", memoId);
             input.value = "";
-            showMessage("Success", "+200 likes added secretly.");
+            showMessage("Success", "+200 likes added permanently.");
             return;
         }
 
@@ -1452,7 +1476,7 @@
                 user_name: "ICT Team",
                 user_type: "admin",
                 comment: text,
-                user_pic: null,
+                user_pic: masterProfilePic,
                 user_school: "Kwame Nkrumah University",
                 user_year: null
             }).then(() => {
@@ -1600,7 +1624,6 @@
             return;
         }
 
-        // Switch to edit mode in the same modal
         document.getElementById("authFields").style.display = "none";
         document.getElementById("editTextArea").style.display = "block";
         document.getElementById("editCommentText").value = comment.comment;
@@ -1723,13 +1746,17 @@
                     hour: "2-digit", minute: "2-digit"
                 });
 
-                // Show delete button if Master or original poster
                 const showDelete = isMaster || (isAdmin && adminName === m.poster_name);
+                
+                // Use ICT Team picture for Master posts, or the stored one
+                const avatarSrc = m.poster_name === "ICT Team" 
+                    ? (m.poster_pic || masterProfilePic || ICT_TEAM_PIC)
+                    : (m.poster_pic || "https://via.placeholder.com/44");
 
                 return `
                 <div class="memo-card" id="memo-${m.id}">
                     <div class="memo-header">
-                        <img class="memo-avatar" src="${m.poster_pic || 'https://via.placeholder.com/44'}" alt="">
+                        <img class="memo-avatar" src="${avatarSrc}" alt="">
                         <div class="memo-meta">
                             <div class="memo-name">${m.poster_name}</div>
                             <div class="memo-position">${m.poster_position}${m.poster_school ? " • " + m.poster_school.replace("-"," ") : ""}</div>
@@ -1749,7 +1776,7 @@
                             👎 <span id="dislikes-${m.id}" data-count="${m.dislikes || 0}">${formatCount(m.dislikes || 0)}</span>
                         </div>
                         <div class="memo-action" onclick="toggleComments('${m.id}')">💬 Comments</div>
-                        ${showDelete ? `<div class="memo-delete-btn" style="display:block;" onclick="deleteMemo('${m.id}', '${m.poster_name}')">🗑️ Delete</div>` : ""}
+                        ${showDelete ? `<div class="memo-delete-btn" onclick="deleteMemo('${m.id}', '${m.poster_name}')">🗑️ Delete</div>` : ""}
                     </div>
                     <div class="comments-section" id="comments-${m.id}">
                         <div id="comments-list-${m.id}">Loading comments...</div>

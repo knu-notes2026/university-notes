@@ -146,7 +146,6 @@
         }
         label { font-weight: 600; font-size: 13px; display: block; margin-top: 10px; }
 
-        /* MODALS */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -265,7 +264,6 @@
 <div class="main-content">
     <div id="infoBar" style="margin-bottom:15px; color:#555; font-size:14px;"></div>
 
-    <!-- Admin Create Folder -->
     <div class="admin-panel" id="adminCreatePanel">
         <h4 style="margin-top:0;">🛠️ Create Tutorial Folder</h4>
         <input type="text" id="newFolderName" placeholder="Folder name (e.g. Week 1 Lectures)">
@@ -274,7 +272,6 @@
         <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
-    <!-- Folders View -->
     <div id="foldersView">
         <h3 style="margin:0 0 10px;">Tutorial Folders</h3>
         <div class="search-box">
@@ -283,7 +280,6 @@
         <div class="folder-grid" id="foldersList"></div>
     </div>
 
-    <!-- Inside Folder View -->
     <div id="folderContentView" style="display:none;">
         <button class="btn btn-secondary" onclick="backToFolders()">← Back to Folders</button>
         <h3 id="currentFolderTitle" style="margin:15px 0 10px;"></h3>
@@ -326,13 +322,11 @@
     This website was developed by <strong>Kamima Nkhata</strong> for Kwame Nkrumah University ICT Department © 2026
 </div>
 
-<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div id="loadingText">Please wait...</div>
 </div>
 
-<!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
         <h3 id="modalTitle" style="color:#1a73e8;">Enter Password</h3>
@@ -348,7 +342,6 @@
     </div>
 </div>
 
-<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <h3 style="color:#e74c3c;" id="confirmTitle">Confirm</h3>
@@ -360,7 +353,6 @@
     </div>
 </div>
 
-<!-- MESSAGE MODAL -->
 <div class="modal-overlay" id="messageModal">
     <div class="modal-box">
         <h3 id="messageTitle" style="color:#1a73e8;">Message</h3>
@@ -653,6 +645,8 @@
                 showLoading(true, "Saving link...");
                 const { error } = await client.from("tutorials").insert({
                     folder_id: currentFolder.id,
+                    school: currentSchool,
+                    year: currentYear,
                     title,
                     type: "link",
                     content: url,
@@ -680,7 +674,7 @@
 
                 const file = fileInput.files[0];
                 const cleanName = title.replace(/[^a-zA-Z0-9._-]/g, "_") + "_" + Date.now();
-                const path = `tutorials/${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
+                const path = `tutorials/${currentSchool}/${currentYear}/${currentFolder.id}/${cleanName}`;
 
                 showLoading(true, "Uploading video...");
                 try {
@@ -688,6 +682,8 @@
 
                     const { error } = await client.from("tutorials").insert({
                         folder_id: currentFolder.id,
+                        school: currentSchool,
+                        year: currentYear,
                         title,
                         type: "video",
                         content: publicUrl,

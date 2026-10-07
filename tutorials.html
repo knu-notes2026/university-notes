@@ -3,172 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorial Videos</title>
-
-    <!-- PWA Meta Tags -->
+    <title>Tutorial Videos - KNU Notes</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e7e34">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="KNU Notes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-        .header { background: #8e44ad; color: white; padding: 15px 25px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header h2 { margin: 0; }
-        .back-btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold; }
-        .card { background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; }
-        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin: 4px; }
-        .btn-primary { background: #8e44ad; color: white; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e8f5e9;
+            margin: 0;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e7e34;
+            color: white;
+            padding: 14px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h2 { margin: 0; font-size: 18px; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.3); }
+        .admin-badge {
+            background: #f1c40f;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+        }
+        .profile-pic {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            margin: 3px;
+        }
+        .btn-primary { background: #1a73e8; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
         .btn-success { background: #27ae60; color: white; }
-        input, select { padding: 10px; width: 100%; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; gap: 15px; }
-        .admin-panel { background: #f5eef8; border: 1px solid #d7bde2; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: none; }
-        .search-box { margin-bottom: 20px; }
-        .search-box input { padding: 12px; font-size: 15px; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 15px; }
-        .folder-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 18px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .folder-card:hover { background: #f3e5f5; border-color: #8e44ad; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-master { background: #6a1b9a; color: white; }
+        .admin-panel {
+            background: #fff8e6;
+            border: 1px solid #ffe0a3;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            margin-top: 15px;
+        }
+        .folder-card {
+            background: #f1f8e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 10px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .folder-card:hover {
+            background: #e8f5e9;
+            border-color: #1e7e34;
+            transform: translateY(-2px);
+        }
+        .tutorial-item {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tutorial-item a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .tutorial-item a:hover { text-decoration: underline; }
+        .search-box { margin: 15px 0; }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        label { font-weight: 600; font-size: 13px; display: block; margin-top: 10px; }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .password-wrapper { position: relative; margin-top: 8px; }
+        .password-wrapper input {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1a73e8;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-cancel { background: #e0e0e0; color: #333; }
+        .btn-confirm { background: #1a73e8; color: white; }
+        .btn-confirm-danger { background: #e74c3c; color: white; }
+        .modal-error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
 
         .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
-            z-index: 10000; flex-direction: column; color: white;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            flex-direction: column;
+            color: white;
         }
         .loading-overlay.show { display: flex; }
         .spinner {
-            width: 60px; height: 60px; border: 6px solid rgba(255,255,255,0.25);
-            border-top: 6px solid #fff; border-radius: 50%;
-            animation: spin 0.85s linear infinite; margin-bottom: 18px;
+            width: 55px;
+            height: 55px;
+            border: 5px solid rgba(255,255,255,0.25);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 15px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); display: none; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; transition: opacity 0.3s;
+        .footer {
+            text-align: center;
+            padding: 20px 10px;
+            margin-top: 30px;
+            font-size: 13px;
+            color: #555;
+            border-top: 1px solid #c8e6c9;
         }
-        .modal-overlay.show { display: flex; opacity: 1; }
-        .modal-box {
-            background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 420px;
-            transform: translateY(-40px); transition: transform 0.35s;
-        }
-        .modal-overlay.show .modal-box { transform: translateY(0); }
-        .modal-box h3 { margin-top: 0; }
-        .modal-error { color: #e74c3c; font-size: 14px; margin-top: 10px; display: none; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 25px; }
-        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background: #e0e0e0; color: #333; }
-        .btn-confirm { background: #8e44ad; color: white; }
-        .btn-confirm-danger { background: #e74c3c; color: white; }
-        .btn-ok { background: #8e44ad; color: white; }
-        .password-wrapper { position: relative; margin-top: 10px; }
-        .password-wrapper input {
-            width: 100%; padding: 13px; font-size: 15px; border: 2px solid #ddd;
-            border-radius: 8px; box-sizing: border-box;
-        }
-        .toggle-password {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; color: #8e44ad;
-            font-size: 13px; font-weight: bold;
-        }
+        .footer strong { color: #1e7e34; }
     </style>
 </head>
 <body>
+
 <div class="header">
     <h2>📺 Tutorial Videos</h2>
-    <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+    <div class="header-right">
+        <img id="headerProfilePic" class="profile-pic" src="" alt="" style="display:none;">
+        <span id="adminBadge" class="admin-badge">ADMIN</span>
+        <span id="userInfo" style="font-size:13px;"></span>
+        <a href="dashboard.html" class="header-btn">← Back to Dashboard</a>
+        <a href="index.html" class="header-btn">Exit</a>
+    </div>
 </div>
 
-<div class="card">
-    <h2 id="pageTitle">Loading...</h2>
+<div class="main-content">
+    <div id="infoBar" style="margin-bottom:15px; color:#555; font-size:14px;"></div>
 
-    <div class="admin-panel" id="adminPanel">
-        <h3 style="margin-top:0;">🛠️ Admin: Create Tutorial Folder</h3>
-        <input type="text" id="newFolderName" placeholder="Folder name (e.g. Week 1 Videos)">
-        <input type="password" id="newFolderPassword" placeholder="Set a password for this folder">
-        <button class="btn btn-primary" onclick="createTutorialFolder()">Create Folder</button>
-        <hr style="margin:25px 0; border:none; border-top:1px solid #d7bde2;">
-        <p style="color:#666; font-size:14px; margin:0;">
-            After creating a folder, <strong>open it</strong> below, then add videos/links inside it.
-        </p>
+    <!-- Admin Create Folder -->
+    <div class="admin-panel" id="adminCreatePanel">
+        <h4 style="margin-top:0;">🛠️ Create Tutorial Folder</h4>
+        <input type="text" id="newFolderName" placeholder="Folder name (e.g. Week 1 Lectures)">
+        <input type="password" id="newFolderPassword" placeholder="Set password">
+        <input type="password" id="newFolderPassword2" placeholder="Confirm password">
+        <button class="btn btn-primary" onclick="createFolder()">Create Folder</button>
     </div>
 
-    <div class="search-box">
-        <input type="text" id="searchTutorials" placeholder="Search folders or tutorials..." oninput="filterItems()">
-    </div>
-
+    <!-- Folders View -->
     <div id="foldersView">
-        <div class="folder-grid" id="foldersList">Loading folders...</div>
+        <h3 style="margin:0 0 10px;">Tutorial Folders</h3>
+        <div class="search-box">
+            <input type="text" id="searchFolders" placeholder="Search folders..." oninput="filterFolders()">
+        </div>
+        <div class="folder-grid" id="foldersList"></div>
     </div>
 
+    <!-- Inside Folder View -->
     <div id="folderContentView" style="display:none;">
         <button class="btn btn-secondary" onclick="backToFolders()">← Back to Folders</button>
-        <h3 id="currentFolderTitle" style="margin-top:15px;"></h3>
+        <h3 id="currentFolderTitle" style="margin:15px 0 10px;"></h3>
 
         <div class="admin-panel" id="folderAdminPanel" style="display:none;">
-            <h4 style="margin-top:0;">Add Tutorial to this Folder</h4>
-            <input type="text" id="tutTitle" placeholder="Title of the tutorial">
-            <select id="tutType" onchange="toggleInputType()">
-                <option value="link">YouTube / Video Link</option>
+            <h4 style="margin-top:0;">Add Tutorial</h4>
+            
+            <label>Type</label>
+            <select id="uploadType" onchange="toggleUploadType()">
+                <option value="link">YouTube / External Link</option>
                 <option value="video">Upload Video File</option>
             </select>
-            <input type="text" id="tutLink" placeholder="Paste YouTube or video URL here">
-            <input type="file" id="tutFile" accept="video/*" style="display:none;">
-            <button class="btn btn-primary" onclick="addTutorial()">Add Tutorial</button>
-            <button class="btn btn-danger" onclick="deleteCurrentFolder()" style="margin-left:8px;">Delete this Folder</button>
+
+            <div id="linkSection">
+                <label>Title</label>
+                <input type="text" id="linkTitle" placeholder="e.g. Introduction to Accounting">
+                <label>Link (YouTube or any URL)</label>
+                <input type="url" id="linkUrl" placeholder="https://youtube.com/...">
+            </div>
+
+            <div id="videoSection" style="display:none;">
+                <label>Title / Display Name</label>
+                <input type="text" id="videoTitle" placeholder="e.g. Lecture 3 Recording">
+                <label>Video File</label>
+                <input type="file" id="videoFile" accept="video/*">
+            </div>
+
+            <button class="btn btn-success" onclick="uploadTutorial()" style="margin-top:12px;">Add Tutorial</button>
+            <button class="btn btn-danger" onclick="deleteCurrentFolder()">Delete This Folder</button>
         </div>
 
-        <div id="tutorialsList" style="margin-top:20px;"></div>
+        <div class="search-box">
+            <input type="text" id="searchTutorials" placeholder="Search tutorials..." oninput="filterTutorials()">
+        </div>
+        <div id="tutorialsList"></div>
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div id="loadingText">Uploading... Please wait</div>
+<div class="footer">
+    This website was developed by <strong>Kamima Nkhata</strong> for Kwame Nkrumah University ICT Department © 2026
 </div>
 
-<!-- Password Modal -->
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingText">Please wait...</div>
+</div>
+
+<!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="passwordModal">
     <div class="modal-box">
-        <h3 id="modalTitle" style="color:#8e44ad;">Enter Password</h3>
+        <h3 id="modalTitle" style="color:#1a73e8;">Enter Password</h3>
         <div class="password-wrapper">
             <input type="password" id="modalPassword" placeholder="Enter password">
-            <button type="button" class="toggle-password" onclick="toggleModalPassword()">Show</button>
+            <button type="button" class="toggle-password" onclick="toggleModalPass()">Show</button>
         </div>
         <div class="modal-error" id="modalError">Wrong password. Please try again.</div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closePasswordModal()">Cancel</button>
-            <button class="btn-confirm" onclick="submitPasswordModal()">Confirm</button>
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-confirm" onclick="submitModalPassword()">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirm Modal -->
-<div class="modal-overlay" id="deleteConfirmModal">
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
-        <h3 style="color:#e74c3c;">Confirm Delete</h3>
-        <p id="deleteConfirmText" style="color:#555; line-height:1.5;">Are you sure?</p>
+        <h3 style="color:#e74c3c;" id="confirmTitle">Confirm</h3>
+        <p id="confirmText" style="color:#555;"></p>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
-            <button class="btn-confirm-danger" onclick="confirmDeleteAction()">Delete</button>
+            <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-confirm-danger" onclick="executeConfirm()">Confirm</button>
         </div>
     </div>
 </div>
 
-<!-- Message Modal -->
+<!-- MESSAGE MODAL -->
 <div class="modal-overlay" id="messageModal">
     <div class="modal-box">
-        <h3 id="messageTitle" style="color:#8e44ad;">Message</h3>
-        <p id="messageText" style="color:#555; line-height:1.5; margin:0;"></p>
+        <h3 id="messageTitle" style="color:#1a73e8;">Message</h3>
+        <p id="messageText" style="color:#555;"></p>
         <div class="modal-actions">
-            <button class="btn-ok" onclick="closeMessageModal()" style="flex:1;">OK</button>
+            <button class="btn-confirm" onclick="closeMessageModal()" style="flex:1;">OK</button>
         </div>
     </div>
 </div>
@@ -177,48 +375,63 @@
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
-    const MASTER_PASSWORD = "Stuff@KNU.2026";
 
-    const school = sessionStorage.getItem("tutSchool") || "business";
-    const year = sessionStorage.getItem("tutYear") || "1";
-    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
-    const isMaster = sessionStorage.getItem("isMaster") === "true";
+    const R2_UPLOAD_URL = "https://knu-upload.knu-notes.workers.dev/upload";
+    const R2_PUBLIC_URL = "https://pub-0793a7ea686f4c6eaa90bc8abb1d7fd6.r2.dev";
 
-    document.getElementById("pageTitle").innerText = 
-        `${school.replace("-", " ").toUpperCase()} – Year ${year} Tutorials`;
+    let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    let isMaster = sessionStorage.getItem("isMaster") === "true";
+    let adminName = sessionStorage.getItem("adminName") || "";
+    let adminPosition = sessionStorage.getItem("adminPosition") || "";
+    let adminProfilePic = sessionStorage.getItem("adminProfilePic") || "";
+    let masterProfilePic = localStorage.getItem("masterProfilePic") || "";
 
-    if (isAdmin || isMaster) {
-        document.getElementById("adminPanel").style.display = "block";
-    }
+    const canManage = isMaster || ["Class Representative", "Lecturer"].includes(adminPosition);
 
-    let allFolders = [];
+    let currentSchool = sessionStorage.getItem("tutSchool") || "business";
+    let currentYear = sessionStorage.getItem("tutYear") || "1";
     let currentFolder = null;
+    let allFolders = [];
     let allTutorials = [];
     let modalCallback = null;
-    let pendingDelete = null;
+    let confirmCallback = null;
 
-    function showLoading(show, text = "Uploading... Please wait") {
+    // UI Setup
+    document.getElementById("infoBar").innerText = 
+        `School: ${currentSchool.replace("-", " ").toUpperCase()}  •  Year ${currentYear}`;
+
+    if (isAdmin || isMaster) {
+        document.getElementById("adminBadge").style.display = "inline-block";
+        document.getElementById("userInfo").innerText = isMaster ? "Master Admin • ICT Team" : `${adminName} • ${adminPosition}`;
+        
+        const img = document.getElementById("headerProfilePic");
+        if (isMaster && masterProfilePic) {
+            img.src = masterProfilePic;
+            img.style.display = "block";
+        } else if (adminProfilePic) {
+            img.src = adminProfilePic;
+            img.style.display = "block";
+        }
+    }
+
+    if (canManage) {
+        document.getElementById("adminCreatePanel").style.display = "block";
+    }
+
+    // ===== HELPERS =====
+    function showLoading(show, text = "Please wait...") {
         document.getElementById("loadingText").innerText = text;
         document.getElementById("loadingOverlay").classList.toggle("show", show);
     }
-
     function showMessage(title, text, isError = false) {
         document.getElementById("messageTitle").innerText = title;
-        document.getElementById("messageTitle").style.color = isError ? "#e74c3c" : "#8e44ad";
+        document.getElementById("messageTitle").style.color = isError ? "#e74c3c" : "#1a73e8";
         document.getElementById("messageText").innerHTML = text;
         document.getElementById("messageModal").classList.add("show");
     }
     function closeMessageModal() {
         document.getElementById("messageModal").classList.remove("show");
     }
-
-    function toggleInputType() {
-        const type = document.getElementById("tutType").value;
-        document.getElementById("tutLink").style.display = type === "link" ? "block" : "none";
-        document.getElementById("tutFile").style.display = type === "video" ? "block" : "none";
-    }
-
-    // Password Modal
     function showPasswordModal(title, callback) {
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalPassword").value = "";
@@ -227,98 +440,127 @@
         document.getElementById("modalPassword").focus();
         modalCallback = callback;
     }
-
-    function closePasswordModal() {
+    function closeModal() {
         document.getElementById("passwordModal").classList.remove("show");
     }
-
-    function toggleModalPassword() {
+    function toggleModalPass() {
         const input = document.getElementById("modalPassword");
         const btn = event.target;
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerText = "Hide";
-        } else {
-            input.type = "password";
-            btn.innerText = "Show";
-        }
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
     }
-
-    function submitPasswordModal() {
+    function submitModalPassword() {
         const password = document.getElementById("modalPassword").value;
-        const isCorrect = password === MASTER_PASSWORD || (currentFolder && password === currentFolder.password);
-
+        const isCorrect = password === (localStorage.getItem("masterPassword") || "Staff@KNU.2026") || 
+                          (currentFolder && password === currentFolder.password);
         if (isCorrect) {
             const cb = modalCallback;
             modalCallback = null;
-            document.getElementById("passwordModal").classList.remove("show");
+            closeModal();
             if (typeof cb === "function") cb();
         } else {
             document.getElementById("modalError").style.display = "block";
             document.getElementById("modalPassword").value = "";
-            document.getElementById("modalPassword").focus();
         }
     }
-
-    document.getElementById("modalPassword").addEventListener("keyup", e => {
-        if (e.key === "Enter") submitPasswordModal();
-    });
-
-    // Delete Confirm
-    function showDeleteConfirm(text, action) {
-        document.getElementById("deleteConfirmText").innerHTML = text;
-        document.getElementById("deleteConfirmModal").classList.add("show");
-        pendingDelete = action;
+    function showConfirmModal(title, text, callback) {
+        document.getElementById("confirmTitle").innerText = title;
+        document.getElementById("confirmText").innerHTML = text;
+        document.getElementById("confirmModal").classList.add("show");
+        confirmCallback = callback;
     }
-    function closeDeleteConfirm() {
-        document.getElementById("deleteConfirmModal").classList.remove("show");
-        pendingDelete = null;
+    function closeConfirmModal() {
+        document.getElementById("confirmModal").classList.remove("show");
+        confirmCallback = null;
     }
-    function confirmDeleteAction() {
-        if (typeof pendingDelete === "function") pendingDelete();
-        closeDeleteConfirm();
+    function executeConfirm() {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
     }
 
-    // Folders
+    // ========== R2 UPLOAD ==========
+    async function uploadToR2(file, path) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("path", path);
+
+        const response = await fetch(R2_UPLOAD_URL, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error("Upload failed: " + errText);
+        }
+        return `${R2_PUBLIC_URL}/${path}`;
+    }
+
+    // ========== FOLDERS ==========
     async function loadFolders() {
-        try {
-            const { data, error } = await client.from("folders")
-                .select("*")
-                .eq("school", school)
-                .eq("year", year)
-                .eq("type", "tutorials")
-                .order("created_at", { ascending: false });
+        const { data } = await client.from("folders")
+            .select("*")
+            .eq("school", currentSchool)
+            .eq("year", currentYear)
+            .eq("type", "tutorials")
+            .order("created_at", { ascending: false });
 
-            if (error) throw error;
-            allFolders = data || [];
-            renderFolders(allFolders);
-        } catch (err) {
-            console.error(err);
-            document.getElementById("foldersList").innerHTML = 
-                `<p style="color:#e74c3c;">Error loading folders: ${err.message}</p>`;
-        }
+        allFolders = data || [];
+        renderFolders(allFolders);
     }
 
-    function renderFolders(list) {
+    function renderFolders(folders) {
         const container = document.getElementById("foldersList");
-        if (!list || list.length === 0) {
-            container.innerHTML = "<p style='color:#888;'>No tutorial folders yet. Create one above.</p>";
+        if (!folders.length) {
+            container.innerHTML = `<p style="color:#888;">No tutorial folders yet.</p>`;
             return;
         }
-        container.innerHTML = list.map(f => `
-            <div class="folder-card" onclick='openFolder(${JSON.stringify(f).replace(/"/g, "&quot;")})'>
+        container.innerHTML = folders.map(f => `
+            <div class="folder-card" onclick='openFolder(${JSON.stringify(f)})'>
                 <div style="font-size:28px;">📁</div>
-                <div style="font-weight:bold; margin-top:8px;">${f.name}</div>
+                <div style="font-weight:bold; margin-top:8px; font-size:14px;">${f.name}</div>
             </div>
         `).join("");
     }
 
-    function filterItems() {
-        const term = document.getElementById("searchTutorials").value.toLowerCase();
-        if (document.getElementById("folderContentView").style.display === "block") {
-            renderTutorials(allTutorials.filter(t => t.title.toLowerCase().includes(term)));
+    function filterFolders() {
+        const term = document.getElementById("searchFolders").value.toLowerCase();
+        renderFolders(allFolders.filter(f => f.name.toLowerCase().includes(term)));
+    }
+
+    async function createFolder() {
+        if (!canManage) return;
+        const name = document.getElementById("newFolderName").value.trim();
+        const password = document.getElementById("newFolderPassword").value;
+        const password2 = document.getElementById("newFolderPassword2").value;
+
+        if (!name || !password) {
+            showMessage("Missing Info", "Please enter folder name and password.", true);
+            return;
+        }
+        if (password !== password2) {
+            showMessage("Mismatch", "Passwords do not match.", true);
+            return;
+        }
+
+        showLoading(true, "Creating folder...");
+        const { error } = await client.from("folders").insert({
+            school: currentSchool,
+            year: currentYear,
+            name,
+            password,
+            type: "tutorials"
+        });
+        showLoading(false);
+
+        if (error) {
+            showMessage("Error", error.message, true);
         } else {
-            renderFolders(allFolders.filter(f => f.name.toLowerCase().includes(term)));
+            document.getElementById("newFolderName").value = "";
+            document.getElementById("newFolderPassword").value = "";
+            document.getElementById("newFolderPassword2").value = "";
+            showMessage("Success", "Tutorial folder created!");
+            loadFolders();
         }
     }
 
@@ -327,9 +569,7 @@
         document.getElementById("foldersView").style.display = "none";
         document.getElementById("folderContentView").style.display = "block";
         document.getElementById("currentFolderTitle").innerText = folder.name;
-        if (isAdmin || isMaster) {
-            document.getElementById("folderAdminPanel").style.display = "block";
-        }
+        document.getElementById("folderAdminPanel").style.display = canManage ? "block" : "none";
         loadTutorials();
     }
 
@@ -340,228 +580,162 @@
         loadFolders();
     }
 
-    async function createTutorialFolder() {
-        if (!isAdmin && !isMaster) return;
+    // ========== TUTORIALS ==========
+    async function loadTutorials() {
+        const container = document.getElementById("tutorialsList");
+        container.innerHTML = "Loading...";
 
-        const name = document.getElementById("newFolderName").value.trim();
-        const password = document.getElementById("newFolderPassword").value;
+        const { data, error } = await client.from("tutorials")
+            .select("*")
+            .eq("folder_id", currentFolder.id)
+            .order("created_at", { ascending: false });
 
-        if (!name || !password) {
-            showMessage("Missing Information", "Please enter both a <strong>folder name</strong> and a <strong>password</strong>.", true);
+        if (error) {
+            container.innerHTML = `<p style="color:#e74c3c;">Error loading tutorials</p>`;
             return;
         }
 
-        showLoading(true, "Creating folder...");
-        try {
-            const { error } = await client.from("folders").insert({
-                school, year, name, password, type: "tutorials"
-            });
-            showLoading(false);
-
-            if (error) {
-                showMessage("Error", "Failed to create folder:<br><br>" + error.message, true);
-            } else {
-                document.getElementById("newFolderName").value = "";
-                document.getElementById("newFolderPassword").value = "";
-                showMessage("Success", `Folder <strong>${name}</strong> created successfully!`);
-                loadFolders();
-            }
-        } catch (err) {
-            showLoading(false);
-            showMessage("Error", err.message, true);
-        }
-    }
-
-    // Tutorials
-    async function loadTutorials() {
-        if (!currentFolder) return;
-        try {
-            const { data, error } = await client.from("tutorials")
-                .select("*")
-                .eq("school", school)
-                .eq("year", year)
-                .eq("folder_id", currentFolder.id)
-                .order("created_at", { ascending: false });
-
-            if (error) throw error;
-            allTutorials = data || [];
-            renderTutorials(allTutorials);
-        } catch (err) {
-            console.error(err);
-            showMessage("Database Error", 
-                "Could not load tutorials.<br><br>Most common cause: the <code>folder_id</code> column is missing.<br>Please run the SQL I gave you earlier.", true);
-        }
+        allTutorials = data || [];
+        renderTutorials(allTutorials);
     }
 
     function renderTutorials(list) {
         const container = document.getElementById("tutorialsList");
-        if (!list || list.length === 0) {
-            container.innerHTML = "<p style='color:#888;'>No tutorials in this folder yet.</p>";
+        if (!list.length) {
+            container.innerHTML = `<p style="color:#888;">No tutorials in this folder yet.</p>`;
             return;
         }
+
         container.innerHTML = list.map(t => {
-            let content = "";
-            if (t.type === "link") {
-                content = `<a href="${t.content}" target="_blank" class="btn btn-primary">Watch Video</a>`;
-            } else {
-                const url = `${DB_URL}/storage/v1/object/public/notes-files/${t.content}`;
-                content = `<a href="${url}" target="_blank" class="btn btn-primary">Play Video</a>`;
-            }
+            const isLink = t.type === "link";
             return `
-                <div class="video-item">
-                    <div>
-                        <strong>${t.title}</strong><br>
-                        <small>${t.type === "link" ? "YouTube / Link" : "Uploaded Video"}</small>
-                    </div>
-                    <div>
-                        ${content}
-                        ${(isAdmin || isMaster) ? `<button class="btn btn-danger" onclick="deleteTutorial('${t.id}', '${t.content}', '${t.type}')">Delete</button>` : ""}
-                    </div>
+            <div class="tutorial-item">
+                <div>
+                    <strong>${t.title}</strong><br>
+                    <small style="color:#666;">${isLink ? "🔗 Link" : "🎬 Video"} • ${new Date(t.created_at).toLocaleDateString()}</small>
                 </div>
-            `;
+                <div>
+                    <a href="${t.content}" target="_blank" class="btn btn-success" style="text-decoration:none;">
+                        ${isLink ? "Open Link" : "Watch / Download"}
+                    </a>
+                    ${canManage ? `<button class="btn btn-danger" onclick="deleteTutorial('${t.id}')">Delete</button>` : ""}
+                </div>
+            </div>`;
         }).join("");
     }
 
-    function addTutorial() {
-        if (!currentFolder) {
-            showMessage("No Folder Open", "Please open a folder first before adding a tutorial.", true);
-            return;
-        }
-
-        const title = document.getElementById("tutTitle").value.trim();
-        const type = document.getElementById("tutType").value;
-
-        if (!title) {
-            showMessage("Missing Title", "Please enter a title for the tutorial.", true);
-            return;
-        }
-
-        showPasswordModal("Enter folder password to continue", function () {
-            performUpload(title, type);
-        });
+    function filterTutorials() {
+        const term = document.getElementById("searchTutorials").value.toLowerCase();
+        renderTutorials(allTutorials.filter(t => t.title.toLowerCase().includes(term)));
     }
 
-    async function performUpload(title, type) {
-        showLoading(true, type === "video" ? "Uploading video... Please wait" : "Saving tutorial...");
+    function toggleUploadType() {
+        const type = document.getElementById("uploadType").value;
+        document.getElementById("linkSection").style.display = type === "link" ? "block" : "none";
+        document.getElementById("videoSection").style.display = type === "video" ? "block" : "none";
+    }
 
-        try {
-            let content = "";
+    async function uploadTutorial() {
+        if (!canManage) return;
 
+        const type = document.getElementById("uploadType").value;
+
+        showPasswordModal("Enter folder password", async () => {
             if (type === "link") {
-                content = document.getElementById("tutLink").value.trim();
-                if (!content) {
-                    showLoading(false);
-                    showMessage("Missing Link", "Please paste a YouTube or video URL.", true);
+                const title = document.getElementById("linkTitle").value.trim();
+                const url = document.getElementById("linkUrl").value.trim();
+
+                if (!title || !url) {
+                    showMessage("Missing Info", "Please enter title and link.", true);
                     return;
                 }
+
+                showLoading(true, "Saving link...");
+                const { error } = await client.from("tutorials").insert({
+                    folder_id: currentFolder.id,
+                    title,
+                    type: "link",
+                    content: url,
+                    uploaded_by: isMaster ? "ICT Team" : adminName
+                });
+                showLoading(false);
+
+                if (error) {
+                    showMessage("Error", error.message, true);
+                } else {
+                    document.getElementById("linkTitle").value = "";
+                    document.getElementById("linkUrl").value = "";
+                    showMessage("Success", "Link added successfully!");
+                    loadTutorials();
+                }
             } else {
-                const fileInput = document.getElementById("tutFile");
-                if (!fileInput.files || !fileInput.files.length) {
-                    showLoading(false);
-                    showMessage("No File Selected", "Please select a video file first.", true);
+                // Video upload
+                const title = document.getElementById("videoTitle").value.trim();
+                const fileInput = document.getElementById("videoFile");
+
+                if (!title || !fileInput.files.length) {
+                    showMessage("Missing Info", "Please enter a title and select a video file.", true);
                     return;
                 }
 
                 const file = fileInput.files[0];
-                const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-                const path = `tutorials/${school}/${year}/${currentFolder.id}/${Date.now()}_${cleanName}`;
+                const cleanName = title.replace(/[^a-zA-Z0-9._-]/g, "_") + "_" + Date.now();
+                const path = `tutorials/${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-                const { error: upError } = await client.storage
-                    .from("notes-files")
-                    .upload(path, file);
-
-                if (upError) {
-                    showLoading(false);
-                    showMessage("Upload Failed", upError.message, true);
-                    return;
-                }
-                content = path;
-            }
-
-            const { error } = await client.from("tutorials").insert({
-                school: school,
-                year: year,
-                title: title,
-                type: type,
-                content: content,
-                folder_id: currentFolder.id
-            });
-
-            showLoading(false);
-
-            if (error) {
-                showMessage("Database Error", 
-                    error.message + 
-                    "<br><br><strong>Most common cause:</strong> the <code>folder_id</code> column does not exist yet.<br>" +
-                    "Run this SQL in Supabase:<br><code>ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS folder_id UUID;</code>", true);
-            } else {
-                document.getElementById("tutTitle").value = "";
-                document.getElementById("tutLink").value = "";
-                document.getElementById("tutFile").value = "";
-                showMessage("Success", "Tutorial added successfully!");
-                loadTutorials();
-            }
-        } catch (err) {
-            showLoading(false);
-            showMessage("Unexpected Error", err.message, true);
-        }
-    }
-
-    function deleteTutorial(id, content, type) {
-        showPasswordModal("Enter password to delete", () => {
-            showDeleteConfirm("Are you sure you want to permanently delete this tutorial?", async () => {
-                showLoading(true, "Deleting...");
+                showLoading(true, "Uploading video...");
                 try {
-                    if (type === "video") {
-                        await client.storage.from("notes-files").remove([content]);
-                    }
-                    const { error } = await client.from("tutorials").delete().eq("id", id);
+                    const publicUrl = await uploadToR2(file, path);
+
+                    const { error } = await client.from("tutorials").insert({
+                        folder_id: currentFolder.id,
+                        title,
+                        type: "video",
+                        content: publicUrl,
+                        uploaded_by: isMaster ? "ICT Team" : adminName
+                    });
+
                     showLoading(false);
+
                     if (error) {
-                        showMessage("Error", "Delete failed: " + error.message, true);
+                        showMessage("Error", error.message, true);
                     } else {
-                        showMessage("Deleted", "Tutorial deleted successfully.");
+                        document.getElementById("videoTitle").value = "";
+                        fileInput.value = "";
+                        showMessage("Success", "Video uploaded successfully!");
                         loadTutorials();
                     }
                 } catch (err) {
                     showLoading(false);
-                    showMessage("Error", err.message, true);
+                    showMessage("Upload Failed", err.message, true);
                 }
+            }
+        });
+    }
+
+    function deleteTutorial(id) {
+        if (!canManage) return;
+        showPasswordModal("Enter password to delete", () => {
+            showConfirmModal("Delete Tutorial", "Are you sure you want to delete this tutorial?", async () => {
+                showLoading(true, "Deleting...");
+                await client.from("tutorials").delete().eq("id", id);
+                showLoading(false);
+                loadTutorials();
+                showMessage("Deleted", "Tutorial deleted.");
             });
         });
     }
 
     function deleteCurrentFolder() {
-        if (!currentFolder) return;
+        if (!canManage) return;
         showPasswordModal("Enter password to delete folder", () => {
-            showDeleteConfirm(
-                `Delete folder <strong>"${currentFolder.name}"</strong> and all its tutorials?<br>This cannot be undone.`,
-                async () => {
-                    showLoading(true, "Deleting folder...");
-                    try {
-                        const { data: tuts } = await client.from("tutorials")
-                            .select("id, content, type")
-                            .eq("folder_id", currentFolder.id);
-
-                        if (tuts && tuts.length) {
-                            for (const t of tuts) {
-                                if (t.type === "video") {
-                                    await client.storage.from("notes-files").remove([t.content]);
-                                }
-                            }
-                            await client.from("tutorials").delete().eq("folder_id", currentFolder.id);
-                        }
-
-                        await client.from("folders").delete().eq("id", currentFolder.id);
-                        showLoading(false);
-                        showMessage("Deleted", "Folder deleted successfully.");
-                        backToFolders();
-                    } catch (err) {
-                        showLoading(false);
-                        showMessage("Error", err.message, true);
-                    }
-                }
-            );
+            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all tutorials inside?`, async () => {
+                showLoading(true, "Deleting folder...");
+                await client.from("tutorials").delete().eq("folder_id", currentFolder.id);
+                await client.from("folders").delete().eq("id", currentFolder.id);
+                showLoading(false);
+                backToFolders();
+                showMessage("Deleted", "Folder deleted.");
+            });
         });
     }
 

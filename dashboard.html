@@ -678,11 +678,10 @@
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // ==================== CLOUDFLARE R2 (10GB Storage) ====================
+    // ==================== STORAGE ====================
     const R2_UPLOAD_URL = "https://knu-upload.knu-notes.workers.dev/upload";
     const R2_PUBLIC_URL = "https://pub-0793a7ea686f4c6eaa90bc8abb1d7fd6.r2.dev";
 
-    // Default ICT Team profile picture
     const ICT_TEAM_PIC = "https://via.placeholder.com/100/1e7e34/ffffff?text=ICT";
 
     let ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
@@ -699,7 +698,6 @@
     let studentId = sessionStorage.getItem("studentId") || "";
     let studentProfilePic = sessionStorage.getItem("studentProfilePic") || "";
 
-    // Master Admin profile pic stored permanently
     let masterProfilePic = localStorage.getItem("masterProfilePic") || ICT_TEAM_PIC;
 
     const canPostMemo = isAdmin && adminPosition !== "Class Representative";
@@ -720,11 +718,11 @@
     let pendingDelete = { commentId: null, memoId: null };
     let authMode = "post";
 
-    // ========== R2 UPLOAD HELPER ==========
+    // ========== UPLOAD HELPER (fixed) ==========
     async function uploadToR2(file, path) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("key", path);
+        formData.append("path", path);   // IMPORTANT: "path" not "key"
 
         const response = await fetch(R2_UPLOAD_URL, {
             method: "POST",
@@ -736,7 +734,6 @@
             throw new Error("Upload failed: " + errText);
         }
 
-        // Return the public URL
         return `${R2_PUBLIC_URL}/${path}`;
     }
 
@@ -1069,15 +1066,10 @@
     }
 
     async function loadFilesInFolder() {
-        // Note: R2 listing requires Worker support. For now we show a message.
-        // Files uploaded to R2 are accessible via public URL.
         const container = document.getElementById("filesList");
-        container.innerHTML = `<p style="color:#666;">Files uploaded to this folder are stored in Cloudflare R2 (10GB).<br>
-        After uploading, the file becomes available immediately via its public link.</p>`;
+        container.innerHTML = `<p style="color:#666;">Files uploaded to this folder are securely stored in the cloud.</p>`;
     }
-    function renderFiles(files) {
-        // Placeholder - will be improved later with file metadata table
-    }
+    function renderFiles(files) {}
     function filterFiles() {}
 
     function uploadToFolder() {
@@ -1093,12 +1085,12 @@
             const cleanName = (displayName || file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-            showLoading(true, "Uploading file to R2...", 0);
+            showLoading(true, "Uploading file...", 0);
             try {
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 12;
-                    if (progress <= 90) showLoading(true, "Uploading file to R2...", progress);
+                    if (progress <= 90) showLoading(true, "Uploading file...", progress);
                 }, 180);
 
                 const publicUrl = await uploadToR2(file, path);
@@ -1107,7 +1099,7 @@
 
                 fileInput.value = "";
                 document.getElementById("fileDisplayName").value = "";
-                showMessage("Success", `File uploaded successfully!<br><br>Public link:<br><a href="${publicUrl}" target="_blank">${publicUrl}</a>`);
+                showMessage("Success", "File uploaded successfully!");
             } catch (err) {
                 showLoading(false);
                 showMessage("Error", err.message, true);
@@ -1116,7 +1108,7 @@
     }
 
     function deleteFile(fileName) {
-        showMessage("Info", "File deletion from R2 will be added in the next update.", true);
+        showMessage("Info", "File deletion will be available in a future update.", true);
     }
 
     function deleteCurrentFolder() {
@@ -1218,7 +1210,7 @@
             let progress = 0;
             const interval = setInterval(() => {
                 progress += 12;
-                if (progress <= 90) showLoading(true, "Uploading image to R2...", progress);
+                if (progress <= 90) showLoading(true, "Uploading image...", progress);
             }, 180);
 
             try {
@@ -1441,17 +1433,14 @@
             const likesEl = document.getElementById(`likes-${memoId}`);
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
 
-            // Update UI immediately
             likesEl.innerText = formatCount(currentLikes);
             likesEl.dataset.count = currentLikes;
 
-            // Save permanently to database
             const { error } = await client.from("memos")
                 .update({ likes: currentLikes })
                 .eq("id", memoId);
 
             if (error) {
-                console.error("Failed to save likes:", error);
                 showMessage("Error", "Could not save the likes. Please try again.", true);
             } else {
                 input.value = "";

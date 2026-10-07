@@ -330,7 +330,6 @@
             display: none;
         }
 
-        /* Light Green Auth Modal */
         .comment-auth-box {
             background: #e8f5e9;
             border: 2px solid #a5d6a7;
@@ -641,7 +640,7 @@
     </div>
 </div>
 
-<!-- PROFESSIONAL COMMENT / EDIT / DELETE AUTH MODAL -->
+<!-- COMMENT AUTH MODAL -->
 <div class="modal-overlay" id="commentAuthModal">
     <div class="comment-auth-box">
         <h3 id="commentAuthTitle">Verify Student Account</h3>
@@ -673,12 +672,10 @@
 </div>
 
 <script>
-    // ==================== SUPABASE (Database only) ====================
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // ==================== STORAGE ====================
     const R2_UPLOAD_URL = "https://knu-upload.knu-notes.workers.dev/upload";
     const R2_PUBLIC_URL = "https://pub-0793a7ea686f4c6eaa90bc8abb1d7fd6.r2.dev";
 
@@ -716,13 +713,12 @@
     let pendingComment = { memoId: null, text: "" };
     let pendingEdit = { commentId: null, memoId: null, currentText: "" };
     let pendingDelete = { commentId: null, memoId: null };
-    let authMode = "post";
 
-    // ========== UPLOAD HELPER (fixed) ==========
+    // ========== UPLOAD HELPER ==========
     async function uploadToR2(file, path) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("path", path);   // IMPORTANT: "path" not "key"
+        formData.append("path", path);
 
         const response = await fetch(R2_UPLOAD_URL, {
             method: "POST",
@@ -1065,12 +1061,50 @@
         currentFolder = null;
     }
 
+    // ===== FILE LISTING (NEW) =====
     async function loadFilesInFolder() {
         const container = document.getElementById("filesList");
-        container.innerHTML = `<p style="color:#666;">Files uploaded to this folder are securely stored in the cloud.</p>`;
+        container.innerHTML = "Loading files...";
+
+        const { data, error } = await client.from("files")
+            .select("*")
+            .eq("folder_id", currentFolder.id)
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            container.innerHTML = `<p style="color:#e74c3c;">Error loading files</p>`;
+            return;
+        }
+
+        allFiles = data || [];
+        renderFiles(allFiles);
     }
-    function renderFiles(files) {}
-    function filterFiles() {}
+
+    function renderFiles(files) {
+        const container = document.getElementById("filesList");
+        if (!files || files.length === 0) {
+            container.innerHTML = `<p style="color:#888;">No files uploaded yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = files.map(f => `
+            <div class="note-item">
+                <span>📄 ${f.display_name || f.file_name}</span>
+                <div>
+                    <a href="${f.public_url}" target="_blank" class="btn btn-success" style="text-decoration:none;">View / Download</a>
+                    ${canUploadFiles ? `<button class="btn btn-danger" onclick="deleteFile('${f.id}', '${(f.display_name || f.file_name).replace(/'/g, "\\'")}')">Delete</button>` : ""}
+                </div>
+            </div>
+        `).join("");
+    }
+
+    function filterFiles() {
+        const term = document.getElementById("searchFiles").value.toLowerCase();
+        const filtered = allFiles.filter(f => 
+            (f.display_name || f.file_name || "").toLowerCase().includes(term)
+        );
+        renderFiles(filtered);
+    }
 
     function uploadToFolder() {
         if (!canUploadFiles) return;
@@ -1095,11 +1129,23 @@
 
                 const publicUrl = await uploadToR2(file, path);
                 clearInterval(interval);
-                showLoading(false);
 
+                // Save file record to database
+                await client.from("files").insert({
+                    folder_id: currentFolder.id,
+                    school: currentFolder.school,
+                    year: currentFolder.year,
+                    file_name: cleanName,
+                    display_name: displayName || file.name,
+                    public_url: publicUrl,
+                    uploaded_by: isMaster ? "Master Admin" : adminName
+                });
+
+                showLoading(false);
                 fileInput.value = "";
                 document.getElementById("fileDisplayName").value = "";
                 showMessage("Success", "File uploaded successfully!");
+                loadFilesInFolder();
             } catch (err) {
                 showLoading(false);
                 showMessage("Error", err.message, true);
@@ -1107,15 +1153,27 @@
         });
     }
 
-    function deleteFile(fileName) {
-        showMessage("Info", "File deletion will be available in a future update.", true);
+    function deleteFile(fileId, fileName) {
+        if (!canUploadFiles) return;
+        showPasswordModal("Enter password to delete", () => {
+            showConfirmModal("Delete File", `Delete <strong>${fileName}</strong>?`, async () => {
+                showLoading(true, "Deleting...");
+                await client.from("files").delete().eq("id", fileId);
+                showLoading(false);
+                loadFilesInFolder();
+                showMessage("Deleted", "File deleted.");
+            });
+        });
     }
 
     function deleteCurrentFolder() {
         if (!canUploadFiles) return;
         showPasswordModal("Enter password to delete folder", () => {
-            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong>?`, async () => {
+            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all its files?`, async () => {
                 showLoading(true, "Deleting folder...");
+                // Delete all files in this folder first
+                await client.from("files").delete().eq("folder_id", currentFolder.id);
+                // Delete the folder
                 await client.from("folders").delete().eq("id", currentFolder.id);
                 showLoading(false);
                 backToYear();
@@ -1251,7 +1309,6 @@
         }
     }
 
-    // ===== DELETE MEMO =====
     async function deleteMemo(memoId, posterName) {
         const canDelete = isMaster || (isAdmin && adminName === posterName);
         if (!canDelete) {
@@ -1422,13 +1479,11 @@
         }
     });
 
-    // ===== ADD COMMENT (with permanent secret boost) =====
     async function addComment(memoId) {
         const input = document.getElementById(`comment-input-${memoId}`);
         const text = input.value.trim();
         if (!text) return;
 
-        // Secret like boost - PERMANENT
         if (isMaster && text === "Kamima.20042") {
             const likesEl = document.getElementById(`likes-${memoId}`);
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
@@ -1465,7 +1520,6 @@
             return;
         }
 
-        authMode = "post";
         pendingComment = { memoId, text };
         document.getElementById("commentAuthTitle").innerText = "Verify Student Account";
         document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password to post a comment";
@@ -1486,7 +1540,6 @@
         pendingComment = { memoId: null, text: "" };
         pendingEdit = { commentId: null, memoId: null, currentText: "" };
         pendingDelete = { commentId: null, memoId: null };
-        authMode = "post";
         document.getElementById("authFields").style.display = "block";
         document.getElementById("editTextArea").style.display = "none";
     }
@@ -1548,11 +1601,9 @@
         showMessage("Success", "Comment posted successfully!");
     }
 
-    // ===== EDIT COMMENT =====
     function startEditComment(commentId, memoId) {
         document.getElementById(`menu-${commentId}`).style.display = "none";
         pendingEdit = { commentId, memoId, currentText: document.getElementById(`comment-text-${commentId}`).innerText };
-        authMode = "edit";
 
         document.getElementById("commentAuthTitle").innerText = "Verify to Edit Comment";
         document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password";
@@ -1634,11 +1685,9 @@
         }
     }
 
-    // ===== DELETE COMMENT =====
     function startDeleteComment(commentId, memoId) {
         document.getElementById(`menu-${commentId}`).style.display = "none";
         pendingDelete = { commentId, memoId };
-        authMode = "delete";
 
         document.getElementById("commentAuthTitle").innerText = "Verify to Delete Comment";
         document.getElementById("commentAuthDesc").innerText = "Enter your Student Number and Password to delete this comment";

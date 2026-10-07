@@ -172,10 +172,10 @@
         <div class="tab" onclick="showTab('forgot')">Forgot Password</div>
     </div>
 
-    <!-- ==================== LOGIN ==================== -->
+    <!-- LOGIN -->
     <div id="login" class="form-section active">
         <label>Email or Phone Number</label>
-        <input type="text" id="loginUsername" placeholder="Email or Phone (e.g. 97XXXXXXX)">
+        <input type="text" id="loginUsername" placeholder="Email or Phone (e.g. 097XXXXXXX)">
 
         <label>Password</label>
         <div class="password-wrapper">
@@ -191,7 +191,7 @@
         </div>
     </div>
 
-    <!-- ==================== REGISTER ==================== -->
+    <!-- REGISTER -->
     <div id="register" class="form-section">
         <div id="registerForm">
             <div class="name-row">
@@ -207,6 +207,13 @@
 
             <label>Last Name *</label>
             <input type="text" id="regLastName" placeholder="Last name">
+
+            <label>Gender *</label>
+            <select id="regGender">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
 
             <label>Email Address *</label>
             <input type="email" id="regEmail" placeholder="yourname@gmail.com">
@@ -274,7 +281,7 @@
         </div>
     </div>
 
-    <!-- ==================== FORGOT PASSWORD ==================== -->
+    <!-- FORGOT PASSWORD -->
     <div id="forgot" class="form-section">
         <div id="forgotStep1">
             <label>Email Address *</label>
@@ -377,6 +384,23 @@
             (pos === "Class Representative" || pos === "Union Leader") ? "block" : "none";
     }
 
+    // Normalize phone number for login (accepts 09..., 97..., +26097...)
+    function normalizePhone(input) {
+        let phone = input.replace(/\s+/g, '').replace(/^\+/, '');
+        
+        // Remove leading 0 if present (only one)
+        if (phone.startsWith('0') && phone.length === 10) {
+            phone = phone.substring(1);
+        }
+        
+        // If it starts with 260, remove it
+        if (phone.startsWith('260') && phone.length === 12) {
+            phone = phone.substring(3);
+        }
+        
+        return '+260' + phone;
+    }
+
     // ========== LOGIN ==========
     async function loginAdmin() {
         let username = document.getElementById("loginUsername").value.trim();
@@ -390,23 +414,19 @@
             return;
         }
 
-        // If user entered only 9 digits, add +260
-        if (/^\d{9}$/.test(username)) {
-            username = "+260" + username;
-        }
-
         // Try email first
         let { data, error } = await client.from("admin_accounts")
             .select("*")
-            .eq("email", username)
+            .eq("email", username.toLowerCase())
             .eq("password", password)
             .maybeSingle();
 
-        // Try phone
+        // Try phone with normalization
         if (!data) {
+            const normalized = normalizePhone(username);
             ({ data, error } = await client.from("admin_accounts")
                 .select("*")
-                .eq("phone", username)
+                .eq("phone", normalized)
                 .eq("password", password)
                 .maybeSingle());
         }
@@ -417,7 +437,6 @@
             return;
         }
 
-        // Allow old accounts (null status) and approved ones
         if (data.status && data.status !== "approved") {
             errorDiv.innerText = "Your account is still pending approval";
             errorDiv.style.display = "block";
@@ -435,11 +454,12 @@
         window.location.href = "dashboard.html";
     }
 
-    // ========== REGISTER (IMPROVED) ==========
+    // ========== REGISTER ==========
     async function registerAdmin() {
         const firstName = document.getElementById("regFirstName").value.trim();
         const middleName = document.getElementById("regMiddleName").value.trim();
         const lastName = document.getElementById("regLastName").value.trim();
+        const gender = document.getElementById("regGender").value;
         const email = document.getElementById("regEmail").value.trim().toLowerCase();
         const phoneDigits = document.getElementById("regPhone").value.trim();
         const position = document.getElementById("regPosition").value;
@@ -452,8 +472,7 @@
         const errorDiv = document.getElementById("regError");
         errorDiv.style.display = "none";
 
-        // Basic validation
-        if (!firstName || !lastName || !email || !phoneDigits || !position || !school) {
+        if (!firstName || !lastName || !gender || !email || !phoneDigits || !position || !school) {
             errorDiv.innerText = "Please fill all required fields marked with *";
             errorDiv.style.display = "block";
             return;
@@ -492,35 +511,28 @@
         const fullPhone = "+260" + phoneDigits;
         const finalPosition = customPosition || position;
 
-        // Check if email already exists
+        // Check duplicates
         const { data: existingEmail } = await client.from("admin_accounts")
-            .select("id")
-            .eq("email", email)
-            .maybeSingle();
-
+            .select("id").eq("email", email).maybeSingle();
         if (existingEmail) {
-            errorDiv.innerText = "This email is already registered. Please use a different email or login.";
+            errorDiv.innerText = "This email is already registered.";
             errorDiv.style.display = "block";
             return;
         }
 
-        // Check if phone already exists
         const { data: existingPhone } = await client.from("admin_accounts")
-            .select("id")
-            .eq("phone", fullPhone)
-            .maybeSingle();
-
+            .select("id").eq("phone", fullPhone).maybeSingle();
         if (existingPhone) {
-            errorDiv.innerText = "This phone number is already registered. Please use a different number.";
+            errorDiv.innerText = "This phone number is already registered.";
             errorDiv.style.display = "block";
             return;
         }
 
-        // Try to insert
         const { error } = await client.from("admin_accounts").insert({
             first_name: firstName,
             middle_name: middleName || null,
             last_name: lastName,
+            gender: gender,
             email: email,
             phone: fullPhone,
             position: position,
@@ -533,7 +545,7 @@
 
         if (error) {
             console.error(error);
-            errorDiv.innerText = "Registration failed: " + (error.message || "Unknown error. Please contact ICT.");
+            errorDiv.innerText = "Registration failed: " + (error.message || "Unknown error");
             errorDiv.style.display = "block";
         } else {
             document.getElementById("registerForm").style.display = "none";

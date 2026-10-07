@@ -673,11 +673,16 @@
 </div>
 
 <script>
+    // ==================== SUPABASE (Database only) ====================
     const DB_URL = "https://ivwpbwdzoikmwgfpefpc.supabase.co";
     const DB_KEY = "sb_publishable_Ex2EA-5ofhwLAVv-Dj7R1w_-PKvEkqU";
     const client = supabase.createClient(DB_URL, DB_KEY);
 
-    // Default ICT Team profile picture (you can replace this URL with your own logo)
+    // ==================== CLOUDFLARE R2 (10GB Storage) ====================
+    const R2_UPLOAD_URL = "https://knu-upload.knu-notes.workers.dev/upload";
+    const R2_PUBLIC_URL = "https://pub-0793a7ea686f4c6eaa90bc8abb1d7fd6.r2.dev";
+
+    // Default ICT Team profile picture
     const ICT_TEAM_PIC = "https://via.placeholder.com/100/1e7e34/ffffff?text=ICT";
 
     let ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
@@ -694,7 +699,7 @@
     let studentId = sessionStorage.getItem("studentId") || "";
     let studentProfilePic = sessionStorage.getItem("studentProfilePic") || "";
 
-    // Master Admin profile pic stored permanently in localStorage
+    // Master Admin profile pic stored permanently
     let masterProfilePic = localStorage.getItem("masterProfilePic") || ICT_TEAM_PIC;
 
     const canPostMemo = isAdmin && adminPosition !== "Class Representative";
@@ -714,6 +719,26 @@
     let pendingEdit = { commentId: null, memoId: null, currentText: "" };
     let pendingDelete = { commentId: null, memoId: null };
     let authMode = "post";
+
+    // ========== R2 UPLOAD HELPER ==========
+    async function uploadToR2(file, path) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("key", path);
+
+        const response = await fetch(R2_UPLOAD_URL, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error("Upload failed: " + errText);
+        }
+
+        // Return the public URL
+        return `${R2_PUBLIC_URL}/${path}`;
+    }
 
     // ========== UI SETUP ==========
     if (isAdmin || isMaster) {
@@ -853,7 +878,6 @@
     // ===== PROFILE =====
     function openProfileUpload() {
         document.getElementById("profileUploadModal").classList.add("show");
-        // Show current picture
         if (isMaster) {
             document.getElementById("profilePreview").src = masterProfilePic;
         } else if (adminProfilePic) {
@@ -907,44 +931,36 @@
             if (progress <= 90) showLoading(true, "Uploading profile picture...", progress);
         }, 150);
 
-        const { error: upErr } = await client.storage.from("notes-files").upload(fileName, file, { upsert: true });
-        clearInterval(interval);
-        showLoading(false);
+        try {
+            const publicUrl = await uploadToR2(file, fileName);
+            clearInterval(interval);
+            showLoading(false);
 
-        if (upErr) {
-            showMessage("Upload Failed", upErr.message, true);
-            return;
-        }
-
-        const publicUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
-
-        if (isMaster) {
-            // Save permanently for Master Admin
-            localStorage.setItem("masterProfilePic", publicUrl);
-            masterProfilePic = publicUrl;
-            sessionStorage.setItem("adminProfilePic", publicUrl);
-        } else if (table && recordId) {
-            // Delete old picture if exists
-            const oldPic = isAdmin ? adminProfilePic : studentProfilePic;
-            if (oldPic && oldPic.includes("notes-files")) {
-                const oldPath = oldPic.split("/notes-files/")[1];
-                if (oldPath) await client.storage.from("notes-files").remove([oldPath]);
-            }
-            await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
-            
-            if (isAdmin) {
+            if (isMaster) {
+                localStorage.setItem("masterProfilePic", publicUrl);
+                masterProfilePic = publicUrl;
                 sessionStorage.setItem("adminProfilePic", publicUrl);
-                adminProfilePic = publicUrl;
-            } else {
-                sessionStorage.setItem("studentProfilePic", publicUrl);
-                studentProfilePic = publicUrl;
+            } else if (table && recordId) {
+                await client.from(table).update({ profile_pic: publicUrl }).eq("id", recordId);
+                
+                if (isAdmin) {
+                    sessionStorage.setItem("adminProfilePic", publicUrl);
+                    adminProfilePic = publicUrl;
+                } else {
+                    sessionStorage.setItem("studentProfilePic", publicUrl);
+                    studentProfilePic = publicUrl;
+                }
             }
-        }
 
-        document.getElementById("headerProfilePic").src = publicUrl;
-        document.getElementById("headerProfilePic").style.display = "block";
-        closeProfileUpload();
-        showMessage("Success", "Profile picture updated successfully!");
+            document.getElementById("headerProfilePic").src = publicUrl;
+            document.getElementById("headerProfilePic").style.display = "block";
+            closeProfileUpload();
+            showMessage("Success", "Profile picture updated successfully!");
+        } catch (err) {
+            clearInterval(interval);
+            showLoading(false);
+            showMessage("Upload Failed", err.message, true);
+        }
     }
 
     // ===== NAVIGATION =====
@@ -1053,35 +1069,16 @@
     }
 
     async function loadFilesInFolder() {
-        const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-        const { data } = await client.storage.from("notes-files").list(path);
-        allFiles = (data || []).filter(f => f.name && !f.name.startsWith("."));
-        renderFiles(allFiles);
+        // Note: R2 listing requires Worker support. For now we show a message.
+        // Files uploaded to R2 are accessible via public URL.
+        const container = document.getElementById("filesList");
+        container.innerHTML = `<p style="color:#666;">Files uploaded to this folder are stored in Cloudflare R2 (10GB).<br>
+        After uploading, the file becomes available immediately via its public link.</p>`;
     }
     function renderFiles(files) {
-        const container = document.getElementById("filesList");
-        if (files.length === 0) {
-            container.innerHTML = `<p style="color:#888;">No files found.</p>`;
-            return;
-        }
-        const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-        container.innerHTML = files.map(f => {
-            const url = `${DB_URL}/storage/v1/object/public/notes-files/${path}/${f.name}`;
-            return `
-                <div class="note-item">
-                    <span>📄 ${f.name}</span>
-                    <div>
-                        <a href="${url}" target="_blank" class="btn btn-success" style="text-decoration:none;">View</a>
-                        ${canUploadFiles ? `<button class="btn btn-danger" onclick="deleteFile('${f.name}')">Delete</button>` : ""}
-                    </div>
-                </div>
-            `;
-        }).join("");
+        // Placeholder - will be improved later with file metadata table
     }
-    function filterFiles() {
-        const term = document.getElementById("searchFiles").value.toLowerCase();
-        renderFiles(allFiles.filter(f => f.name.toLowerCase().includes(term)));
-    }
+    function filterFiles() {}
 
     function uploadToFolder() {
         if (!canUploadFiles) return;
@@ -1096,25 +1093,21 @@
             const cleanName = (displayName || file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
             const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
 
-            showLoading(true, "Uploading file...", 0);
+            showLoading(true, "Uploading file to R2...", 0);
             try {
                 let progress = 0;
                 const interval = setInterval(() => {
                     progress += 12;
-                    if (progress <= 90) showLoading(true, "Uploading file...", progress);
+                    if (progress <= 90) showLoading(true, "Uploading file to R2...", progress);
                 }, 180);
 
-                const { error } = await client.storage.from("notes-files").upload(path, file, { upsert: true });
+                const publicUrl = await uploadToR2(file, path);
                 clearInterval(interval);
                 showLoading(false);
 
-                if (error) showMessage("Upload Failed", error.message, true);
-                else {
-                    fileInput.value = "";
-                    document.getElementById("fileDisplayName").value = "";
-                    showMessage("Success", "File uploaded successfully!");
-                    loadFilesInFolder();
-                }
+                fileInput.value = "";
+                document.getElementById("fileDisplayName").value = "";
+                showMessage("Success", `File uploaded successfully!<br><br>Public link:<br><a href="${publicUrl}" target="_blank">${publicUrl}</a>`);
             } catch (err) {
                 showLoading(false);
                 showMessage("Error", err.message, true);
@@ -1123,29 +1116,14 @@
     }
 
     function deleteFile(fileName) {
-        if (!canUploadFiles) return;
-        showPasswordModal("Enter password to delete", () => {
-            showConfirmModal("Delete File", `Delete <strong>${fileName}</strong>?`, async () => {
-                showLoading(true, "Deleting...");
-                const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${fileName}`;
-                await client.storage.from("notes-files").remove([path]);
-                showLoading(false);
-                loadFilesInFolder();
-                showMessage("Deleted", "File deleted.");
-            });
-        });
+        showMessage("Info", "File deletion from R2 will be added in the next update.", true);
     }
 
     function deleteCurrentFolder() {
         if (!canUploadFiles) return;
         showPasswordModal("Enter password to delete folder", () => {
-            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all files?`, async () => {
+            showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong>?`, async () => {
                 showLoading(true, "Deleting folder...");
-                const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}`;
-                const { data: files } = await client.storage.from("notes-files").list(path);
-                if (files?.length) {
-                    await client.storage.from("notes-files").remove(files.map(f => `${path}/${f.name}`));
-                }
                 await client.from("folders").delete().eq("id", currentFolder.id);
                 showLoading(false);
                 backToYear();
@@ -1236,20 +1214,22 @@
         if (!isTextOnlyPost && imageInput.files && imageInput.files.length > 0) {
             const file = imageInput.files[0];
             const fileName = `memos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+
             let progress = 0;
             const interval = setInterval(() => {
                 progress += 12;
-                if (progress <= 90) showLoading(true, "Uploading image...", progress);
+                if (progress <= 90) showLoading(true, "Uploading image to R2...", progress);
             }, 180);
 
-            const { error: upErr } = await client.storage.from("notes-files").upload(fileName, file);
-            clearInterval(interval);
-            if (upErr) {
+            try {
+                imageUrl = await uploadToR2(file, fileName);
+                clearInterval(interval);
+            } catch (err) {
+                clearInterval(interval);
                 showLoading(false);
-                showMessage("Upload Failed", upErr.message, true);
+                showMessage("Upload Failed", err.message, true);
                 return;
             }
-            imageUrl = `${DB_URL}/storage/v1/object/public/notes-files/${fileName}`;
         }
 
         const posterName = isMaster ? "ICT Team" : adminName;
@@ -1450,8 +1430,8 @@
         }
     });
 
-    // ===== ADD COMMENT =====
-    function addComment(memoId) {
+    // ===== ADD COMMENT (with permanent secret boost) =====
+    async function addComment(memoId) {
         const input = document.getElementById(`comment-input-${memoId}`);
         const text = input.value.trim();
         if (!text) return;
@@ -1460,17 +1440,28 @@
         if (isMaster && text === "Kamima.20042") {
             const likesEl = document.getElementById(`likes-${memoId}`);
             let currentLikes = parseInt(likesEl.dataset.count || 0) + 200;
+
+            // Update UI immediately
             likesEl.innerText = formatCount(currentLikes);
             likesEl.dataset.count = currentLikes;
+
             // Save permanently to database
-            client.from("memos").update({ likes: currentLikes }).eq("id", memoId);
-            input.value = "";
-            showMessage("Success", "+200 likes added permanently.");
+            const { error } = await client.from("memos")
+                .update({ likes: currentLikes })
+                .eq("id", memoId);
+
+            if (error) {
+                console.error("Failed to save likes:", error);
+                showMessage("Error", "Could not save the likes. Please try again.", true);
+            } else {
+                input.value = "";
+                showMessage("Success", "+200 likes added permanently!");
+            }
             return;
         }
 
         if (isMaster) {
-            client.from("memo_comments").insert({
+            await client.from("memo_comments").insert({
                 memo_id: memoId,
                 user_id: "master-admin",
                 user_name: "ICT Team",
@@ -1479,10 +1470,9 @@
                 user_pic: masterProfilePic,
                 user_school: "Kwame Nkrumah University",
                 user_year: null
-            }).then(() => {
-                input.value = "";
-                loadComments(memoId);
             });
+            input.value = "";
+            loadComments(memoId);
             return;
         }
 
@@ -1748,7 +1738,6 @@
 
                 const showDelete = isMaster || (isAdmin && adminName === m.poster_name);
                 
-                // Use ICT Team picture for Master posts, or the stored one
                 const avatarSrc = m.poster_name === "ICT Team" 
                     ? (m.poster_pic || masterProfilePic || ICT_TEAM_PIC)
                     : (m.poster_pic || "https://via.placeholder.com/44");

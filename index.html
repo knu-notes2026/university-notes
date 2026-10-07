@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - Kwame Nkrumah University Notes</title>
+    
+    <!-- Google Search Console Verification -->
+    <meta name="google-site-verification" content="hsqb-6uwqve_RcelB7izO1oWAaNR52CP8iJhJilBDk8" />
+    
+    <title>Kwame Nkrumah University – Notes & Results Portal</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e7e34">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KNU Notes">
+    <meta name="description" content="Official Notes, Results and Tutorial Videos Portal for Kwame Nkrumah University students and staff.">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -13,168 +22,270 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            background: #e8f5e9;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background Image */
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('background.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: -2;
+        }
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(232, 245, 233, 0.85);
+            z-index: -1;
+        }
+
+        /* Top Green Bar */
+        .top-bar {
+            background: #1e7e34;
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        .top-bar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .top-bar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .top-btn {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .top-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Main Content */
+        .main-container {
+            flex: 1;
+            display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            /* Background Image - 100% clear */
-            background-image: url('background.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            padding: 30px 15px;
         }
 
-        .welcome-container {
-            background: rgba(255, 255, 255, 0.92);
-            padding: 45px 35px;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        .welcome-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            padding: 40px 30px;
             width: 100%;
-            max-width: 520px;
+            max-width: 480px;
             text-align: center;
-            border-top: 8px solid #1e7e34;
-            position: relative;
-            z-index: 1;
-            animation: fadeInUp 0.8s ease;
+            border-top: 6px solid #1e7e34;
+            animation: fadeInUp 0.6s ease;
         }
 
-        .university-name {
-            font-size: 28px;
-            font-weight: 800;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .uni-name {
             color: #1e7e34;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-            animation: glow 2.5s ease-in-out infinite alternate;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            animation: pulse 2.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
         .subtitle {
-            color: #2e7d32;
-            font-size: 16px;
-            margin-bottom: 32px;
+            color: #555;
+            font-size: 15px;
+            margin-bottom: 30px;
             font-weight: 500;
         }
 
         .enter-btn {
-            display: inline-block;
-            width: 90%;
-            padding: 16px;
-            background: linear-gradient(135deg, #1e7e34, #2e7d32);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(30, 126, 52, 0.4);
-            margin-bottom: 22px;
-            animation: pulse 2.2s infinite;
-        }
-
-        .enter-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(30, 126, 52, 0.5);
-        }
-
-        .admin-login-btn {
-            background: transparent;
-            border: 2px solid #1e7e34;
-            color: #1e7e34;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 15px;
-            transition: 0.3s;
-        }
-
-        .admin-login-btn:hover {
+            display: block;
+            width: 100%;
+            padding: 15px;
             background: #1e7e34;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 14px;
+            transition: 0.25s;
+            box-shadow: 0 4px 12px rgba(30,126,52,0.3);
+        }
+        .enter-btn:hover {
+            background: #166528;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(30,126,52,0.4);
+        }
+
+        .admin-btn {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            background: #6a1b9a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: 0.25s;
+        }
+        .admin-btn:hover {
+            background: #4a148c;
+        }
+
+        .student-btn {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            background: #1565c0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: 0.25s;
+        }
+        .student-btn:hover {
+            background: #0d47a1;
         }
 
         .credits {
-            margin-top: 30px;
             font-size: 13px;
-            color: #66bb6a;
-            font-style: italic;
+            color: #777;
+            margin-top: 25px;
+            padding-top: 18px;
+            border-top: 1px solid #eee;
+            line-height: 1.5;
         }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: #555;
+            background: rgba(255,255,255,0.7);
         }
+        .footer strong { color: #1e7e34; }
 
-        @keyframes glow {
-            from { text-shadow: 0 0 5px rgba(30, 126, 52, 0.3); }
-            to { text-shadow: 0 0 15px rgba(30, 126, 52, 0.6); }
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 8px 25px rgba(30, 126, 52, 0.4); }
-            50% { box-shadow: 0 8px 35px rgba(30, 126, 52, 0.6); }
-            100% { box-shadow: 0 8px 25px rgba(30, 126, 52, 0.4); }
-        }
-
-        /* Admin Passcode Modal - Light Green */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(0,0,0,0.65);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 9999;
             padding: 15px;
         }
         .modal-overlay.show { display: flex; }
-
         .modal-box {
             background: #e8f5e9;
             border: 2px solid #a5d6a7;
-            padding: 30px;
-            border-radius: 16px;
+            padding: 28px 24px;
+            border-radius: 14px;
             width: 100%;
-            max-width: 400px;
-            text-align: center;
+            max-width: 380px;
             animation: slideUp 0.3s ease;
         }
-
         @keyframes slideUp {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-
         .modal-box h3 {
+            margin: 0 0 8px;
             color: #1e7e34;
-            margin-bottom: 10px;
-            font-size: 22px;
+            text-align: center;
+            font-size: 18px;
         }
-
         .modal-box p {
+            text-align: center;
             color: #555;
             font-size: 14px;
             margin-bottom: 18px;
         }
-
-        .modal-box input {
+        .password-wrapper {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        .password-wrapper input {
             width: 100%;
-            padding: 13px;
+            padding: 13px 45px 13px 14px;
             border: 1px solid #a5d6a7;
             border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
+            font-size: 15px;
             background: white;
         }
-
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #1e7e34;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-error {
+            color: #c62828;
+            font-size: 13px;
+            margin: 8px 0;
+            display: none;
+            text-align: center;
+        }
         .modal-actions {
             display: flex;
             gap: 10px;
+            margin-top: 18px;
         }
-
         .modal-actions button {
             flex: 1;
             padding: 12px;
@@ -182,87 +293,126 @@
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
         }
-
-        .btn-cancel { background: #c8e6c9; color: #1e7e34; }
-        .btn-confirm { background: #1e7e34; color: white; }
-
-        .error-msg {
-            color: #c62828;
-            font-size: 13px;
-            margin-bottom: 10px;
-            display: none;
+        .btn-cancel {
+            background: #c8e6c9;
+            color: #1e7e34;
+        }
+        .btn-confirm {
+            background: #1e7e34;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="welcome-container">
-        <div class="university-name">Kwame Nkrumah University</div>
-        <div class="subtitle">Notes • Results • Tutorials Portal</div>
+
+<div class="bg-image"></div>
+<div class="bg-overlay"></div>
+
+<!-- Top Green Bar -->
+<div class="top-bar">
+    <h1>Kwame Nkrumah University</h1>
+    <div class="top-bar-right">
+        <a href="student-auth.html" class="top-btn" id="studentLoginTop">Student Login</a>
+        <button class="top-btn" onclick="openAdminLogin()">Admin Login</button>
+    </div>
+</div>
+
+<!-- Main Welcome Card -->
+<div class="main-container">
+    <div class="welcome-card">
+        <div class="uni-name">Kwame Nkrumah University</div>
+        <div class="subtitle">Notes, Results & Tutorial Videos Portal</div>
 
         <a href="dashboard.html" class="enter-btn">Enter Main Notes Library</a>
 
-        <button class="admin-login-btn" onclick="openAdminPasscode()">Admin Login</button>
+        <button class="admin-btn" onclick="openAdminLogin()">Admin Access</button>
+        <a href="student-auth.html" class="student-btn">Student Login / Register</a>
 
         <div class="credits">
-            Developed by Kamima Nkhata🤝🏾 & Benard cox🙌🏽 for Kwame Nkrumah University<br>
-            ICT Department © 2026
+            Official platform for students and staff<br>
+            Access notes, past papers, results and tutorial videos
         </div>
     </div>
+</div>
 
-    <!-- Admin Passcode Modal -->
-    <div class="modal-overlay" id="passcodeModal">
-        <div class="modal-box">
-            <h3>Admin Access</h3>
-            <p>Enter the Admin Passcode</p>
-            <div class="error-msg" id="passcodeError">Wrong passcode. Please try again.</div>
-            <input type="password" id="adminPasscodeInput" placeholder="Enter passcode" onkeypress="if(event.key==='Enter') checkPasscode()">
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closePasscodeModal()">Cancel</button>
-                <button class="btn-confirm" onclick="checkPasscode()">Continue</button>
-            </div>
+<div class="footer">
+    This website was developed by <strong>Kamima Nkhata</strong> for Kwame Nkrumah University ICT Department © 2026
+</div>
+
+<!-- Admin Login Modal -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-box">
+        <h3>Admin Access</h3>
+        <p>Enter the admin passcode to continue</p>
+        
+        <div class="password-wrapper">
+            <input type="password" id="adminPasscode" placeholder="Enter admin passcode">
+            <button type="button" class="toggle-password" onclick="togglePass()">Show</button>
+        </div>
+        
+        <div class="modal-error" id="adminError">Wrong passcode. Please try again.</div>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeAdminModal()">Cancel</button>
+            <button class="btn-confirm" onclick="submitAdminPasscode()">Continue</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
-        const MASTER_PASSWORD = localStorage.getItem("masterPassword") || "Staff@KNU.2026";
+<script>
+    const ADMIN_PASSCODE = localStorage.getItem("adminPasscode") || "KNUstaff@2026";
+    const MASTER_PASSWORD = localStorage.getItem("masterPassword") || "Staff@KNU.2026";
 
-        function openAdminPasscode() {
-            document.getElementById("adminPasscodeInput").value = "";
-            document.getElementById("passcodeError").style.display = "none";
-            document.getElementById("passcodeModal").classList.add("show");
-            document.getElementById("adminPasscodeInput").focus();
-        }
+    function openAdminLogin() {
+        document.getElementById("adminPasscode").value = "";
+        document.getElementById("adminError").style.display = "none";
+        document.getElementById("adminModal").classList.add("show");
+        document.getElementById("adminPasscode").focus();
+    }
 
-        function closePasscodeModal() {
-            document.getElementById("passcodeModal").classList.remove("show");
-        }
+    function closeAdminModal() {
+        document.getElementById("adminModal").classList.remove("show");
+    }
 
-        function checkPasscode() {
-            const code = document.getElementById("adminPasscodeInput").value.trim();
-            const errorDiv = document.getElementById("passcodeError");
+    function togglePass() {
+        const input = document.getElementById("adminPasscode");
+        const btn = event.target;
+        input.type = input.type === "password" ? "text" : "password";
+        btn.innerText = input.type === "password" ? "Show" : "Hide";
+    }
 
+    function submitAdminPasscode() {
+        const code = document.getElementById("adminPasscode").value.trim();
+        const errorDiv = document.getElementById("adminError");
+
+        if (code === MASTER_PASSWORD) {
             // Master Admin
-            if (code === MASTER_PASSWORD) {
-                sessionStorage.setItem("isAdmin", "true");
-                sessionStorage.setItem("isMaster", "true");
-                sessionStorage.setItem("adminName", "Master Admin");
-                sessionStorage.setItem("adminPosition", "Master Admin");
-                window.location.href = "dashboard.html";
-                return;
-            }
-
-            // Normal Admin Passcode
-            if (code === ADMIN_PASSCODE) {
-                window.location.href = "admin-auth.html";
-                return;
-            }
-
-            errorDiv.style.display = "block";
-            document.getElementById("adminPasscodeInput").value = "";
+            sessionStorage.setItem("isMaster", "true");
+            sessionStorage.setItem("isAdmin", "true");
+            sessionStorage.setItem("adminName", "ICT Team");
+            sessionStorage.setItem("adminPosition", "Master Admin");
+            window.location.href = "dashboard.html";
+            return;
         }
-    </script>
+
+        if (code === ADMIN_PASSCODE) {
+            // Normal Admin → go to admin registration/login page
+            window.location.href = "admin-auth.html";
+            return;
+        }
+
+        // Wrong code
+        errorDiv.style.display = "block";
+        document.getElementById("adminPasscode").value = "";
+        document.getElementById("adminPasscode").focus();
+    }
+
+    // Allow Enter key
+    document.getElementById("adminPasscode").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") submitAdminPasscode();
+    });
+</script>
 </body>
 </html>

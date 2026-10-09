@@ -145,10 +145,25 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 14px 12px;
             border-bottom: 1px solid #eee;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
+        }
+        .uploader-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #555;
+        }
+        .uploader-info img {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
         }
 
         /* MEMOS */
@@ -697,7 +712,8 @@
 
     let masterProfilePic = localStorage.getItem("masterProfilePic") || ICT_TEAM_PIC;
 
-    const canPostMemo = isAdmin && adminPosition !== "Class Representative";
+    // Class Reps cannot post memos
+    const canPostMemo = isMaster || (isAdmin && adminPosition !== "Class Representative");
     const canUploadFiles = isMaster || ["Class Representative", "Lecturer"].includes(adminPosition);
 
     let currentSchool = "";
@@ -730,7 +746,7 @@
             throw new Error("Upload failed: " + errText);
         }
 
-        return `${R2_PUBLIC_URL}/${path}`;
+        return `\( {R2_PUBLIC_URL}/ \){path}`;
     }
 
     // ========== UI SETUP ==========
@@ -750,7 +766,8 @@
             img.style.display = "block";
         }
 
-        if (canPostMemo || isMaster) {
+        // Only show Post Memo buttons if allowed
+        if (canPostMemo) {
             document.getElementById("postButtons").style.display = "block";
         }
     }
@@ -832,7 +849,7 @@
     function linkify(text) {
         if (!text) return "";
         return text.replace(/(https?:\/\/[^\s]+)/g, url => 
-            `<a href="${url}" target="_blank" rel="noopener">${url}</a>`
+            `<a href="\( {url}" target="_blank" rel="noopener"> \){url}</a>`
         );
     }
 
@@ -915,7 +932,7 @@
             table = "students";
         }
 
-        const fileName = `${folder}/${recordId}_${Date.now()}.jpg`;
+        const fileName = `\( {folder}/ \){recordId}_${Date.now()}.jpg`;
 
         showLoading(true, "Uploading profile picture...", 0);
         let progress = 0;
@@ -1061,7 +1078,7 @@
         currentFolder = null;
     }
 
-    // ===== FILE LISTING (NEW) =====
+    // ===== FILE LISTING WITH UPLOADER INFO =====
     async function loadFilesInFolder() {
         const container = document.getElementById("filesList");
         container.innerHTML = "Loading files...";
@@ -1087,15 +1104,31 @@
             return;
         }
 
-        container.innerHTML = files.map(f => `
+        container.innerHTML = files.map(f => {
+            const uploaderName = f.uploaded_by_name || f.uploaded_by || "Unknown";
+            const uploaderPic = f.uploaded_by_pic || "https://via.placeholder.com/28";
+            const uploaderPos = f.uploaded_by_position || "";
+            const uploaderSchool = f.uploaded_by_school ? f.uploaded_by_school.replace("-", " ") : "";
+
+            return `
             <div class="note-item">
-                <span>📄 ${f.display_name || f.file_name}</span>
+                <div style="flex:1;">
+                    <div style="font-weight:600;">📄 ${f.display_name || f.file_name}</div>
+                    <div class="uploader-info">
+                        <img src="${uploaderPic}" alt="">
+                        <div>
+                            <strong>${uploaderName}</strong>
+                            ${uploaderPos ? ` • ${uploaderPos}` : ""}
+                            \( {uploaderSchool ? `<br><span style="color:#777;"> \){uploaderSchool}</span>` : ""}
+                        </div>
+                    </div>
+                </div>
                 <div>
                     <a href="${f.public_url}" target="_blank" class="btn btn-success" style="text-decoration:none;">View / Download</a>
-                    ${canUploadFiles ? `<button class="btn btn-danger" onclick="deleteFile('${f.id}', '${(f.display_name || f.file_name).replace(/'/g, "\\'")}')">Delete</button>` : ""}
+                    \( {canUploadFiles ? `<button class="btn btn-danger" onclick="deleteFile(' \){f.id}', '${(f.display_name || f.file_name).replace(/'/g, "\\'")}')">Delete</button>` : ""}
                 </div>
-            </div>
-        `).join("");
+            </div>`;
+        }).join("");
     }
 
     function filterFiles() {
@@ -1117,7 +1150,7 @@
             const file = fileInput.files[0];
             const displayName = document.getElementById("fileDisplayName").value.trim();
             const cleanName = (displayName || file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
-            const path = `${currentFolder.school}/${currentFolder.year}/${currentFolder.id}/${cleanName}`;
+            const path = `\( {currentFolder.school}/ \){currentFolder.year}/\( {currentFolder.id}/ \){cleanName}`;
 
             showLoading(true, "Uploading file...", 0);
             try {
@@ -1130,7 +1163,7 @@
                 const publicUrl = await uploadToR2(file, path);
                 clearInterval(interval);
 
-                // Save file record to database
+                // Save with full uploader info
                 await client.from("files").insert({
                     folder_id: currentFolder.id,
                     school: currentFolder.school,
@@ -1138,7 +1171,11 @@
                     file_name: cleanName,
                     display_name: displayName || file.name,
                     public_url: publicUrl,
-                    uploaded_by: isMaster ? "Master Admin" : adminName
+                    uploaded_by: isMaster ? "Master Admin" : adminName,
+                    uploaded_by_name: isMaster ? "ICT Team" : adminName,
+                    uploaded_by_pic: isMaster ? masterProfilePic : (adminProfilePic || null),
+                    uploaded_by_position: isMaster ? "Master Admin" : adminPosition,
+                    uploaded_by_school: isMaster ? null : adminSchool
                 });
 
                 showLoading(false);
@@ -1171,9 +1208,7 @@
         showPasswordModal("Enter password to delete folder", () => {
             showConfirmModal("Delete Folder", `Delete folder <strong>${currentFolder.name}</strong> and all its files?`, async () => {
                 showLoading(true, "Deleting folder...");
-                // Delete all files in this folder first
                 await client.from("files").delete().eq("folder_id", currentFolder.id);
-                // Delete the folder
                 await client.from("folders").delete().eq("id", currentFolder.id);
                 showLoading(false);
                 backToYear();
@@ -1235,7 +1270,7 @@
 
     // ===== POST MEMO =====
     function openPostMemoModal(textOnly = false) {
-        if (!canPostMemo && !isMaster) return;
+        if (!canPostMemo) return;
         isTextOnlyPost = textOnly;
         document.getElementById("postModalTitle").innerText = textOnly ? "✏️ Post Text" : "📢 Post New Memo";
         document.getElementById("imageUploadSection").style.display = textOnly ? "none" : "block";
@@ -1249,6 +1284,7 @@
     }
 
     async function postMemo() {
+        if (!canPostMemo) return;
         const title = document.getElementById("memoTitle").value.trim();
         const description = document.getElementById("memoDescription").value.trim();
         const imageInput = document.getElementById("memoImage");
@@ -1263,7 +1299,7 @@
         let imageUrl = null;
         if (!isTextOnlyPost && imageInput.files && imageInput.files.length > 0) {
             const file = imageInput.files[0];
-            const fileName = `memos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+            const fileName = `memos/\( {Date.now()}_ \){file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
 
             let progress = 0;
             const interval = setInterval(() => {
@@ -1447,18 +1483,18 @@
                             <button onclick="toggleCommentMenu('${c.id}')" 
                                     style="background:none; border:none; font-size:18px; cursor:pointer; color:#666; padding:0 4px;">⋯</button>
                             <div id="menu-${c.id}" style="display:none; position:absolute; right:0; top:24px; background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:10; min-width:130px;">
-                                <div onclick="startEditComment('${c.id}', '${memoId}')" 
+                                <div onclick="startEditComment('\( {c.id}', ' \){memoId}')" 
                                      style="padding:10px 14px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee;">
                                     ✏️ Edit
                                 </div>
-                                <div onclick="startDeleteComment('${c.id}', '${memoId}')" 
+                                <div onclick="startDeleteComment('\( {c.id}', ' \){memoId}')" 
                                      style="padding:10px 14px; cursor:pointer; font-size:13px; color:#c62828;">
                                     🗑️ Delete
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="comment-text" id="comment-text-${c.id}">${c.comment}</div>
+                    <div class="comment-text" id="comment-text-\( {c.id}"> \){c.comment}</div>
                     <div class="comment-time">${timeStr}</div>
                 </div>
             </div>`;
@@ -1786,24 +1822,24 @@
                         <img class="memo-avatar" src="${avatarSrc}" alt="">
                         <div class="memo-meta">
                             <div class="memo-name">${m.poster_name}</div>
-                            <div class="memo-position">${m.poster_position}${m.poster_school ? " • " + m.poster_school.replace("-"," ") : ""}</div>
+                            <div class="memo-position">\( {m.poster_position} \){m.poster_school ? " • " + m.poster_school.replace("-"," ") : ""}</div>
                             <div class="memo-time">${timeStr}</div>
                         </div>
                     </div>
-                    ${m.image_url ? `<img class="memo-image" src="${m.image_url}" onclick="openFullscreen('${m.image_url}')">` : ""}
+                    \( {m.image_url ? `<img class="memo-image" src=" \){m.image_url}" onclick="openFullscreen('${m.image_url}')">` : ""}
                     <div class="memo-body">
                         <div class="memo-title">${m.title || ""}</div>
                         <div class="memo-desc">${linkify(m.description || "")}</div>
                     </div>
                     <div class="memo-actions">
                         <div class="memo-action" onclick="toggleLike('${m.id}', this)">
-                            👍 <span id="likes-${m.id}" data-count="${m.likes || 0}">${formatCount(m.likes || 0)}</span>
+                            👍 <span id="likes-\( {m.id}" data-count=" \){m.likes || 0}">${formatCount(m.likes || 0)}</span>
                         </div>
                         <div class="memo-action" onclick="toggleDislike('${m.id}', this)">
-                            👎 <span id="dislikes-${m.id}" data-count="${m.dislikes || 0}">${formatCount(m.dislikes || 0)}</span>
+                            👎 <span id="dislikes-\( {m.id}" data-count=" \){m.dislikes || 0}">${formatCount(m.dislikes || 0)}</span>
                         </div>
                         <div class="memo-action" onclick="toggleComments('${m.id}')">💬 Comments</div>
-                        ${showDelete ? `<div class="memo-delete-btn" onclick="deleteMemo('${m.id}', '${m.poster_name}')">🗑️ Delete</div>` : ""}
+                        \( {showDelete ? `<div class="memo-delete-btn" onclick="deleteMemo(' \){m.id}', '${m.poster_name}')">🗑️ Delete</div>` : ""}
                     </div>
                     <div class="comments-section" id="comments-${m.id}">
                         <div id="comments-list-${m.id}">Loading comments...</div>
